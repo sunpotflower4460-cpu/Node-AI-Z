@@ -144,12 +144,9 @@ export const buildStudioViewModel = (result: NodePipelineResult): StudioViewMode
 
   let flowSummaryText = ''
   if (mainState && mainState.id !== 'processing') {
-    flowSummaryText = `この入力では、まず ${mainState.label}（${NODE_DICT[mainState.label]?.ja || mainState.label}）に強く触れました。
-`
-    if (mainConflict) flowSummaryText += `次に ${mainConflict.source} と ${mainConflict.target} のあいだの揺れを見ました。
-`
-    else flowSummaryText += '目立った強い衝突は感じていません。
-'
+    flowSummaryText = `この入力では、まず ${mainState.label}（${NODE_DICT[mainState.label]?.ja || mainState.label}）に強く触れました。\n`
+    if (mainConflict) flowSummaryText += `次に ${mainConflict.source} と ${mainConflict.target} のあいだの揺れを見ました。\n`
+    else flowSummaryText += '目立った強い衝突は感じていません。\n'
     flowSummaryText += `そのため、行動を急がせるより先に、「${getReplyDirectionText(result, mainConflict)}」の方向に結晶化しました。`
   } else {
     flowSummaryText = '明確なキーワードの反応がなかったため、まずは静かに全体を受け止める姿勢をとりました。'
