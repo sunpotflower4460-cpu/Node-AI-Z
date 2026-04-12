@@ -79,7 +79,7 @@ export function addRelationalSoftness(text: string, reason: HomeCheckResult['rea
   return `${text}\n${relationalLine}`
 }
 
-// Trim line-end whitespace, cap blank gaps to a single empty line, and remove outer whitespace.
+/** Trim line-end whitespace, cap blank gaps to a single empty line, and remove outer whitespace. */
 const normalizeReply = (text: string) => text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
 
 export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResult): string {

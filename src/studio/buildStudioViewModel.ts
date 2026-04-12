@@ -11,7 +11,11 @@ const isConflictType = (type: string): type is ConflictType => CONFLICT_TYPES.so
 
 const hasConflict = (mainConflict: Binding | null) => Boolean(mainConflict && isConflictType(mainConflict.type))
 
-const cleanReplyParts = (replyParts: Array<string | null | undefined>) => replyParts.map((part) => part?.trim()).filter((part): part is string => Boolean(part))
+function cleanReplyParts(replyParts: Array<string | null | undefined>) {
+  return replyParts.map((part) => part?.trim()).filter((part): part is string => Boolean(part))
+}
+
+const shouldOmitMeaningFollow = (result: NodePipelineResult) => result.stateVector.ambiguity > AMBIGUITY_KEEP_STILL_THRESHOLD && result.activatedNodes[0]?.id !== 'processing'
 
 export const getReactionLead = (result: NodePipelineResult, mainPattern: StudioPattern | null, mainConflict: Binding | null) => {
   const vector = result.stateVector
@@ -73,7 +77,7 @@ export const composeNaturalReply = (result: NodePipelineResult, mainPattern: Stu
 
   return cleanReplyParts([
     getReactionLead(result, mainPattern, mainConflict),
-    result.stateVector.ambiguity > AMBIGUITY_KEEP_STILL_THRESHOLD && result.activatedNodes[0]?.id !== 'processing' ? null : meaningFollow,
+    shouldOmitMeaningFollow(result) ? null : meaningFollow,
     closingLine === meaningFollow ? null : closingLine,
   ]).join('\n')
 }
