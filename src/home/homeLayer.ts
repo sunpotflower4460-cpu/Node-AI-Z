@@ -80,7 +80,7 @@ export function addRelationalSoftness(text: string, reason: HomeCheckResult['rea
 }
 
 /** Trim line-end whitespace, cap blank gaps to a single empty line, and remove outer whitespace. */
-const normalizeReply = (text: string) => text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
+const normalizeWhitespace = (text: string) => text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
 
 export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResult): string {
   let adjusted = softenDirectiveTone(rawReply)
@@ -114,5 +114,5 @@ export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResu
       adjusted = addRelationalSoftness(adjusted, homeCheck.reason)
       break
   }
-  return normalizeReply(adjusted)
+  return normalizeWhitespace(adjusted)
 }

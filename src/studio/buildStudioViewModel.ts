@@ -5,7 +5,7 @@ import type { Binding, CoreNode, HomeCheckResult, NodePipelineResult, ReturnTrac
 const CONFLICT_TYPES = ['conflicts_with', 'tension'] as const
 const MAX_GUIDE_TAGS = 3
 const AMBIGUITY_KEEP_STILL_THRESHOLD = 0.82
-type ConflictType = typeof CONFLICT_TYPES[number]
+type ConflictType = (typeof CONFLICT_TYPES)[number]
 
 const isConflictType = (type: string): type is ConflictType => CONFLICT_TYPES.some((conflictType) => conflictType === type)
 
