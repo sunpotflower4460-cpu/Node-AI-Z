@@ -2,9 +2,12 @@ import { PATTERN_DICT, RELATION_DICT, NODE_DICT } from '../core/nodeData'
 import { buildHomeState, runHomeCheck, applyReturnAdjustment } from '../home/homeLayer'
 import type { Binding, CoreNode, HomeCheckResult, NodePipelineResult, ReturnTrace, StudioInternalProcess, StudioPattern, StudioViewModel } from '../types/nodeStudio'
 
-const hasConflict = (mainConflict: Binding | null) => Boolean(mainConflict && ['conflicts_with', 'tension'].includes(mainConflict.type))
+const CONFLICT_TYPES = ['conflicts_with', 'tension'] as const
+const MAX_GUIDE_TAGS = 3
 
-const splitReplyLines = (replyParts: Array<string | null | undefined>) => replyParts.map((part) => part?.trim()).filter((part): part is string => Boolean(part))
+const hasConflict = (mainConflict: Binding | null) => Boolean(mainConflict && CONFLICT_TYPES.includes(mainConflict.type as typeof CONFLICT_TYPES[number]))
+
+const cleanReplyParts = (replyParts: Array<string | null | undefined>) => replyParts.map((part) => part?.trim()).filter((part): part is string => Boolean(part))
 
 export const getReactionLead = (result: NodePipelineResult, mainPattern: StudioPattern | null, mainConflict: Binding | null) => {
   const vector = result.stateVector
@@ -64,7 +67,7 @@ export const composeNaturalReply = (result: NodePipelineResult, mainPattern: Stu
   const meaningFollow = getMeaningFollow(result, mainPattern, mainConflict)
   const closingLine = getClosingLine(result, mainPattern, mainConflict)
 
-  return splitReplyLines([
+  return cleanReplyParts([
     getReactionLead(result, mainPattern, mainConflict),
     result.stateVector.ambiguity > 0.82 && result.activatedNodes[0]?.id !== 'processing' ? null : meaningFollow,
     closingLine === meaningFollow ? null : closingLine,
@@ -117,7 +120,7 @@ export const getInternalProcess = (
 
   const reaction = mainNode && mainNode.id !== 'processing' ? `${mainNode.label} に強く触れた` : '全体像の把握から入った'
   let stance = '整理するより先に受け止める'
-  if (mainConflict && ['conflicts_with', 'tension'].includes(mainConflict.type)) stance = '片方に寄らず葛藤を可視化する'
+  if (mainConflict && CONFLICT_TYPES.includes(mainConflict.type as typeof CONFLICT_TYPES[number])) stance = '片方に寄らず葛藤を可視化する'
   if (vector.ambiguity > 0.7) stance = '未言語のまま保つ'
 
   const activated = result.activatedNodes.filter((node) => node.id !== 'processing').slice(0, 3).map((node) => node.label).join(', ') || '特になし'
@@ -198,12 +201,12 @@ export const generateGuideObserves = (
     tags.push('断定弱め')
   }
 
-  return { summary, uncertainty, naturalnessAdvice, tags: tags.slice(0, 3) }
+  return { summary, uncertainty, naturalnessAdvice, tags: tags.slice(0, MAX_GUIDE_TAGS) }
 }
 
 export const buildStudioViewModel = (result: NodePipelineResult): StudioViewModel => {
   const mainState = result.activatedNodes.length > 0 ? result.activatedNodes[0] : null
-  const conflictRelations = result.bindings.filter((binding) => ['conflicts_with', 'tension'].includes(binding.type))
+  const conflictRelations = result.bindings.filter((binding) => CONFLICT_TYPES.includes(binding.type as typeof CONFLICT_TYPES[number]))
   const mainConflict = conflictRelations.length > 0 ? conflictRelations[0] : (result.bindings.length > 0 ? result.bindings[0] : null)
   const enrichedPatterns = result.liftedPatterns.map((pattern) => ({
     ...pattern,

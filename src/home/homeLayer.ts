@@ -38,7 +38,7 @@ export function runHomeCheck(result: NodePipelineResult, home: HomeState): HomeC
   return { needsReturn: false, returnMode: 'none', reason: 'none', homePhrase: HOME_PHRASES.stable[0], released: [], preserved: ['自然な流れ'] }
 }
 
-const replaceTone = (text: string, replacements: Array<[RegExp, string]>) => replacements.reduce((current, [pattern, next]) => current.replace(pattern, next), text)
+const replaceTone = (text: string, replacements: Array<[RegExp, string]>) => replacements.reduce((current, [pattern, replacement]) => current.replace(pattern, replacement), text)
 
 export function softenAssertions(text: string): string {
   return replaceTone(text, [
