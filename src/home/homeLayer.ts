@@ -70,14 +70,16 @@ export function addRelationalSoftness(text: string, reason: HomeCheckResult['rea
     hostile_input: '境界を保ったままでも、ここには戻ってこられます。',
     none: '',
   }[reason]
+  const lines = text.split('\n')
 
-  if (!relationalLine || text.includes(relationalLine)) {
+  if (!relationalLine || lines[lines.length - 1] === relationalLine) {
     return text
   }
 
   return `${text}\n${relationalLine}`
 }
 
+// Trim line-end whitespace, cap blank gaps to a single empty line, and remove outer whitespace.
 const normalizeReply = (text: string) => text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
 
 export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResult): string {

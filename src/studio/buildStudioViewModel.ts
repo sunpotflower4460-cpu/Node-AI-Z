@@ -4,8 +4,12 @@ import type { Binding, CoreNode, HomeCheckResult, NodePipelineResult, ReturnTrac
 
 const CONFLICT_TYPES = ['conflicts_with', 'tension'] as const
 const MAX_GUIDE_TAGS = 3
+const AMBIGUITY_KEEP_STILL_THRESHOLD = 0.82
+type ConflictType = typeof CONFLICT_TYPES[number]
 
-const hasConflict = (mainConflict: Binding | null) => Boolean(mainConflict && CONFLICT_TYPES.includes(mainConflict.type as typeof CONFLICT_TYPES[number]))
+const isConflictType = (type: string): type is ConflictType => CONFLICT_TYPES.some((conflictType) => conflictType === type)
+
+const hasConflict = (mainConflict: Binding | null) => Boolean(mainConflict && isConflictType(mainConflict.type))
 
 const cleanReplyParts = (replyParts: Array<string | null | undefined>) => replyParts.map((part) => part?.trim()).filter((part): part is string => Boolean(part))
 
@@ -69,7 +73,7 @@ export const composeNaturalReply = (result: NodePipelineResult, mainPattern: Stu
 
   return cleanReplyParts([
     getReactionLead(result, mainPattern, mainConflict),
-    result.stateVector.ambiguity > 0.82 && result.activatedNodes[0]?.id !== 'processing' ? null : meaningFollow,
+    result.stateVector.ambiguity > AMBIGUITY_KEEP_STILL_THRESHOLD && result.activatedNodes[0]?.id !== 'processing' ? null : meaningFollow,
     closingLine === meaningFollow ? null : closingLine,
   ]).join('\n')
 }
@@ -120,7 +124,7 @@ export const getInternalProcess = (
 
   const reaction = mainNode && mainNode.id !== 'processing' ? `${mainNode.label} に強く触れた` : '全体像の把握から入った'
   let stance = '整理するより先に受け止める'
-  if (mainConflict && CONFLICT_TYPES.includes(mainConflict.type as typeof CONFLICT_TYPES[number])) stance = '片方に寄らず葛藤を可視化する'
+  if (mainConflict && isConflictType(mainConflict.type)) stance = '片方に寄らず葛藤を可視化する'
   if (vector.ambiguity > 0.7) stance = '未言語のまま保つ'
 
   const activated = result.activatedNodes.filter((node) => node.id !== 'processing').slice(0, 3).map((node) => node.label).join(', ') || '特になし'
@@ -206,7 +210,7 @@ export const generateGuideObserves = (
 
 export const buildStudioViewModel = (result: NodePipelineResult): StudioViewModel => {
   const mainState = result.activatedNodes.length > 0 ? result.activatedNodes[0] : null
-  const conflictRelations = result.bindings.filter((binding) => CONFLICT_TYPES.includes(binding.type as typeof CONFLICT_TYPES[number]))
+  const conflictRelations = result.bindings.filter((binding) => isConflictType(binding.type))
   const mainConflict = conflictRelations.length > 0 ? conflictRelations[0] : (result.bindings.length > 0 ? result.bindings[0] : null)
   const enrichedPatterns = result.liftedPatterns.map((pattern) => ({
     ...pattern,
