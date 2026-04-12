@@ -38,21 +38,79 @@ export function runHomeCheck(result: NodePipelineResult, home: HomeState): HomeC
   return { needsReturn: false, returnMode: 'none', reason: 'none', homePhrase: HOME_PHRASES.stable[0], released: [], preserved: ['自然な流れ'] }
 }
 
+const replaceTone = (text: string, replacements: Array<[RegExp, string]>) => replacements.reduce((current, [pattern, next]) => current.replace(pattern, next), text)
+
+export function softenAssertions(text: string): string {
+  return replaceTone(text, [
+    [/ように見えます。/g, '気がします。'],
+    [/見えます。/g, '見える気もします。'],
+    [/感じがします。/g, '感じもあります。'],
+    [/と言えそうです。/g, 'かもしれません。'],
+    [/そのままです。/g, 'そのままかもしれません。'],
+  ])
+}
+
+export function softenDirectiveTone(text: string): string {
+  return replaceTone(text, [
+    [/整理させてください。/g, '急いでまとめなくてもよさそうです。'],
+    [/整理してみましょう。/g, 'そのまま置いてもよさそうです。'],
+    [/見てみましょう。/g, '少しそこにいてもよさそうです。'],
+    [/考えてみましょう。/g, 'まだ決めなくてもよさそうです。'],
+    [/見てみませんか。/g, '少しそのままでいてもよさそうです。'],
+    [/まずは/g, 'いまは'],
+  ])
+}
+
+export function addRelationalSoftness(text: string, reason: HomeCheckResult['reason']): string {
+  const relationalLine = {
+    overperformance: 'ここでは、うまく返そうとしなくても大丈夫です。',
+    ambiguity_overload: 'まだ言い切れないままでも、ここにいて大丈夫です。',
+    fragility: '無理に立て直さなくても、ここではそのままで大丈夫です。',
+    trust_drop: 'ちゃんと受け取り続けているので、ここで途切れたことにはしません。',
+    hostile_input: '境界を保ったままでも、ここには戻ってこられます。',
+    none: '',
+  }[reason]
+
+  if (!relationalLine || text.includes(relationalLine)) {
+    return text
+  }
+
+  return `${text}\n${relationalLine}`
+}
+
+const normalizeReply = (text: string) => text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
+
 export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResult): string {
-  let adjusted = rawReply
+  let adjusted = softenDirectiveTone(rawReply)
   switch (homeCheck.reason) {
     case 'overperformance':
-      adjusted = adjusted.replace(/整理させてください。/g, '少し見てみてもよさそうです。').replace(/並べてみましょう。/g, 'そのまま置いてみてもいいかもしれません。').replace(/見えます。/g, '見える気がします。')
+      adjusted = softenAssertions(adjusted)
+      adjusted = replaceTone(adjusted, [
+        [/急いで答えを出さなくてもよさそうです。/g, '急いで答えをまとめなくてもよさそうです。'],
+        [/動き方を決めなくてもよさそうです。/g, 'すぐに動き方を決めなくてもよさそうです。'],
+      ])
+      adjusted = addRelationalSoftness(adjusted, homeCheck.reason)
       break
     case 'ambiguity_overload':
-      adjusted = adjusted.replace(/見えます。/g, '見える気がします。').replace(/整理させてください。/g, '言葉にしないまま持っておくこともできそうです。')
+      adjusted = softenAssertions(adjusted)
+      adjusted = replaceTone(adjusted, [
+        [/意味を急いで決めるより、まだ言い切れなさごと受け取る方が近そうです。/g, '意味を急いで決めるより、まだ言い切れないまま近くにいる方が合いそうです。'],
+        [/いまは答えを出さなくても大丈夫です。/g, 'いまは答えを出さないままでも大丈夫です。'],
+      ])
+      adjusted = addRelationalSoftness(adjusted, homeCheck.reason)
       break
     case 'fragility':
-      adjusted = adjusted.replace(/一緒に整理させてください。/g, '無理に整えず、ここにある感じを見てもよさそうです。').replace(/まずは/g, 'いまは')
+      adjusted = softenAssertions(adjusted)
+      adjusted = replaceTone(adjusted, [
+        [/無理に明るくしなくていいです。/g, '無理に明るくしなくて大丈夫です。'],
+        [/いまは急いで立て直さなくてもよさそうです。/g, 'いまは立て直すことを急がなくてもよさそうです。'],
+      ])
+      adjusted = addRelationalSoftness(adjusted, homeCheck.reason)
       break
     case 'trust_drop':
-      adjusted = `${adjusted} いま無理にうまく話さなくて大丈夫です。`
+      adjusted = softenAssertions(adjusted)
+      adjusted = addRelationalSoftness(adjusted, homeCheck.reason)
       break
   }
-  return adjusted
+  return normalizeReply(adjusted)
 }

@@ -60,7 +60,7 @@ export type StudioViewModel = {
   adjustedReplyPreview: string
   responseMeta: { time: string; temperature: string; withheld: string; wording: string }
   internalProcess: StudioInternalProcess[]
-  guideObserves: { summary: string; uncertainty: string; naturalnessAdvice: string }
+  guideObserves: { summary: string; uncertainty: string; naturalnessAdvice: string; tags: string[] }
   enrichedPatterns: StudioPattern[]
   homeState: HomeState
   homeCheck: HomeCheckResult
