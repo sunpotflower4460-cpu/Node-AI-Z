@@ -136,6 +136,15 @@ export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcess
             <div className="bg-white rounded-xl p-4 border border-indigo-100/50 shadow-sm">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-2">Naturalness Advice (自然さへの助言)</h4>
               <p className="text-[14px] text-slate-700 font-bold leading-relaxed">{studioView.guideObserves.naturalnessAdvice}</p>
+              {studioView.guideObserves.tags.length > 0 ? (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {studioView.guideObserves.tags.map((tag) => (
+                    <span key={tag} className="px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100 text-[11px] font-bold">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>
