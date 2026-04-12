@@ -10,7 +10,7 @@ type ReplyTabProps = {
   setIsProcessOpen: Dispatch<SetStateAction<boolean>>
 }
 
-const renderBadgeList = (items: string[], colorClass: string, emptyText: string) => (
+const renderBadgeListOrEmpty = (items: string[], colorClass: string, emptyText: string) => (
   <>
     {items.length > 0 ? items.map((item) => <Badge key={item} colorClass={colorClass}>{item}</Badge>) : <span className="text-xs text-slate-400">{emptyText}</span>}
   </>
@@ -69,13 +69,13 @@ export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcess
             <div className="flex-1 flex flex-col gap-2">
               <span className="text-[10px] font-bold text-slate-500 uppercase">Released (手放したもの)</span>
               <div className="flex flex-wrap gap-1.5">
-                {renderBadgeList(studioView.homeCheck.released, 'bg-white text-slate-500 border border-slate-200 line-through', '特になし')}
+                {renderBadgeListOrEmpty(studioView.homeCheck.released, 'bg-white text-slate-500 border border-slate-200 line-through', '特になし')}
               </div>
             </div>
             <div className="flex-1 flex flex-col gap-2">
               <span className="text-[10px] font-bold text-slate-500 uppercase">Preserved (残したもの)</span>
               <div className="flex flex-wrap gap-1.5">
-                {renderBadgeList(studioView.homeCheck.preserved, 'bg-pink-100 text-pink-700 border border-pink-200', '特になし')}
+                {renderBadgeListOrEmpty(studioView.homeCheck.preserved, 'bg-pink-100 text-pink-700 border border-pink-200', '特になし')}
               </div>
             </div>
           </div>
