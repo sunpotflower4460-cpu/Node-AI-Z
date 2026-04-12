@@ -49,7 +49,7 @@ export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResu
         .replace(/動きづらさが出ていますね。/g, 'すぐ決めきれなくなるのも自然だと思います。')
         .replace(/どちらかをすぐ選ぶ前に、/g, 'どちらかを急いで選ばなくて大丈夫なので、')
         .replace(/見えます。/g, 'そう感じます。')
-        .replace(/見ていたいです。/g, 'そのままそばで見ていたいです。')
+        .replace(/見ていたいです。/g, 'そばで見ていたいです。')
         .replace(/まずは/g, 'いったん')
       break
     case 'ambiguity_overload':
