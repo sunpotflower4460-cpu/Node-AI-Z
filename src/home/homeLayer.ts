@@ -42,13 +42,24 @@ export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResu
   let adjusted = rawReply
   switch (homeCheck.reason) {
     case 'overperformance':
-      adjusted = adjusted.replace(/整理させてください。/g, '少し見てみてもよさそうです。').replace(/並べてみましょう。/g, 'そのまま置いてみてもいいかもしれません。').replace(/見えます。/g, '見える気がします。')
+      adjusted = adjusted
+        .replace(/一緒に整理させてください。/g, 'いったん、このまま置いておいても大丈夫です。')
+        .replace(/整理させてください。/g, '急いで形にしなくても大丈夫です。')
+        .replace(/並べてみましょう。/g, '先に、そのまま受け取ってみたいです。')
+        .replace(/見えます。/g, 'そう感じます。')
+        .replace(/まずは/g, 'いったん')
       break
     case 'ambiguity_overload':
-      adjusted = adjusted.replace(/見えます。/g, '見える気がします。').replace(/整理させてください。/g, '言葉にしないまま持っておくこともできそうです。')
+      adjusted = adjusted
+        .replace(/見えます。/g, 'まだ、はっきりしないままでも大丈夫そうです。')
+        .replace(/整理させてください。/g, '言葉にしないまま、そばに置いておくこともできそうです。')
+        .replace(/見てみませんか。/g, 'そのまま一緒に眺めていてもよさそうです。')
       break
     case 'fragility':
-      adjusted = adjusted.replace(/一緒に整理させてください。/g, '無理に整えず、ここにある感じを見てもよさそうです。').replace(/まずは/g, 'いまは')
+      adjusted = adjusted
+        .replace(/一緒に整理させてください。/g, '無理に整えず、ここにある重さをそっと持っていたいです。')
+        .replace(/そのままにしておきます。/g, 'そのまま、やさしく持っておきたいです。')
+        .replace(/まずは/g, 'いまは')
       break
     case 'trust_drop':
       adjusted = `${adjusted} いま無理にうまく話さなくて大丈夫です。`

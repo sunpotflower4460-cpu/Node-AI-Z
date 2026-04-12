@@ -3,16 +3,16 @@ import { buildHomeState, runHomeCheck, applyReturnAdjustment } from '../home/hom
 import type { Binding, CoreNode, HomeCheckResult, NodePipelineResult, ReturnTrace, StudioInternalProcess, StudioPattern, StudioViewModel } from '../types/nodeStudio'
 
 export const generateRawReplyPreview = (result: NodePipelineResult, mainPattern: StudioPattern | null, mainConflict: Binding | null) => {
-  if (result.activatedNodes.length === 0) return 'なんだか、言葉になりにくい状態のようです。少し問いかけて対話の糸口を探してみます。'
-  if (result.activatedNodes[0].id === 'processing') return 'はっきりとした言葉が見えないため、まずはそのまま受け止めて、あなたのペースに合わせます。'
+  if (result.activatedNodes.length === 0) return 'まだ輪郭は薄いですね。無理に言葉にせず、このまま糸口を探します。'
+  if (result.activatedNodes[0].id === 'processing') return 'まだはっきりしませんね。今はそのまま受け取りながら、あなたのペースに合わせます。'
 
-  if (mainPattern?.id === 'motivation_drift') return 'なんだか、かなりしんどそうです。単なる迷いというより、疲れが溜まって動けなくなっている感じがします。まずは『何に消耗しているか』を置いてみてもよさそうです。'
-  if (mainPattern?.id === 'core_insecurity') return '一時的な不安というより、深いところで自分を信じられなくなっている感じがします。今は急いで解決しようとせず、その重さをそのままにしておきます。'
-  if (mainConflict && ['conflicts_with', 'tension'].includes(mainConflict.type)) return '二つの気持ちが同時に強くぶつかって、身動きが取れなくなっているようです。行動を急ぐ前に、この葛藤をそのままテーブルに置いてみてもいいかもしれません。'
-  if (result.stateVector.ambiguity > 0.75) return 'まだ言葉になりきってない感じがありますね。無理に言葉を探したり結論を出そうとせず、その曖昧な感覚のまま少し留まってみましょう。'
-  if (mainPattern) return `なんだか、${mainPattern.titleJa}のような状態が感じられます。今は無理に動くよりも、この状態がどこから来ているかを少し見てみませんか。`
+  if (mainPattern?.id === 'motivation_drift') return 'かなりしんどそうです。ただ迷っているというより、疲れがたまって動きづらくなっていそうです。何にいちばん削られているか、そこから見ていけるかもしれません。'
+  if (mainPattern?.id === 'core_insecurity') return 'それ、浅い不安というより、深いところに触れていそうです。今は急いで解決せず、その重さごとここに置いておきたいです。'
+  if (mainConflict && ['conflicts_with', 'tension'].includes(mainConflict.type)) return '二つの気持ちが同時に引っ張っていて、動きづらさが出ていますね。どちらかをすぐ選ぶ前に、その揺れをいったんそのまま見ていたいです。'
+  if (result.stateVector.ambiguity > 0.75) return 'まだ言葉になりきらないものがありますね。無理にまとめず、その曖昧さのそばに少し居てもよさそうです。'
+  if (mainPattern) return `${mainPattern.titleJa}っぽさがありますね。今は答えを急ぐより、この感じがどこから来ているかを少し確かめたいです。`
 
-  return 'なんだか、いろんな感情が混ざっているような感じがします。まずはその感覚を否定せずに受け止めたいと思います。'
+  return 'いくつかの気持ちが重なっていそうです。まずは否定せず、そのまま受け止めたいです。'
 }
 
 export const getResponseMeta = (result: NodePipelineResult, mainConflict: Binding | null, homeCheck: HomeCheckResult) => {
@@ -91,7 +91,7 @@ export const generateGuideObserves = (
     return {
       summary: '特定の強いノードが見当たらず、まずは全体を受け止めようとしています。一言でいうと、「静かに聞いている感じ」です。',
       uncertainty: '要素が少なすぎるため、背後の意味はまだ保留されています。',
-      naturalnessAdvice: '過剰に分析せず、そのままの姿勢で正解です。',
+      naturalnessAdvice: '分析を足すより、短く受け止める一文を先に置くと自然です。説明は後ろに回してください。',
     }
   }
 
@@ -106,12 +106,12 @@ export const generateGuideObserves = (
   else if (!mainPattern) uncertainty = 'relation がまだ少なく構造が薄いため、意味の断定を避けています。'
   else uncertainty = '他にも抑制されている感情がある可能性がありますが、まずは表面化した状態の扱いに集中しています。'
 
-  let naturalnessAdvice = '反応を先に出してから意味を添えると、もっと自然です。'
-  if (homeCheck.reason === 'overperformance') naturalnessAdvice = '少し頭で整えすぎています。先に“感じたこと”が出ると、もっと人っぽくなります。'
-  else if (homeCheck.reason === 'ambiguity_overload') naturalnessAdvice = 'まだ整理しすぎています。ここは少し“分からないまま近くにいる”方が自然です。'
-  else if (homeCheck.reason === 'fragility') naturalnessAdvice = 'この入力では、明るさを足すより重さをそのまま持つ方がしっくりきます。'
-  else if (homeCheck.reason === 'trust_drop') naturalnessAdvice = '関係の再確認が必要です。正しい説明より、ここにいていいというシグナルが合っています。'
-  else if (result.stateVector.ambiguity > 0.5) naturalnessAdvice = '今回は理解の速さより、言葉の遅さが合っています。'
+  let naturalnessAdvice = '一文目で反応を置き、二文目で意味を添え、三文目で寄り添い方を示すと自然です。'
+  if (homeCheck.reason === 'overperformance') naturalnessAdvice = '説明から入らず、最初に「しんどそうですね」のような反応を置いてください。整理や提案はその次で十分です。'
+  else if (homeCheck.reason === 'ambiguity_overload') naturalnessAdvice = '言い換えや結論を急がず、「まだはっきりしませんね」を先に置いてください。分からなさを残したまま隣にいる文が合います。'
+  else if (homeCheck.reason === 'fragility') naturalnessAdvice = '励ましを足す前に、重さをそのまま受ける一文を先に置いてください。持ち上げるより、そっと支える語感が自然です。'
+  else if (homeCheck.reason === 'trust_drop') naturalnessAdvice = '説明より先に「ここで大丈夫です」を明示してください。正しさより、離れていない感じを一文で返す方が自然です。'
+  else if (result.stateVector.ambiguity > 0.5) naturalnessAdvice = '理解の速さを見せるより、「まだ言葉にならないですね」と遅さを許す一文を先に置くと自然です。'
 
   return { summary, uncertainty, naturalnessAdvice }
 }

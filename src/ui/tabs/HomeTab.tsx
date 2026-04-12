@@ -66,7 +66,7 @@ export const HomeTab = ({ studioView }: HomeTabProps) => {
             </div>
             <div className="flex flex-col gap-3">
               <span className="text-[10px] font-bold text-slate-400 uppercase">Preserved (残したもの)</span>
-              <div className="flex flex-wrap gap-2">{studioView.homeCheck.preserved.map((preserved) => <span key={preserved} className="text-[12px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">{preserved}</span>)}</div>
+              <div className="flex flex-wrap gap-2">{studioView.homeCheck.preserved.length > 0 ? studioView.homeCheck.preserved.map((preserved) => <span key={preserved} className="text-[12px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">{preserved}</span>) : <span className="text-xs text-slate-400">特になし</span>}</div>
             </div>
           </div>
         </div>
