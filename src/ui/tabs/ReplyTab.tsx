@@ -11,7 +11,9 @@ type ReplyTabProps = {
 }
 
 const renderBadgeList = (items: string[], colorClass: string, emptyText: string) => (
-  items.length > 0 ? items.map((item) => <Badge key={item} colorClass={colorClass}>{item}</Badge>) : <span className="text-xs text-slate-400">{emptyText}</span>
+  <>
+    {items.length > 0 ? items.map((item) => <Badge key={item} colorClass={colorClass}>{item}</Badge>) : <span className="text-xs text-slate-400">{emptyText}</span>}
+  </>
 )
 
 export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcessOpen }: ReplyTabProps) => {
