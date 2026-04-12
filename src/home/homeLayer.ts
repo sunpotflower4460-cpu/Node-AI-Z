@@ -46,7 +46,10 @@ export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResu
         .replace(/一緒に整理させてください。/g, 'いったん、このまま置いておいても大丈夫です。')
         .replace(/整理させてください。/g, '急いで形にしなくても大丈夫です。')
         .replace(/並べてみましょう。/g, '先に、そのまま受け取ってみたいです。')
+        .replace(/動きづらさが出ていますね。/g, 'すぐ決めきれなくなるのも自然だと思います。')
+        .replace(/どちらかをすぐ選ぶ前に、/g, 'どちらかを急いで選ばなくて大丈夫なので、')
         .replace(/見えます。/g, 'そう感じます。')
+        .replace(/見ていたいです。/g, 'そのままそばで見ていたいです。')
         .replace(/まずは/g, 'いったん')
       break
     case 'ambiguity_overload':
@@ -54,11 +57,13 @@ export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResu
         .replace(/見えます。/g, 'まだ、はっきりしないままでも大丈夫そうです。')
         .replace(/整理させてください。/g, '言葉にしないまま、そばに置いておくこともできそうです。')
         .replace(/見てみませんか。/g, 'そのまま一緒に眺めていてもよさそうです。')
+        .replace(/少し居てもよさそうです。/g, 'まだ分からないまま、一緒に居てもよさそうです。')
       break
     case 'fragility':
       adjusted = adjusted
         .replace(/一緒に整理させてください。/g, '無理に整えず、ここにある重さをそっと持っていたいです。')
         .replace(/そのままにしておきます。/g, 'そのまま、やさしく持っておきたいです。')
+        .replace(/ここに置いておきたいです。/g, 'ここでそっと支えるように持っておきたいです。')
         .replace(/まずは/g, 'いまは')
       break
     case 'trust_drop':
