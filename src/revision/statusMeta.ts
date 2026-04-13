@@ -10,20 +10,20 @@ const STATUS_META: Record<ChangeStatus, { label: string; description: string; ba
   provisional: {
     label: '様子見採用',
     description: '続ける前提でまだ観察中',
-    badgeClass: 'bg-amber-100 text-amber-800 border-amber-200',
-    panelClass: 'bg-amber-50 border-amber-200 text-amber-900',
+    badgeClass: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    panelClass: 'bg-yellow-50 border-yellow-200 text-yellow-900',
   },
   promoted: {
     label: '定着',
     description: '手応えがあり継続採用',
-    badgeClass: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    panelClass: 'bg-emerald-50 border-emerald-200 text-emerald-900',
+    badgeClass: 'bg-green-100 text-green-800 border-green-200',
+    panelClass: 'bg-green-50 border-green-200 text-green-900',
   },
   reverted: {
     label: '差し戻し',
     description: '今回は戻して影響を停止',
-    badgeClass: 'bg-rose-100 text-rose-800 border-rose-200',
-    panelClass: 'bg-rose-50 border-rose-200 text-rose-900',
+    badgeClass: 'bg-red-100 text-red-800 border-red-200',
+    panelClass: 'bg-red-50 border-red-200 text-red-900',
   },
 }
 

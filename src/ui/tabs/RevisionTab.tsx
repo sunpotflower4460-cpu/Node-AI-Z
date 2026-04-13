@@ -61,14 +61,6 @@ export const RevisionTab = ({ revisionState, currentEntry, onTuningAction, onCle
             <div className="mt-1 text-[11px] font-medium text-red-700/70">{getRevisionStatusMeta('reverted').description}</div>
           </div>
         </div>
-        <div className="mt-4 grid gap-2 md:grid-cols-4">
-          {(['ephemeral', 'provisional', 'promoted', 'reverted'] as const).map((status) => (
-            <div key={status} className={`rounded-lg border px-3 py-2 ${getRevisionStatusMeta(status).panelClass}`}>
-              <div className="text-[10px] font-bold uppercase tracking-widest">{getRevisionStatusMeta(status).label}</div>
-              <div className="mt-1 text-xs font-medium opacity-80">{getRevisionStatusMeta(status).description}</div>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Top Issues */}
