@@ -43,8 +43,11 @@ const addChange = (
   const existing = bucket.get(mapKey)
 
   if (existing) {
-    existing.delta += delta
-    existing.reason = `${existing.reason} / ${reason}`
+    bucket.set(mapKey, {
+      ...existing,
+      delta: existing.delta + delta,
+      reason: `${existing.reason} / ${reason}`,
+    })
     return
   }
 

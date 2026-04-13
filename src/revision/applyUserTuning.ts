@@ -106,8 +106,5 @@ export const getEffectiveDelta = (
   if (tuning.kept.has(changeId)) {
     return originalDelta * 0.6
   }
-  if (tuning.locked.has(changeId)) {
-    return originalDelta
-  }
   return originalDelta * 0.35
 }
