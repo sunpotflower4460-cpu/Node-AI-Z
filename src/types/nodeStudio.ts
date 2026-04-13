@@ -73,3 +73,16 @@ export type HistoryItem = {
   time: string
   pipelineResult: NodePipelineResult
 }
+
+// Re-export revision types for convenience
+export type {
+  RevisionEntry,
+  ProposedChange,
+  PlasticityState,
+  MemoryState,
+  UserTuningState,
+  RevisionState,
+  RevisionSummary,
+  UserTuningAction,
+  ChangeStatus,
+} from '../revision/revisionTypes'
