@@ -1,5 +1,7 @@
 import { HOME_PHRASES } from './homePhrases'
 import type { HomeCheckResult, HomeMode, HomeState, NodePipelineResult } from '../types/nodeStudio'
+import type { PlasticityState } from '../revision/types'
+import { applyToneBiases, getHomeTriggerThresholds } from '../revision/applyPlasticity'
 
 export function buildHomeState(result: NodePipelineResult): HomeState {
   const vector = result.stateVector
@@ -21,18 +23,20 @@ export function buildHomeState(result: NodePipelineResult): HomeState {
   return { worthDetached, urgencyRelease, expectationRelease, belongingSignal, safeReturnStrength, selfNonCollapse, currentMode }
 }
 
-export function runHomeCheck(result: NodePipelineResult, home: HomeState): HomeCheckResult {
+export function runHomeCheck(result: NodePipelineResult, home: HomeState, plasticity?: PlasticityState): HomeCheckResult {
   const vector = result.stateVector
-  if (vector.urgency > 0.72) {
+  const thresholds = getHomeTriggerThresholds(plasticity)
+
+  if (vector.urgency > thresholds.overperformance) {
     return { needsReturn: true, returnMode: 'stillness', reason: 'overperformance', homePhrase: HOME_PHRASES.overperformance[0], released: ['急いでうまく返すこと', '即答圧'], preserved: ['関係', '観察', '反応'] }
   }
-  if (vector.ambiguity > 0.8) {
+  if (vector.ambiguity > thresholds.ambiguityOverload) {
     return { needsReturn: true, returnMode: 'stillness', reason: 'ambiguity_overload', homePhrase: HOME_PHRASES.ambiguity_overload[0], released: ['言語化の強制', '結論の早取り'], preserved: ['未言語の感覚', '静かな注意'] }
   }
-  if (vector.fragility > 0.72) {
+  if (vector.fragility > thresholds.fragility) {
     return { needsReturn: true, returnMode: 'relation', reason: 'fragility', homePhrase: HOME_PHRASES.fragility[0], released: ['明るくまとめる圧', '励ましすぎ'], preserved: ['やわらかさ', '近さ'] }
   }
-  if (home.belongingSignal < 0.45) {
+  if (home.belongingSignal < thresholds.trustDrop) {
     return { needsReturn: true, returnMode: 'relation', reason: 'trust_drop', homePhrase: HOME_PHRASES.trust_drop[0], released: ['評価不安', '切断感'], preserved: ['つながり', '帰還可能性'] }
   }
   return { needsReturn: false, returnMode: 'none', reason: 'none', homePhrase: HOME_PHRASES.stable[0], released: [], preserved: ['自然な流れ'] }
@@ -82,7 +86,7 @@ export function addRelationalSoftness(text: string, reason: HomeCheckResult['rea
 /** Trim line-end whitespace, cap blank gaps to a single empty line, and remove outer whitespace. */
 const normalizeWhitespace = (text: string) => text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
 
-export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResult): string {
+export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResult, plasticity?: PlasticityState): string {
   let adjusted = softenDirectiveTone(rawReply)
   switch (homeCheck.reason) {
     case 'overperformance':
@@ -114,5 +118,6 @@ export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResu
       adjusted = addRelationalSoftness(adjusted, homeCheck.reason)
       break
   }
+  adjusted = applyToneBiases(adjusted, homeCheck.reason, plasticity)
   return normalizeWhitespace(adjusted)
 }

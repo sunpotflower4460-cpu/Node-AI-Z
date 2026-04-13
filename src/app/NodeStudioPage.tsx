@@ -5,9 +5,10 @@ import { buildStudioViewModel } from '../studio/buildStudioViewModel'
 import { buildRevisionEntry } from '../revision/buildRevisionEntry'
 import { loadRevisionState, saveRevisionState, clearRevisionState } from '../revision/revisionStorage'
 import { applyUserTuning } from '../revision/applyUserTuning'
+import { addRevisionEntry } from '../revision/revisionLog'
 import { loadExperienceMessages, saveExperienceMessages } from '../storage/experienceStorage'
 import type { ExperienceMessage, AppMode, ObservationRecord } from '../types/experience'
-import type { NodePipelineResult, RevisionEntry, RevisionState, StudioViewModel, UserTuningAction } from '../types/nodeStudio'
+import type { NodePipelineResult, PlasticityState, RevisionEntry, RevisionState, StudioViewModel, UserTuningAction } from '../types/nodeStudio'
 import { ModeSwitch } from '../ui/components/ModeSwitch'
 import { ExperienceMode } from '../ui/modes/ExperienceMode'
 import { ObserveMode } from '../ui/modes/ObserveMode'
@@ -45,25 +46,12 @@ export default function NodeStudioPage() {
   }, [experienceMessages])
 
   const addRevisionEntryToMemory = useCallback((entry: RevisionEntry) => {
-    setRevisionState((previous) => {
-      if (previous.memory.entries.some((existingEntry) => existingEntry.id === entry.id)) {
-        return previous
-      }
-
-      return {
-        ...previous,
-        memory: {
-          ...previous.memory,
-          entries: [entry, ...previous.memory.entries],
-          ephemeral: entry.status === 'ephemeral' ? [entry, ...previous.memory.ephemeral] : previous.memory.ephemeral,
-        },
-      }
-    })
+    setRevisionState((previous) => addRevisionEntry(previous, entry))
   }, [])
 
-  const createObservation = useCallback((text: string, type: ObservationRecord['type']): ObservationRecord => {
-    const pipelineResult = runNodePipeline(text)
-    const studioView = buildStudioViewModel(pipelineResult)
+  const createObservation = useCallback((text: string, type: ObservationRecord['type'], plasticity: PlasticityState): ObservationRecord => {
+    const pipelineResult = runNodePipeline(text, plasticity)
+    const studioView = buildStudioViewModel(pipelineResult, plasticity)
     const revisionEntry = buildRevisionEntry(pipelineResult, studioView)
     const timestamp = new Date().toISOString()
 
@@ -103,14 +91,14 @@ export default function NodeStudioPage() {
   }, [experienceHistory, observeHistory])
 
   const handleObserveAnalyze = useCallback((text: string) => {
-    const record = createObservation(text, 'observe')
+    const record = createObservation(text, 'observe', revisionState.plasticity)
     addRevisionEntryToMemory(record.revisionEntry)
     setObserveHistory((previous) => [record, ...previous])
     setCurrentObservation(record)
-  }, [addRevisionEntryToMemory, createObservation])
+  }, [addRevisionEntryToMemory, createObservation, revisionState.plasticity])
 
   const handleExperienceSend = useCallback((text: string) => {
-    const record = createObservation(text, 'experience')
+    const record = createObservation(text, 'experience', revisionState.plasticity)
     const turnTimestamp = record.timestamp
 
     addRevisionEntryToMemory(record.revisionEntry)
@@ -136,9 +124,9 @@ export default function NodeStudioPage() {
         pipelineResult: record.pipelineResult,
         studioView: record.studioView,
         revisionEntry: record.revisionEntry,
-      },
-    ])
-  }, [addRevisionEntryToMemory, createObservation])
+        },
+      ])
+  }, [addRevisionEntryToMemory, createObservation, revisionState.plasticity])
 
   const handleRestoreObservation = useCallback((record: ObservationRecord) => {
     setCurrentObservation(record)
@@ -177,7 +165,7 @@ export default function NodeStudioPage() {
             <h1 className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-900 md:text-xl">
               <BrainCircuit className="h-5 w-5 text-indigo-600 md:h-6 md:w-6" />
               Node-AI-Z
-              <span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">SRM-1 / Foundation</span>
+              <span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">SRM-2 / Provisional Plasticity</span>
             </h1>
             <p className="mt-1 text-sm font-medium text-slate-500">
               研究するための観察ビューと、実際に話すための体験ビューを往復しながら、育つ知性を見ていく実験アプリ。
