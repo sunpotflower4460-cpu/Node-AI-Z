@@ -23,7 +23,7 @@ const createId = (prefix: string) => {
 
 const formatTime = (timestamp: string) => new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 
-const isExperienceObservation = (
+const hasObservationData = (
   message: ExperienceMessage,
 ): message is ExperienceMessage & { pipelineResult: NodePipelineResult; studioView: StudioViewModel; revisionEntry: RevisionEntry } => {
   return message.role === 'assistant' && Boolean(message.pipelineResult && message.studioView && message.revisionEntry)
@@ -82,7 +82,7 @@ export default function NodeStudioPage() {
 
   const experienceHistory = useMemo<ObservationRecord[]>(() => {
     return experienceMessages
-      .filter(isExperienceObservation)
+      .filter(hasObservationData)
       .map((message) => ({
         id: message.observationId,
         type: 'experience' as const,
@@ -97,8 +97,8 @@ export default function NodeStudioPage() {
   }, [experienceMessages])
 
   const history = useMemo(() => {
-    return [...observeHistory, ...experienceHistory].sort((left, right) => {
-      return new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime()
+    return [...observeHistory, ...experienceHistory].sort((first, second) => {
+      return new Date(second.timestamp).getTime() - new Date(first.timestamp).getTime()
     })
   }, [experienceHistory, observeHistory])
 

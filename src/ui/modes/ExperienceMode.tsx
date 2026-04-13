@@ -70,7 +70,7 @@ export const ExperienceMode = ({ messages, onSend, onOpenObservation }: Experien
                     <p className="whitespace-pre-wrap text-[15px] font-medium leading-relaxed">{message.text}</p>
                     <div className={`mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold ${isAssistant ? 'text-slate-500' : 'text-rose-100'}`}>
                       <span>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      {isAssistant ? (
+                      {isAssistant && message.observationId ? (
                         <>
                           <span>観察研究モードで詳しく見返せます</span>
                           <button
