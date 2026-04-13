@@ -110,8 +110,7 @@ export default function NodeStudioPage() {
 
   const handleExperienceSend = useCallback((text: string) => {
     const record = createObservation(text, 'experience')
-    const userTimestamp = new Date().toISOString()
-    const assistantTimestamp = new Date().toISOString()
+    const turnTimestamp = record.timestamp
 
     addRevisionEntryToMemory(record.revisionEntry)
     setCurrentObservation(record)
@@ -122,7 +121,7 @@ export default function NodeStudioPage() {
         observationId: record.id,
         role: 'user',
         text,
-        timestamp: userTimestamp,
+        timestamp: turnTimestamp,
         pipelineResult: record.pipelineResult,
         studioView: record.studioView,
         revisionEntry: record.revisionEntry,
@@ -132,7 +131,7 @@ export default function NodeStudioPage() {
         observationId: record.id,
         role: 'assistant',
         text: record.assistantReply,
-        timestamp: assistantTimestamp,
+        timestamp: turnTimestamp,
         pipelineResult: record.pipelineResult,
         studioView: record.studioView,
         revisionEntry: record.revisionEntry,

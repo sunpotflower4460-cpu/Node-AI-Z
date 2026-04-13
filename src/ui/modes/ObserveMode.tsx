@@ -141,6 +141,7 @@ export const ObserveMode = ({
               type="button"
               onClick={handleAnalyze}
               disabled={isAnalyzing || !inputText.trim()}
+              aria-label={isAnalyzing ? '分析中' : '分析する'}
               className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-[15px] font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50"
             >
               {isAnalyzing ? <RefreshCw className="h-4.5 w-4.5 animate-spin" /> : <Activity className="h-4.5 w-4.5" />}

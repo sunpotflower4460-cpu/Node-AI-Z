@@ -30,7 +30,7 @@ export const HistoryTab = ({ history, restoreHistory }: HistoryTabProps) => (
                       <span className="text-[11px] font-semibold text-slate-400">{item.time}</span>
                     </div>
                     <p className="line-clamp-2 text-[15px] font-semibold leading-relaxed text-slate-800">"{item.text}"</p>
-                    {item.type === 'experience' ? <p className="mt-2 line-clamp-2 text-sm font-medium leading-relaxed text-slate-500">返答: {item.assistantReply}</p> : null}
+                    {item.type === 'experience' ? <p title={item.assistantReply} className="mt-2 line-clamp-2 text-sm font-medium leading-relaxed text-slate-500">返答: {item.assistantReply}</p> : null}
                   </div>
                 </div>
                 <div className="mt-1 flex flex-wrap gap-2">

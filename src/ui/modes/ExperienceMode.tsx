@@ -110,6 +110,7 @@ export const ExperienceMode = ({ messages, onSend, onOpenObservation }: Experien
                 type="button"
                 onClick={handleSend}
                 disabled={isSending || !inputText.trim()}
+                aria-label={isSending ? '返答中' : '送信'}
                 className="inline-flex items-center gap-2 rounded-full bg-rose-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-rose-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
