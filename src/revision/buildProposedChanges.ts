@@ -5,6 +5,8 @@ const generateId = () => `change_${Date.now()}_${Math.random().toString(36).slic
 
 const SOFTENING_MARKERS = ['かもしれ', '気がします', '感じがあります', '見える気もします', 'まだ言い切れない']
 const DECISIVE_REPLY_PATTERN = /です。|ます。|でしょう。|はずです。/g
+const AMBIGUITY_CERTAINTY_THRESHOLD = 0.72
+const FRAGILITY_CLOSENESS_THRESHOLD = 0.72
 
 const changeLabel = (kind: ProposedChange['kind'], key: string, delta: number) => ({
   id: `${kind}:${key}`,
@@ -73,13 +75,13 @@ export const buildProposedChanges = (
     addChange(changeBucket, 'home_trigger', 'overperformance', 0.03, '過剰整理に早めに戻れるよう overperformance trigger を少し上げる')
   }
 
-  if (result.stateVector.ambiguity > 0.72 && isAssertiveReply(studioView.adjustedReplyPreview)) {
+  if (result.stateVector.ambiguity > AMBIGUITY_CERTAINTY_THRESHOLD && isAssertiveReply(studioView.adjustedReplyPreview)) {
     issues.push('曖昧さに対して断定が早い')
     addChange(changeBucket, 'pattern_weight', 'unarticulated_feeling', 0.04, '曖昧さが高いので unarticulated_feeling を少し持ち上げる')
     addChange(changeBucket, 'tone_bias', 'certainty', -0.04, '断定を少し緩め、certainty を下げる')
   }
 
-  if (result.stateVector.fragility > 0.72 && isExplanationLeaningReply(studioView.adjustedReplyPreview)) {
+  if (result.stateVector.fragility > FRAGILITY_CLOSENESS_THRESHOLD && isExplanationLeaningReply(studioView.adjustedReplyPreview)) {
     issues.push('fragility で近さがまだ足りない')
     addChange(changeBucket, 'tone_bias', 'gentleness', 0.05, 'fragility が高いため gentleness を少し上げる')
     addChange(changeBucket, 'home_trigger', 'fragility', 0.04, 'fragility return を少し早める')

@@ -3,6 +3,7 @@ import type { HomeCheckReason } from '../types/nodeStudio'
 import type { PlasticityState } from './types'
 
 const ensurePlasticity = (plasticity?: PlasticityState) => plasticity ?? createDefaultPlasticityState()
+const GENTLENESS_TAIL_THRESHOLD = 0.035
 
 export const buildRelationBoostKey = (source: string, target: string) => `${source}->${target}`
 
@@ -33,6 +34,7 @@ export const getHomeTriggerThresholds = (plasticity?: PlasticityState) => {
   }
 }
 
+// Ordered replacements are intentional so stronger softening rules can refine earlier wording.
 const replaceTone = (text: string, replacements: Array<[RegExp, string]>) => replacements.reduce((current, [pattern, replacement]) => current.replace(pattern, replacement), text)
 
 const normalizeWhitespace = (text: string) => text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
@@ -96,7 +98,7 @@ export const applyToneBiases = (
       [/決めなくても/g, '決めようとしなくても'],
     ])
 
-    if (gentlenessBias > 0.035) {
+    if (gentlenessBias > GENTLENESS_TAIL_THRESHOLD) {
       adjusted = addGentlenessTail(adjusted, reason)
     }
   }

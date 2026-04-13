@@ -3,6 +3,7 @@ import type { RevisionEntry } from './revisionTypes'
 import { buildProposedChanges } from './buildProposedChanges'
 
 const generateId = () => `rev_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+const ZERO_DELTA_EPSILON = 0.001
 
 const describeLeadingIssue = (issues: string[]) => {
   if (issues.some((issue) => issue.includes('説明'))) {
@@ -27,7 +28,7 @@ const describeLeadingChange = (entry: RevisionEntry['proposedChanges']) => {
     return '次回の微調整はまだ発生していません。'
   }
 
-  if (firstChange.delta === 0) {
+  if (Math.abs(firstChange.delta) < ZERO_DELTA_EPSILON) {
     return `次回は ${firstChange.key} をそのまま様子見します。`
   }
 
