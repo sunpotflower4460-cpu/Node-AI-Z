@@ -22,7 +22,7 @@ const SAMPLE_INPUTS = [
 
 type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision'
 type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision'
-const PLASTICITY_DISPLAY_THRESHOLD = 0.009
+const MIN_PLASTICITY_DISPLAY_VALUE = 0.009
 
 const TONE_NOTES: Record<string, (value: number) => string> = {
   over_explaining: (value) => value < 0
@@ -56,10 +56,11 @@ const describeActivePlasticity = (kind: 'tone' | 'home' | 'pattern', key: string
 }
 
 const describeRelationGrowth = (key: string) => {
-  const [source, target] = key.split('->')
-  if (!source || !target) {
+  const relationParts = key.split('->')
+  if (relationParts.length !== 2 || !relationParts[0] || !relationParts[1]) {
     return 'この relation が最近少し太くなっています。'
   }
+  const [source, target] = relationParts
   return `${source} と ${target} のあいだの通り道が少し太くなり、揺れや引っぱりを先に拾いやすくなっています。`
 }
 
@@ -133,7 +134,7 @@ export const ObserveMode = ({
   const studioView = currentObservation?.studioView ?? null
   const currentRevisionEntry = currentObservation?.revisionEntry ?? null
   const relationHighlights = Object.entries(revisionState.plasticity.relationBoosts)
-    .filter(([, value]) => value > PLASTICITY_DISPLAY_THRESHOLD)
+    .filter(([, value]) => value > MIN_PLASTICITY_DISPLAY_VALUE)
     .sort((first, second) => second[1] - first[1])
     .slice(0, 3)
   const activePlasticityHighlights = [
@@ -141,7 +142,7 @@ export const ObserveMode = ({
     ...Object.entries(revisionState.plasticity.homeTriggerBoosts).map(([key, value]) => ({ kind: 'home' as const, key, value })),
     ...Object.entries(revisionState.plasticity.patternBoosts).map(([key, value]) => ({ kind: 'pattern' as const, key, value })),
   ]
-    .filter(({ value }) => Math.abs(value) > PLASTICITY_DISPLAY_THRESHOLD)
+    .filter(({ value }) => Math.abs(value) > MIN_PLASTICITY_DISPLAY_VALUE)
     .sort((first, second) => Math.abs(second.value) - Math.abs(first.value))
     .slice(0, 4)
 
