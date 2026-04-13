@@ -12,15 +12,13 @@ import { ModeSwitch } from '../ui/components/ModeSwitch'
 import { ExperienceMode } from '../ui/modes/ExperienceMode'
 import { ObserveMode } from '../ui/modes/ObserveMode'
 
-let fallbackIdCounter = 0
-
 const createId = (prefix: string) => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return `${prefix}_${crypto.randomUUID()}`
   }
 
-  fallbackIdCounter += 1
-  return `${prefix}_${Date.now()}_${fallbackIdCounter}_${Math.random().toString(36).slice(2, 8)}`
+  const highResolutionTime = typeof performance !== 'undefined' ? performance.now().toFixed(5) : '0'
+  return `${prefix}_${Date.now()}_${highResolutionTime}_${Math.random().toString(36).slice(2, 8)}`
 }
 
 const formatTime = (timestamp: string) => new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
