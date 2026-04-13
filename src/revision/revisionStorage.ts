@@ -39,7 +39,9 @@ const deserializeRevisionState = (json: string): RevisionState => {
       nodeBoosts: parsed.plasticity?.nodeBoosts || {},
       relationBoosts: parsed.plasticity?.relationBoosts || {},
       patternBoosts: parsed.plasticity?.patternBoosts || {},
+      // Backward compatibility for SRM-1 persisted state.
       homeTriggerBoosts: parsed.plasticity?.homeTriggerBoosts || parsed.plasticity?.homeTriggerAdjust || {},
+      // Backward compatibility for SRM-1 persisted state.
       toneBiases: parsed.plasticity?.toneBiases || parsed.plasticity?.toneBias || {},
       lastUpdated: parsed.plasticity?.lastUpdated || defaultPlasticity.lastUpdated,
     },

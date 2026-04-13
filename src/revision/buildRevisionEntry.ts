@@ -27,7 +27,11 @@ const describeLeadingChange = (entry: RevisionEntry['proposedChanges']) => {
     return '次回の微調整はまだ発生していません。'
   }
 
-  return `次回は ${firstChange.key} を少し${firstChange.delta >= 0 ? '強め' : '弱め'}ます。`
+  if (firstChange.delta === 0) {
+    return `次回は ${firstChange.key} をそのまま様子見します。`
+  }
+
+  return `次回は ${firstChange.key} を少し${firstChange.delta > 0 ? '強め' : '弱め'}ます。`
 }
 
 /**

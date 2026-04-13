@@ -1,6 +1,9 @@
 import type { UserTuningAction, RevisionState } from './revisionTypes'
 import { syncRevisionState } from './revisionLog'
 
+const EPHEMERAL_INFLUENCE = 0.35
+const PROVISIONAL_INFLUENCE = 0.6
+
 /**
  * Apply user tuning actions to revision entries
  * This allows users to keep, soften, revert, or lock changes
@@ -101,10 +104,10 @@ export const getEffectiveDelta = (
     return originalDelta
   }
   if (tuning.softened.has(changeId)) {
-    return originalDelta * 0.35
+    return originalDelta * EPHEMERAL_INFLUENCE
   }
   if (tuning.kept.has(changeId)) {
-    return originalDelta * 0.6
+    return originalDelta * PROVISIONAL_INFLUENCE
   }
-  return originalDelta * 0.35
+  return originalDelta * EPHEMERAL_INFLUENCE
 }

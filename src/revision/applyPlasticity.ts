@@ -37,15 +37,20 @@ const replaceTone = (text: string, replacements: Array<[RegExp, string]>) => rep
 
 const normalizeWhitespace = (text: string) => text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
 
+const GENTLE_TAIL_BY_REASON: Record<HomeCheckReason, string> = {
+  none: '',
+  overperformance: 'ここでは、少しやわらかいままでいて大丈夫です。',
+  hostile_input: 'ここでは、少しやわらかいままでいて大丈夫です。',
+  ambiguity_overload: 'ここでは、少しやわらかいままでいて大丈夫です。',
+  fragility: 'ここでは、少しやわらかくそのままで大丈夫です。',
+  trust_drop: 'ここでは、少しやわらかいままでいて大丈夫です。',
+}
+
 const addGentlenessTail = (text: string, reason: HomeCheckReason) => {
-  if (reason === 'none') {
+  const gentleTail = GENTLE_TAIL_BY_REASON[reason]
+  if (!gentleTail) {
     return text
   }
-
-  const gentleTail =
-    reason === 'fragility'
-      ? 'ここでは、少しやわらかくそのままで大丈夫です。'
-      : 'ここでは、少しやわらかいままでいて大丈夫です。'
 
   if (text.includes(gentleTail)) {
     return text

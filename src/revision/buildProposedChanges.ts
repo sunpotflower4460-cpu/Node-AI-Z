@@ -4,6 +4,7 @@ import type { ProposedChange } from './revisionTypes'
 const generateId = () => `change_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 
 const SOFTENING_MARKERS = ['かもしれ', '気がします', '感じがあります', '見える気もします', 'まだ言い切れない']
+const DECISIVE_REPLY_PATTERN = /です。|ます。|でしょう。|はずです。/g
 
 const changeLabel = (kind: ProposedChange['kind'], key: string, delta: number) => ({
   id: `${kind}:${key}`,
@@ -23,7 +24,7 @@ const isOverExplaining = (studioView: StudioViewModel) => {
 }
 
 const isAssertiveReply = (reply: string) => {
-  const decisiveMarkers = reply.match(/です。|ます。|でしょう。|はずです。/g)?.length ?? 0
+  const decisiveMarkers = reply.match(DECISIVE_REPLY_PATTERN)?.length ?? 0
   const softMarkers = SOFTENING_MARKERS.reduce((count, marker) => count + (reply.includes(marker) ? 1 : 0), 0)
   return decisiveMarkers >= 2 && softMarkers === 0
 }
