@@ -1,5 +1,7 @@
 import { BINDING_RULES, CORE_NODES, PATTERN_RULES } from './nodeData'
 import type { Binding, CoreNode, LiftedPattern, NodePipelineResult, StateVector, SuppressedNode } from '../types/nodeStudio'
+import type { PlasticityState } from '../revision/types'
+import { applyPatternBoost, applyRelationBoost, buildRelationBoostKey } from '../revision/applyPlasticity'
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
@@ -68,7 +70,7 @@ export const retrieveNodes = (text: string) => {
   return { activatedNodes: nodes, suppressedNodes: suppressed, debugNotes: debug }
 }
 
-export const bindNodes = (nodes: CoreNode[]) => {
+export const bindNodes = (nodes: CoreNode[], plasticity?: PlasticityState) => {
   const bindings: Binding[] = []
   const debug: string[] = []
   const nodeIds = nodes.map((node) => node.id)
@@ -82,14 +84,16 @@ export const bindNodes = (nodes: CoreNode[]) => {
         return
       }
 
-      const weight = (sourceNode.value + targetNode.value) / 2
+      const relationKey = buildRelationBoostKey(rule.source, rule.target)
+      const baseWeight = (sourceNode.value + targetNode.value) / 2
+      const weight = applyRelationBoost(baseWeight, relationKey, plasticity)
       bindings.push({
         id: `b_${rule.source}_${rule.target}`,
         source: rule.source,
         target: rule.target,
         type: rule.type,
         weight,
-        reasons: [`${rule.source} と ${rule.target} の共起により構造化`],
+        reasons: [`${rule.source} と ${rule.target} の共起により構造化`, weight !== baseWeight ? `plasticity boost: ${relationKey}` : ''],
       })
       debug.push(`Bound: ${rule.source} -> ${rule.target} (${rule.type})`)
     }
@@ -98,7 +102,7 @@ export const bindNodes = (nodes: CoreNode[]) => {
   return { bindings, debugNotes: debug }
 }
 
-export const liftPatterns = (nodes: CoreNode[], bindings: Binding[]) => {
+export const liftPatterns = (nodes: CoreNode[], bindings: Binding[], plasticity?: PlasticityState) => {
   const patterns: LiftedPattern[] = []
   const debug: string[] = []
   const nodeIds = nodes.map((node) => node.id)
@@ -108,7 +112,8 @@ export const liftPatterns = (nodes: CoreNode[], bindings: Binding[]) => {
       const matchedNodes = rule.reqNodes
         .map((id) => nodes.find((node) => node.id === id))
         .filter((node): node is CoreNode => Boolean(node))
-      const score = matchedNodes.reduce((total, node) => total + node.value, 0) / matchedNodes.length
+      const baseScore = matchedNodes.reduce((total, node) => total + node.value, 0) / matchedNodes.length
+      const score = applyPatternBoost(baseScore, rule.id, plasticity)
 
       patterns.push({
         id: rule.id,
@@ -186,11 +191,11 @@ export const analyzeNodeField = (nodes: CoreNode[], bindings: Binding[]) => {
   return { stateVector, debugNotes: ['Analyzed field to state vector.'] }
 }
 
-export const runNodePipeline = (text: string): NodePipelineResult => {
+export const runNodePipeline = (text: string, plasticity?: PlasticityState): NodePipelineResult => {
   const startedAt = now()
   const retrieved = retrieveNodes(text)
-  const bound = bindNodes(retrieved.activatedNodes)
-  const lifted = liftPatterns(retrieved.activatedNodes, bound.bindings)
+  const bound = bindNodes(retrieved.activatedNodes, plasticity)
+  const lifted = liftPatterns(retrieved.activatedNodes, bound.bindings, plasticity)
   const analyzed = analyzeNodeField(retrieved.activatedNodes, bound.bindings)
   const elapsedMs = now() - startedAt
 

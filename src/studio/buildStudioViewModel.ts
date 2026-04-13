@@ -1,6 +1,7 @@
 import { PATTERN_DICT, RELATION_DICT, NODE_DICT } from '../core/nodeData'
 import { buildHomeState, runHomeCheck, applyReturnAdjustment } from '../home/homeLayer'
 import type { Binding, CoreNode, HomeCheckResult, NodePipelineResult, ReturnTrace, StudioInternalProcess, StudioPattern, StudioViewModel } from '../types/nodeStudio'
+import type { PlasticityState } from '../revision/types'
 
 const CONFLICT_TYPES = ['conflicts_with', 'tension'] as const
 const MAX_GUIDE_TAGS = 3
@@ -212,7 +213,7 @@ export const generateGuideObserves = (
   return { summary, uncertainty, naturalnessAdvice, tags: tags.slice(0, MAX_GUIDE_TAGS) }
 }
 
-export const buildStudioViewModel = (result: NodePipelineResult): StudioViewModel => {
+export const buildStudioViewModel = (result: NodePipelineResult, plasticity?: PlasticityState): StudioViewModel => {
   const mainState = result.activatedNodes.length > 0 ? result.activatedNodes[0] : null
   const conflictRelations = result.bindings.filter((binding) => isConflictType(binding.type))
   const mainConflict = conflictRelations.length > 0 ? conflictRelations[0] : (result.bindings.length > 0 ? result.bindings[0] : null)
@@ -223,9 +224,9 @@ export const buildStudioViewModel = (result: NodePipelineResult): StudioViewMode
   const mainPattern = enrichedPatterns.length > 0 ? enrichedPatterns[0] : null
 
   const homeState = buildHomeState(result)
-  const homeCheck = runHomeCheck(result, homeState)
+  const homeCheck = runHomeCheck(result, homeState, plasticity)
   const rawReplyPreview = generateRawReplyPreview(result, mainPattern, mainConflict)
-  const adjustedReplyPreview = applyReturnAdjustment(rawReplyPreview, homeCheck)
+  const adjustedReplyPreview = applyReturnAdjustment(rawReplyPreview, homeCheck, plasticity)
   const responseMeta = getResponseMeta(result, mainConflict, homeCheck)
 
   const returnTrace: ReturnTrace = {

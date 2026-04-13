@@ -1,5 +1,7 @@
 import type { RevisionState } from './revisionTypes'
-import { createDefaultRevisionState } from './defaultRevisionState'
+import { createDefaultMemoryState, createDefaultRevisionState, createDefaultUserTuningState } from './defaultRevisionState'
+import { createDefaultPlasticityState } from './defaultPlasticityState'
+import { syncRevisionState } from './revisionLog'
 
 const STORAGE_KEY = 'node-ai-z:revision-state'
 
@@ -26,16 +28,38 @@ const serializeRevisionState = (state: RevisionState): string => {
  */
 const deserializeRevisionState = (json: string): RevisionState => {
   const parsed = JSON.parse(json)
-  return {
-    plasticity: parsed.plasticity,
-    memory: parsed.memory,
-    tuning: {
-      locked: new Set(parsed.tuning.locked || []),
-      softened: new Set(parsed.tuning.softened || []),
-      reverted: new Set(parsed.tuning.reverted || []),
-      kept: new Set(parsed.tuning.kept || []),
+  const defaultPlasticity = createDefaultPlasticityState()
+  const defaultMemory = createDefaultMemoryState()
+  const defaultTuning = createDefaultUserTuningState()
+
+  return syncRevisionState({
+    plasticity: {
+      ...defaultPlasticity,
+      ...(parsed.plasticity || {}),
+      nodeBoosts: parsed.plasticity?.nodeBoosts || {},
+      relationBoosts: parsed.plasticity?.relationBoosts || {},
+      patternBoosts: parsed.plasticity?.patternBoosts || {},
+      homeTriggerBoosts: parsed.plasticity?.homeTriggerBoosts || parsed.plasticity?.homeTriggerAdjust || {},
+      toneBiases: parsed.plasticity?.toneBiases || parsed.plasticity?.toneBias || {},
+      lastUpdated: parsed.plasticity?.lastUpdated || defaultPlasticity.lastUpdated,
     },
-  }
+    memory: {
+      ...defaultMemory,
+      ...(parsed.memory || {}),
+      entries: parsed.memory?.entries || [],
+      promoted: parsed.memory?.promoted || [],
+      ephemeral: parsed.memory?.ephemeral || [],
+      maxEphemeralSize: parsed.memory?.maxEphemeralSize || defaultMemory.maxEphemeralSize,
+      lastCleanup: parsed.memory?.lastCleanup || defaultMemory.lastCleanup,
+    },
+    tuning: {
+      ...defaultTuning,
+      locked: new Set(parsed.tuning?.locked || []),
+      softened: new Set(parsed.tuning?.softened || []),
+      reverted: new Set(parsed.tuning?.reverted || []),
+      kept: new Set(parsed.tuning?.kept || []),
+    },
+  })
 }
 
 export const loadRevisionState = (): RevisionState => {

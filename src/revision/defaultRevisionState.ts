@@ -1,13 +1,5 @@
-import type { RevisionState, PlasticityState, MemoryState, UserTuningState } from './revisionTypes'
-
-export const createDefaultPlasticityState = (): PlasticityState => ({
-  nodeBoosts: {},
-  relationBoosts: {},
-  patternBoosts: {},
-  homeTriggerAdjust: {},
-  toneBias: {},
-  lastUpdated: new Date().toISOString(),
-})
+import type { RevisionState, MemoryState, UserTuningState } from './revisionTypes'
+import { createDefaultPlasticityState } from './defaultPlasticityState'
 
 export const createDefaultMemoryState = (): MemoryState => ({
   entries: [],
