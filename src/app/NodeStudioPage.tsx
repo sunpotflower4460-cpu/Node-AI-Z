@@ -1,14 +1,18 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Activity, BrainCircuit, ChevronDown, ChevronUp, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Terminal } from 'lucide-react'
 import { runNodePipeline } from '../core/runNodePipeline'
 import { buildStudioViewModel } from '../studio/buildStudioViewModel'
-import type { HistoryItem, NodePipelineResult } from '../types/nodeStudio'
+import type { HistoryItem, NodePipelineResult, RevisionState, UserTuningAction } from '../types/nodeStudio'
 import { HistoryTab } from '../ui/tabs/HistoryTab'
 import { HomeTab } from '../ui/tabs/HomeTab'
 import { PatternsTab } from '../ui/tabs/PatternsTab'
 import { RelationsTab } from '../ui/tabs/RelationsTab'
 import { ReplyTab } from '../ui/tabs/ReplyTab'
 import { StatesTab } from '../ui/tabs/StatesTab'
+import { RevisionTab } from '../ui/tabs/RevisionTab'
+import { buildRevisionEntry } from '../revision/buildRevisionEntry'
+import { loadRevisionState, saveRevisionState, clearRevisionState } from '../revision/revisionStorage'
+import { applyUserTuning } from '../revision/applyUserTuning'
 
 const SAMPLE_INPUTS = [
   '仕事に対する意欲が湧かなくて、転職すべきか悩んでいる',
@@ -18,8 +22,8 @@ const SAMPLE_INPUTS = [
   '少しだけ希望はある気がする',
 ]
 
-type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History'
-type RawViewMode = 'pipeline' | 'view' | 'home'
+type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision'
+type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision'
 
 export default function NodeStudioPage() {
   const [inputText, setInputText] = useState('')
@@ -32,6 +36,14 @@ export default function NodeStudioPage() {
   const [rawViewMode, setRawViewMode] = useState<RawViewMode>('pipeline')
   const [isProcessOpen, setIsProcessOpen] = useState(true)
 
+  // Revision state
+  const [revisionState, setRevisionState] = useState<RevisionState>(() => loadRevisionState())
+
+  // Save revision state when it changes
+  useEffect(() => {
+    saveRevisionState(revisionState)
+  }, [revisionState])
+
   const studioView = useMemo(() => {
     if (!pipelineResult) {
       return null
@@ -39,13 +51,46 @@ export default function NodeStudioPage() {
     return buildStudioViewModel(pipelineResult)
   }, [pipelineResult])
 
+  // Build revision entry from current pipeline and studio view
+  const currentRevisionEntry = useMemo(() => {
+    if (!pipelineResult || !studioView) {
+      return null
+    }
+    return buildRevisionEntry(pipelineResult, studioView)
+  }, [pipelineResult, studioView])
+
+  // Callback to add revision entry to memory
+  const addRevisionEntryToMemory = useCallback((entry: ReturnType<typeof buildRevisionEntry>) => {
+    setRevisionState(prev => {
+      // Check if entry already exists to avoid duplicates
+      if (prev.memory.entries.some(e => e.id === entry.id)) {
+        return prev
+      }
+      return {
+        ...prev,
+        memory: {
+          ...prev.memory,
+          entries: [entry, ...prev.memory.entries],
+          ephemeral: entry.status === 'ephemeral'
+            ? [entry, ...prev.memory.ephemeral]
+            : prev.memory.ephemeral,
+        },
+      }
+    })
+  }, [])
+
   const executePipeline = (text: string) => {
     setIsAnalyzing(true)
     setAnalyzedText(text)
 
     setTimeout(() => {
       const result = runNodePipeline(text)
+      const view = buildStudioViewModel(result)
+      const entry = buildRevisionEntry(result, view)
+
       setPipelineResult(result)
+      addRevisionEntryToMemory(entry)
+
       setHistory((previous) => [
         {
           id: Date.now(),
@@ -77,6 +122,7 @@ export default function NodeStudioPage() {
     setPipelineResult(null)
     setActiveTab('Reply')
     setIsRawOpen(false)
+    // currentRevisionEntry will be automatically cleared when pipelineResult becomes null
   }
 
   const restoreHistory = (item: HistoryItem) => {
@@ -85,6 +131,20 @@ export default function NodeStudioPage() {
     setPipelineResult(item.pipelineResult)
     setActiveTab('Reply')
     setIsRawOpen(false)
+  }
+
+  const handleTuningAction = (entryId: string, changeId: string, action: UserTuningAction) => {
+    const newState = applyUserTuning(revisionState, entryId, changeId, action)
+    setRevisionState(newState)
+    // currentRevisionEntry will be re-derived from memory if needed
+  }
+
+  const handleClearRevision = () => {
+    if (confirm('Clear all revision data? This cannot be undone.')) {
+      clearRevisionState()
+      setRevisionState(loadRevisionState())
+      // currentRevisionEntry will be re-derived automatically
+    }
   }
 
   return (
@@ -142,7 +202,7 @@ export default function NodeStudioPage() {
         {pipelineResult && studioView ? (
           <div className="flex flex-col gap-6 min-w-0">
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide border-b-2 border-slate-100 z-10 sticky top-[73px] bg-[#F8FAFC] pt-1">
-              {(['Reply', 'States', 'Relations', 'Patterns', 'Home', 'History'] as ActiveTab[]).map((tab) => (
+              {(['Reply', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -151,18 +211,20 @@ export default function NodeStudioPage() {
                   {tab === 'Reply' ? <MessageSquareText className="w-4.5 h-4.5" /> : null}
                   {tab === 'Home' ? <Home className="w-4.5 h-4.5" /> : null}
                   {tab === 'Relations' ? <GitPullRequest className="w-4.5 h-4.5" /> : null}
+                  {tab === 'Revision' ? <RefreshCw className="w-4.5 h-4.5" /> : null}
                   {tab}
                 </button>
               ))}
             </div>
 
             <div className="flex flex-col z-0">
-              {activeTab === 'Reply' ? <ReplyTab studioView={studioView} analyzedText={analyzedText} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} /> : null}
+              {activeTab === 'Reply' ? <ReplyTab studioView={studioView} analyzedText={analyzedText} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} onTuningAction={handleTuningAction} /> : null}
               {activeTab === 'Home' ? <HomeTab studioView={studioView} /> : null}
               {activeTab === 'States' ? <StatesTab pipelineResult={pipelineResult} /> : null}
               {activeTab === 'Relations' ? <RelationsTab pipelineResult={pipelineResult} /> : null}
               {activeTab === 'Patterns' ? <PatternsTab studioView={studioView} /> : null}
               {activeTab === 'History' ? <HistoryTab history={history} restoreHistory={restoreHistory} /> : null}
+              {activeTab === 'Revision' ? <RevisionTab revisionState={revisionState} currentEntry={currentRevisionEntry} onTuningAction={handleTuningAction} onClearAll={handleClearRevision} /> : null}
             </div>
           </div>
         ) : (
@@ -194,6 +256,7 @@ export default function NodeStudioPage() {
                 <button onClick={() => { setRawViewMode('pipeline'); setIsRawOpen(true) }} className={`px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'pipeline' && isRawOpen ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>Pipeline Raw</button>
                 <button onClick={() => { setRawViewMode('view'); setIsRawOpen(true) }} className={`px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'view' && isRawOpen ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>Studio View</button>
                 <button onClick={() => { setRawViewMode('home'); setIsRawOpen(true) }} className={`px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'home' && isRawOpen ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>Home View</button>
+                <button onClick={() => { setRawViewMode('revision'); setIsRawOpen(true) }} className={`px-3 py-1.5 rounded text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'revision' && isRawOpen ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>Revision</button>
                 <button onClick={() => setIsRawOpen(!isRawOpen)} className="p-1.5 text-slate-500 hover:text-white">{isRawOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}</button>
               </div>
             </div>
@@ -202,6 +265,7 @@ export default function NodeStudioPage() {
                 {rawViewMode === 'pipeline' ? JSON.stringify(pipelineResult, null, 2) : null}
                 {rawViewMode === 'view' ? JSON.stringify(studioView, null, 2) : null}
                 {rawViewMode === 'home' ? JSON.stringify({ homeState: studioView.homeState, homeCheck: studioView.homeCheck, returnTrace: studioView.returnTrace, rawReplyPreview: studioView.rawReplyPreview, adjustedReplyPreview: studioView.adjustedReplyPreview }, null, 2) : null}
+                {rawViewMode === 'revision' ? JSON.stringify({ currentEntry: currentRevisionEntry, revisionState: { plasticity: revisionState.plasticity, memoryCount: revisionState.memory.entries.length, tuningCounts: { locked: revisionState.tuning.locked.size, softened: revisionState.tuning.softened.size, reverted: revisionState.tuning.reverted.size, kept: revisionState.tuning.kept.size } } }, null, 2) : null}
               </div>
             ) : null}
           </div>

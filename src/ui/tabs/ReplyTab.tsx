@@ -1,16 +1,25 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { Activity, ChevronDown, ChevronUp, Globe, HeartPulse, Home, MessageSquareText, Search, Timer } from 'lucide-react'
-import type { StudioViewModel } from '../../types/nodeStudio'
+import type { StudioViewModel, RevisionEntry, UserTuningAction } from '../../types/nodeStudio'
 import { Badge, OriginBadge, TabHeader, VoiceLabel } from '../components/CommonUI'
+import { SelfRevisionCard } from '../components/SelfRevisionCard'
 
 type ReplyTabProps = {
   studioView: StudioViewModel
   analyzedText: string
   isProcessOpen: boolean
   setIsProcessOpen: Dispatch<SetStateAction<boolean>>
+  currentRevisionEntry?: RevisionEntry | null
+  onTuningAction?: (entryId: string, changeId: string, action: UserTuningAction) => void
 }
 
-export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcessOpen }: ReplyTabProps) => {
+export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcessOpen, currentRevisionEntry, onTuningAction }: ReplyTabProps) => {
+  const handleTuningAction = (changeId: string, action: UserTuningAction) => {
+    if (onTuningAction && currentRevisionEntry) {
+      onTuningAction(currentRevisionEntry.id, changeId, action)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <TabHeader title="Reply" description="この入力に現状どう返すか / どういうプロセスでそうなったか" icon={MessageSquareText} colorClass="border-purple-100 text-purple-900" />
@@ -149,6 +158,10 @@ export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcess
           </div>
         </div>
       </div>
+
+      {currentRevisionEntry && (
+        <SelfRevisionCard entry={currentRevisionEntry} onTuningAction={handleTuningAction} />
+      )}
     </div>
   )
 }
