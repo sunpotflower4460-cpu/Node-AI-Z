@@ -22,6 +22,7 @@ const SAMPLE_INPUTS = [
 
 type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision'
 type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision'
+const PLASTICITY_DISPLAY_THRESHOLD = 0.009
 
 const TONE_NOTES: Record<string, (value: number) => string> = {
   over_explaining: (value) => value < 0
@@ -132,7 +133,7 @@ export const ObserveMode = ({
   const studioView = currentObservation?.studioView ?? null
   const currentRevisionEntry = currentObservation?.revisionEntry ?? null
   const relationHighlights = Object.entries(revisionState.plasticity.relationBoosts)
-    .filter(([, value]) => value > 0.009)
+    .filter(([, value]) => value > PLASTICITY_DISPLAY_THRESHOLD)
     .sort((first, second) => second[1] - first[1])
     .slice(0, 3)
   const activePlasticityHighlights = [
@@ -140,7 +141,7 @@ export const ObserveMode = ({
     ...Object.entries(revisionState.plasticity.homeTriggerBoosts).map(([key, value]) => ({ kind: 'home' as const, key, value })),
     ...Object.entries(revisionState.plasticity.patternBoosts).map(([key, value]) => ({ kind: 'pattern' as const, key, value })),
   ]
-    .filter(({ value }) => Math.abs(value) > 0.009)
+    .filter(({ value }) => Math.abs(value) > PLASTICITY_DISPLAY_THRESHOLD)
     .sort((first, second) => Math.abs(second.value) - Math.abs(first.value))
     .slice(0, 4)
 
@@ -264,7 +265,7 @@ export const ObserveMode = ({
                       <div key={key} className="rounded-xl border border-white bg-white p-3 shadow-sm">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm font-semibold text-slate-800">{key.replace('->', ' → ')}</p>
-                          <span className="text-xs font-bold text-indigo-700">+{value.toFixed(2)}</span>
+                          <span className="text-xs font-bold text-indigo-700">{formatRevisionDelta(value)}</span>
                         </div>
                         <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">{describeRelationGrowth(key)}</p>
                       </div>
@@ -283,7 +284,7 @@ export const ObserveMode = ({
                       <div key={`${kind}:${key}`} className="rounded-xl border border-white bg-white p-3 shadow-sm">
                         <div className="flex items-center justify-between gap-2">
                           <p className="text-sm font-semibold text-slate-800">{key}</p>
-                          <span className="text-xs font-bold text-slate-700">{value > 0 ? '+' : ''}{value.toFixed(2)}</span>
+                          <span className="text-xs font-bold text-slate-700">{formatRevisionDelta(value)}</span>
                         </div>
                         <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">{describeActivePlasticity(kind, key, value)}</p>
                       </div>
