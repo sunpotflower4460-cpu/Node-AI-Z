@@ -16,7 +16,7 @@ export const loadExperienceMessages = (): ExperienceMessage[] => {
     const parsed = JSON.parse(stored)
     return Array.isArray(parsed) ? parsed : []
   } catch (error) {
-    console.error('Failed to load experience messages. Stored data may be corrupted; back up important conversation data before clearing browser storage or retrying in a private window.', error)
+    console.error('Failed to load experience messages. Stored data may be corrupted. Back up important conversation data before clearing browser storage or retrying in a private window.', error)
     return []
   }
 }
@@ -29,6 +29,6 @@ export const saveExperienceMessages = (messages: ExperienceMessage[]): void => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
   } catch (error) {
-    console.error('Failed to save experience messages. Browser storage may be full or unavailable; back up important conversation data and free up storage before trying again.', error)
+    console.error('Failed to save experience messages. Browser storage may be full or unavailable. Back up important conversation data and free up storage before trying again.', error)
   }
 }

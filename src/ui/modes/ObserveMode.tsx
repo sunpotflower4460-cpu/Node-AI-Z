@@ -203,7 +203,7 @@ export const ObserveMode = ({
                   <span className="text-xs font-bold uppercase tracking-widest text-slate-300">Internal Data Inspect</span>
                 </div>
                 <div className="mt-1 flex gap-3 text-[10px] text-slate-500">
-                  <span>source: {currentObservation.type === 'observe' ? 'observe' : 'experience'}</span>
+                  <span>source: {currentObservation.type}</span>
                   <span>retrieved: {pipelineResult.meta.retrievalCount}</span>
                   <span>bindings: {pipelineResult.meta.bindingCount}</span>
                   <span>patterns: {pipelineResult.meta.patternCount}</span>

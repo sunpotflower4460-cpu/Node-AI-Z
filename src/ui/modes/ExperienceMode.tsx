@@ -57,7 +57,7 @@ export const ExperienceMode = ({ messages, onSend, onOpenObservation }: Experien
               </div>
               <h3 className="mt-4 text-lg font-bold text-slate-800">ここから話し始められます</h3>
               <p className="mt-2 max-w-md text-sm font-medium leading-relaxed text-slate-500">
-                返答は既存の Node Pipeline / Home Layer / Self-Revision を通して生成されます。詳しい内部観察はあとから研究モードで開けます。
+                返答は既存の Node Pipeline / Home Layer / 返答調整レイヤーを通して生成されます。詳しい内部観察はあとから研究モードで開けます。
               </p>
             </div>
           ) : (
