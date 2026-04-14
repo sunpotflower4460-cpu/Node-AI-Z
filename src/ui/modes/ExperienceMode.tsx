@@ -143,15 +143,6 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, onSend,
                                 )
                               })}
                             </div>
-                            {message.observationId ? (
-                              <button
-                                type="button"
-                                onClick={() => onOpenObservation(message.observationId)}
-                                className="mt-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
-                              >
-                                観察で見る
-                              </button>
-                            ) : null}
                           </div>
                         ) : null}
                       </div>
