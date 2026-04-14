@@ -208,7 +208,7 @@ export default function NodeStudioPage() {
                 Surface Provider: {currentProviderConfig.label}
               </span>
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-                internal reasoning: shared
+                Internal reasoning: shared
               </span>
               <button
                 type="button"

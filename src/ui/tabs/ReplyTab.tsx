@@ -42,8 +42,8 @@ export const ReplyTab = ({ studioView, surfaceReply, surfaceProviderLabel, analy
           <VoiceLabel type="ai" />
           <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-500">
             <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">Surface Provider: {surfaceProviderLabel}</span>
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">internal reasoning: shared</span>
-            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">home-adjusted: yes</span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">Internal reasoning: shared</span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">Home-adjusted: yes</span>
           </div>
 
           {studioView.homeCheck.needsReturn ? (
