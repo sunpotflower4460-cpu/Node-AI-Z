@@ -6,6 +6,8 @@ import { PLASTICITY_LIMITS, clampNumber, clampPlasticityValue } from '../revisio
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
+const MAX_NODE_SCORE = 0.99
+
 export const retrieveNodes = (text: string, plasticity?: PlasticityState) => {
   const nodes: CoreNode[] = []
   const debug: string[] = []
@@ -24,7 +26,7 @@ export const retrieveNodes = (text: string, plasticity?: PlasticityState) => {
     if (matchCount > 0) {
       const baseScore = Math.min(0.5 + matchCount * 0.15, 0.95)
       const nodeBoost = clampPlasticityValue(plasticity?.nodeBoosts[core.id] ?? 0, PLASTICITY_LIMITS.node)
-      const score = clampNumber(baseScore + nodeBoost, 0, 0.99)
+      const score = clampNumber(baseScore + nodeBoost, 0, MAX_NODE_SCORE)
       const reasons = [`入力内の「${matchedWords.join(', ')}」に反応`]
       if (nodeBoost !== 0) {
         reasons.push(`plasticity node boost: ${nodeBoost > 0 ? '+' : ''}${nodeBoost.toFixed(3)}`)

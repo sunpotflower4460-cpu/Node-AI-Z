@@ -1,14 +1,9 @@
 import { PLASTICITY_LIMITS, clampPlasticityValue } from './defaultPlasticityState'
 import { buildRelationBoostKey } from './applyPlasticity'
-import type { Binding, CoreNode, LiftedPattern } from '../types/nodeStudio'
+import type { AppliedBoostEntry, Binding, CoreNode, LiftedPattern } from '../types/nodeStudio'
 import type { PlasticityState } from './types'
 
-export type AppliedBoostEntry = {
-  kind: 'node' | 'relation' | 'pattern' | 'home_trigger'
-  key: string
-  delta: number
-  label: string
-}
+export type { AppliedBoostEntry }
 
 const MIN_BOOST_THRESHOLD = 0.001
 
