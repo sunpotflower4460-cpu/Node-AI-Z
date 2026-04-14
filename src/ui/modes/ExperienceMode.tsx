@@ -118,21 +118,21 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, onSend,
                                       <div className="mt-1.5 flex flex-wrap gap-1">
                                         <button
                                           type="button"
-                                          onClick={() => onTuningAction(message.revisionEntry!.id, change.id, 'keep')}
+                                          onClick={() => message.revisionEntry && onTuningAction(message.revisionEntry.id, change.id, 'keep')}
                                           className={`rounded px-2 py-0.5 text-[10px] font-bold transition-colors ${isKept ? 'bg-green-200 text-green-800' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
                                         >
                                           keep
                                         </button>
                                         <button
                                           type="button"
-                                          onClick={() => onTuningAction(message.revisionEntry!.id, change.id, 'soften')}
+                                          onClick={() => message.revisionEntry && onTuningAction(message.revisionEntry.id, change.id, 'soften')}
                                           className={`rounded px-2 py-0.5 text-[10px] font-bold transition-colors ${isSoftened ? 'bg-yellow-200 text-yellow-800' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}`}
                                         >
                                           soften
                                         </button>
                                         <button
                                           type="button"
-                                          onClick={() => onTuningAction(message.revisionEntry!.id, change.id, 'revert')}
+                                          onClick={() => message.revisionEntry && onTuningAction(message.revisionEntry.id, change.id, 'revert')}
                                           className={`rounded px-2 py-0.5 text-[10px] font-bold transition-colors ${isReverted ? 'bg-slate-200 text-slate-700 hover:bg-green-100' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
                                         >
                                           {isReverted ? 'restore' : 'revert'}
