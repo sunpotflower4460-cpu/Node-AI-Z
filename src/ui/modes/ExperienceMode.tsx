@@ -87,6 +87,12 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, onSend,
                 <div key={message.id} className={`flex ${isAssistant ? 'justify-start' : 'justify-end'}`}>
                   <div className={`max-w-[85%] rounded-3xl px-4 py-3 shadow-sm ${isAssistant ? 'border border-slate-200 bg-slate-50 text-slate-800' : 'bg-rose-500 text-white'}`}>
                     <p className="whitespace-pre-wrap text-[15px] font-medium leading-relaxed">{message.text}</p>
+                    {isAssistant && (message.studioView?.appliedPlasticity.length ?? 0) > 0 ? (
+                      <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-700">
+                        <Sparkles className="h-3 w-3" />
+                        Memory hint applied
+                      </div>
+                    ) : null}
                     {isAssistant && message.revisionEntry && message.revisionEntry.proposedChanges.length > 0 ? (
                       <div className="mt-3 rounded-2xl border border-indigo-100 bg-white/80 text-slate-600">
                         <button
