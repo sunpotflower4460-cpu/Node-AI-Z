@@ -51,6 +51,8 @@ export type ReturnTrace = {
 export type StudioPattern = LiftedPattern & { titleJa: string; simpleDescJa: string; internalDescription: string }
 export type StudioInternalProcess = { label: string; desc: string; content: string; origin: string }
 
+export type AppliedBoostEntry = { kind: 'node' | 'relation' | 'pattern' | 'home_trigger'; key: string; delta: number; label: string }
+
 export type StudioViewModel = {
   mainState: CoreNode | null
   mainConflict: Binding | null
@@ -65,6 +67,7 @@ export type StudioViewModel = {
   homeState: HomeState
   homeCheck: HomeCheckResult
   returnTrace: ReturnTrace
+  appliedPlasticity: AppliedBoostEntry[]
 }
 
 export type HistoryItem = {
