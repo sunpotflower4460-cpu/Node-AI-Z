@@ -1,4 +1,5 @@
 import { rebuildPlasticityState } from './plasticityState'
+import { promoteRevisionState } from './promoteRevisionState'
 import type { ChangeStatus, RevisionEntry, RevisionState } from './types'
 
 const deriveEntryStatus = (entry: RevisionEntry): ChangeStatus => {
@@ -38,10 +39,10 @@ export const syncRevisionState = (state: RevisionState): RevisionState => {
     memory,
   }
 
-  return {
+  return promoteRevisionState({
     ...nextState,
     plasticity: rebuildPlasticityState(nextState),
-  }
+  })
 }
 
 export const addRevisionEntry = (state: RevisionState, entry: RevisionEntry): RevisionState => {
