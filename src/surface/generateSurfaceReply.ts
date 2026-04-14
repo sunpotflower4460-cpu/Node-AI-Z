@@ -6,7 +6,7 @@ type GenerateSurfaceReplyParams = {
   studioView: StudioViewModel
 }
 
-const generateInternalMockReply = async (studioView: StudioViewModel) => {
+const generateInternalMockReply = (studioView: StudioViewModel) => {
   return studioView.adjustedReplyPreview
 }
 
