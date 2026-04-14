@@ -46,6 +46,7 @@ export const applyUserTuning = (
       nextState.tuning.reverted.delete(changeId)
       break
     case 'revert':
+      // The same UI control is used for both revert and restore.
       if (nextState.tuning.reverted.has(changeId)) {
         nextState.tuning.reverted.delete(changeId)
       } else {

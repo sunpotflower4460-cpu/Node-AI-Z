@@ -430,7 +430,7 @@ export const ObserveMode = ({
                           {item.isLocked ? <Badge colorClass="bg-indigo-100 text-indigo-700 border-indigo-200">locked</Badge> : null}
                         </div>
                         <p className="mt-2 text-sm font-semibold text-slate-800">{getRevisionKindLabel(item.kind)} / {item.key}</p>
-                        <p className="mt-1 text-[11px] font-medium text-slate-500">keep {item.keepCount} / occurrence {item.occurrenceCount}</p>
+                        <p className="mt-1 text-[11px] font-medium text-slate-500">keep {item.keepCount} / seen {item.occurrenceCount}</p>
                         <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">{item.reasonSummary}</p>
                       </div>
                     ))}

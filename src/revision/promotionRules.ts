@@ -67,6 +67,14 @@ const getPromotionGap = (item: PromotionSummaryItem) => {
   return keepGap + occurrenceGap
 }
 
+const sortByRecencyThenDelta = (first: PromotionSummaryItem, second: PromotionSummaryItem) => {
+  const timeDifference = new Date(second.latestTimestamp).getTime() - new Date(first.latestTimestamp).getTime()
+  if (timeDifference !== 0) {
+    return timeDifference
+  }
+  return Math.abs(second.cumulativeDelta) - Math.abs(first.cumulativeDelta)
+}
+
 export const deriveEntryStatus = (entry: RevisionEntry): ChangeStatus => {
   if (entry.proposedChanges.length === 0) {
     return normalizeChangeStatus(entry.status)
@@ -172,9 +180,7 @@ export const summarizePromotion = (state: RevisionState): PromotionSummary => {
 
   const recentlyPromoted = items
     .filter((item) => item.status === 'promoted')
-    .sort((first, second) => {
-      return new Date(second.latestTimestamp).getTime() - new Date(first.latestTimestamp).getTime() || Math.abs(second.cumulativeDelta) - Math.abs(first.cumulativeDelta)
-    })
+    .sort(sortByRecencyThenDelta)
     .slice(0, PROMOTED_RECENT_LIMIT)
 
   const provisionalQueue = items
