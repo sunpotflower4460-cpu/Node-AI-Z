@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Terminal } from 'lucide-react'
+import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Sparkles, Terminal } from 'lucide-react'
 import type { ObservationRecord } from '../../types/experience'
-import type { RevisionState, UserTuningAction } from '../../types/nodeStudio'
+import type { AppliedBoostEntry, RevisionState, UserTuningAction } from '../../types/nodeStudio'
 import { describeProposedChange, formatRevisionDelta, getRevisionStatusMeta } from '../../revision/statusMeta'
 import { HistoryTab } from '../tabs/HistoryTab'
 import { HomeTab } from '../tabs/HomeTab'
@@ -62,6 +62,52 @@ const describeRelationGrowth = (key: string) => {
   }
   const [source, target] = relationParts
   return `${source} と ${target} のあいだの通り道が少し太くなり、揺れや引っぱりを先に拾いやすくなっています。`
+}
+
+type AppliedBoostSource = 'auto' | 'keep' | 'soften' | 'lock'
+
+const getAppliedBoostSource = (entry: AppliedBoostEntry, revisionState: RevisionState): AppliedBoostSource => {
+  for (const memEntry of revisionState.memory.entries) {
+    for (const change of memEntry.proposedChanges) {
+      if (change.key === entry.key) {
+        if (revisionState.tuning.locked.has(change.id)) return 'lock'
+        if (revisionState.tuning.kept.has(change.id)) return 'keep'
+        if (revisionState.tuning.softened.has(change.id)) return 'soften'
+      }
+    }
+  }
+  return 'auto'
+}
+
+const describeAppliedEffect = (entry: AppliedBoostEntry): string => {
+  const sign = entry.delta > 0 ? '+' : ''
+  const val = `${sign}${entry.delta.toFixed(3)}`
+  switch (entry.kind) {
+    case 'relation': {
+      const parts = entry.key.split('->')
+      if (parts.length === 2 && parts[0] && parts[1]) {
+        return `${parts[0]} → ${parts[1]} に ${val} 適用`
+      }
+      return `relation ${entry.key} に ${val} 適用`
+    }
+    case 'pattern':
+      return `${entry.key} パターンを ${val} 強化`
+    case 'home_trigger':
+      return `${entry.key} home trigger を ${val} ${entry.delta > 0 ? '強化' : '緩和'}`
+    case 'tone':
+      return `${entry.key} tone bias を ${val} 補正`
+    case 'node':
+      return `${entry.key} ノード活性を ${val} 補正`
+    default:
+      return entry.label
+  }
+}
+
+const SOURCE_LABEL: Record<AppliedBoostSource, { label: string; colorClass: string }> = {
+  auto: { label: 'auto', colorClass: 'bg-slate-100 text-slate-600 border-slate-200' },
+  keep: { label: 'keep', colorClass: 'bg-green-100 text-green-700 border-green-200' },
+  soften: { label: 'soften', colorClass: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+  lock: { label: 'lock', colorClass: 'bg-indigo-100 text-indigo-700 border-indigo-200' },
 }
 
 type ObserveModeProps = {
@@ -302,6 +348,44 @@ export const ObserveMode = ({
             </div>
           </section>
 
+          {studioView.appliedPlasticity.length > 0 ? (
+            <section className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 shadow-sm md:p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-600" />
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">Applied This Turn</h3>
+              </div>
+              <p className="mb-3 text-xs font-medium text-emerald-700/70">
+                今回の返答に実際に影響した plasticity 補正の一覧です。source は操作の由来を示します。
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {studioView.appliedPlasticity.map((entry) => {
+                  const source = getAppliedBoostSource(entry, revisionState)
+                  const sourceMeta = SOURCE_LABEL[source]
+                  return (
+                    <div key={`${entry.kind}:${entry.key}`} className="flex flex-col gap-1.5 rounded-xl border border-emerald-100 bg-white p-3 shadow-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge colorClass={
+                          entry.kind === 'relation' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' :
+                          entry.kind === 'pattern' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                          entry.kind === 'home_trigger' ? 'bg-pink-100 text-pink-700 border-pink-200' :
+                          entry.kind === 'tone' ? 'bg-teal-100 text-teal-700 border-teal-200' :
+                          'bg-slate-100 text-slate-700 border-slate-200'
+                        }>
+                          {entry.kind}
+                        </Badge>
+                        <Badge colorClass={sourceMeta.colorClass}>{sourceMeta.label}</Badge>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-800">{describeAppliedEffect(entry)}</p>
+                      <span className={`self-end text-xs font-bold ${entry.delta > 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                        {entry.delta > 0 ? '+' : ''}{entry.delta.toFixed(3)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          ) : null}
+
           <div className="flex min-w-0 flex-col gap-6">
             <div className="scrollbar-hide sticky top-[92px] z-10 flex gap-2 overflow-x-auto border-b-2 border-slate-100 bg-[#F8FAFC] pb-1 pt-1">
               {(['Reply', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
@@ -321,7 +405,7 @@ export const ObserveMode = ({
             </div>
 
             <div className="flex flex-col">
-              {activeTab === 'Reply' ? <ReplyTab studioView={studioView} surfaceReply={currentObservation.assistantReply} surfaceProviderLabel={surfaceProviderLabel} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} onTuningAction={onTuningAction} /> : null}
+              {activeTab === 'Reply' ? <ReplyTab studioView={studioView} surfaceReply={currentObservation.assistantReply} surfaceProviderLabel={surfaceProviderLabel} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} tuning={revisionState.tuning} onTuningAction={onTuningAction} /> : null}
               {activeTab === 'Home' ? <HomeTab studioView={studioView} /> : null}
               {activeTab === 'States' ? <StatesTab pipelineResult={pipelineResult} /> : null}
               {activeTab === 'Relations' ? <RelationsTab pipelineResult={pipelineResult} /> : null}

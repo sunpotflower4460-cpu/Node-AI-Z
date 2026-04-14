@@ -1,4 +1,4 @@
-import { RefreshCcw, Database, TrendingUp, AlertTriangle } from 'lucide-react'
+import { RefreshCcw, Database, TrendingUp, AlertTriangle, Lock } from 'lucide-react'
 import type { RevisionState, RevisionEntry, UserTuningAction } from '../../revision/revisionTypes'
 import { getRevisionSummary } from '../../revision/getRevisionSummary'
 import { describeProposedChange, formatRevisionDelta, getRevisionStatusMeta } from '../../revision/statusMeta'
@@ -87,7 +87,7 @@ export const RevisionTab = ({ revisionState, currentEntry, onTuningAction, onCle
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-indigo-600 mb-4 flex items-center gap-1.5">
           <TrendingUp className="w-3.5 h-3.5" /> Current Interaction
         </h3>
-        <SelfRevisionCard entry={currentEntry} onTuningAction={handleTuningAction} />
+        <SelfRevisionCard entry={currentEntry} tuning={revisionState.tuning} onTuningAction={handleTuningAction} />
       </div>
 
       {/* Recent Changes */}
@@ -107,28 +107,49 @@ export const RevisionTab = ({ revisionState, currentEntry, onTuningAction, onCle
             )}
           </div>
           <div className="space-y-2">
-            {summary.recentChanges.slice(0, 5).map((change) => (
-              <div key={change.id} className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge colorClass="bg-indigo-100 text-indigo-700 border-indigo-200">
-                        {change.kind}
-                      </Badge>
-                      <span className="text-xs font-mono text-slate-600">{change.key}</span>
-                      <Badge colorClass={getRevisionStatusMeta(change.status).badgeClass}>
-                        {getRevisionStatusMeta(change.status).label}
-                      </Badge>
+            {summary.recentChanges.slice(0, 5).map((change) => {
+              const isLocked = revisionState.tuning.locked.has(change.id)
+              const isKept = revisionState.tuning.kept.has(change.id)
+              const isSoftened = revisionState.tuning.softened.has(change.id)
+              const isReverted = revisionState.tuning.reverted.has(change.id)
+
+              return (
+                <div key={change.id} className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <Badge colorClass="bg-indigo-100 text-indigo-700 border-indigo-200">
+                          {change.kind}
+                        </Badge>
+                        <span className="text-xs font-mono text-slate-600">{change.key}</span>
+                        <Badge colorClass={getRevisionStatusMeta(change.status).badgeClass}>
+                          {getRevisionStatusMeta(change.status).label}
+                        </Badge>
+                        {isLocked && (
+                          <Badge colorClass="bg-indigo-100 text-indigo-700 border-indigo-200 flex items-center gap-1">
+                            <Lock className="w-2.5 h-2.5" /> locked
+                          </Badge>
+                        )}
+                        {isKept && !isLocked && (
+                          <Badge colorClass="bg-green-100 text-green-700 border-green-200">kept</Badge>
+                        )}
+                        {isSoftened && (
+                          <Badge colorClass="bg-yellow-100 text-yellow-700 border-yellow-200">softened</Badge>
+                        )}
+                        {isReverted && (
+                          <Badge colorClass="bg-red-100 text-red-700 border-red-200">reverted</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-700">{change.reason}</p>
+                      <p className="mt-1 text-[11px] font-medium text-slate-500">{describeProposedChange(change)} / {getRevisionStatusMeta(change.status).description}</p>
                     </div>
-                    <p className="text-xs text-slate-700">{change.reason}</p>
-                    <p className="mt-1 text-[11px] font-medium text-slate-500">{describeProposedChange(change)} / {getRevisionStatusMeta(change.status).description}</p>
-                  </div>
-                  <div className="text-sm font-bold text-slate-800">
-                    {formatRevisionDelta(change.delta)}
+                    <div className="text-sm font-bold text-slate-800">
+                      {formatRevisionDelta(change.delta)}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
