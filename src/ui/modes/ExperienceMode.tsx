@@ -1,18 +1,34 @@
 import { useState } from 'react'
-import { MessageCircleHeart, Send, Sparkles } from 'lucide-react'
+import { ChevronDown, ChevronUp, MessageCircleHeart, RefreshCcw, Send, Sparkles } from 'lucide-react'
 import type { ExperienceMessage } from '../../types/experience'
-import { describeProposedChange, getRevisionStatusMeta } from '../../revision/statusMeta'
+import type { UserTuningAction, UserTuningState } from '../../types/nodeStudio'
+import { describeProposedChange } from '../../revision/statusMeta'
 
 type ExperienceModeProps = {
   messages: ExperienceMessage[]
   surfaceProviderLabel: string
+  tuning?: UserTuningState
   onSend: (text: string) => void | Promise<void>
   onOpenObservation: (observationId: string) => void
+  onTuningAction?: (entryId: string, changeId: string, action: UserTuningAction) => void
 }
 
-export const ExperienceMode = ({ messages, surfaceProviderLabel, onSend, onOpenObservation }: ExperienceModeProps) => {
+export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, onSend, onOpenObservation, onTuningAction }: ExperienceModeProps) => {
   const [inputText, setInputText] = useState('')
   const [isSending, setIsSending] = useState(false)
+  const [expandedRevisions, setExpandedRevisions] = useState<Set<string>>(new Set())
+
+  const toggleRevision = (messageId: string) => {
+    setExpandedRevisions((previous) => {
+      const next = new Set(previous)
+      if (next.has(messageId)) {
+        next.delete(messageId)
+      } else {
+        next.add(messageId)
+      }
+      return next
+    })
+  }
 
   const handleSend = () => {
     const trimmed = inputText.trim()
@@ -72,15 +88,72 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, onSend, onOpenO
                   <div className={`max-w-[85%] rounded-3xl px-4 py-3 shadow-sm ${isAssistant ? 'border border-slate-200 bg-slate-50 text-slate-800' : 'bg-rose-500 text-white'}`}>
                     <p className="whitespace-pre-wrap text-[15px] font-medium leading-relaxed">{message.text}</p>
                     {isAssistant && message.revisionEntry && message.revisionEntry.proposedChanges.length > 0 ? (
-                      <div className="mt-3 rounded-2xl border border-indigo-100 bg-white/80 px-3 py-2.5 text-slate-600">
-                        <p className="text-[12px] font-medium leading-relaxed">{message.revisionEntry.note}</p>
-                        <div className="mt-2 flex flex-wrap gap-1.5">
-                          {message.revisionEntry.proposedChanges.slice(0, 2).map((change) => (
-                            <span key={change.id} className={`rounded-full border px-2 py-1 text-[10px] font-bold ${getRevisionStatusMeta(change.status).badgeClass}`}>
-                              {getRevisionStatusMeta(change.status).label} · {describeProposedChange(change)}
-                            </span>
-                          ))}
-                        </div>
+                      <div className="mt-3 rounded-2xl border border-indigo-100 bg-white/80 text-slate-600">
+                        <button
+                          type="button"
+                          onClick={() => toggleRevision(message.id)}
+                          className="flex w-full items-center justify-between gap-2 rounded-2xl px-3 py-2.5 text-left hover:bg-slate-50/60 transition-colors"
+                        >
+                          <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-indigo-600">
+                            <RefreshCcw className="h-3 w-3" /> Self-Revision
+                          </span>
+                          {expandedRevisions.has(message.id) ? (
+                            <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                          ) : (
+                            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                          )}
+                        </button>
+                        {expandedRevisions.has(message.id) ? (
+                          <div className="border-t border-indigo-100 px-3 pb-3 pt-2">
+                            <p className="text-[12px] font-medium leading-relaxed text-slate-600">{message.revisionEntry.note}</p>
+                            <div className="mt-2 flex flex-col gap-1.5">
+                              {message.revisionEntry.proposedChanges.slice(0, 2).map((change) => {
+                                const isReverted = tuning?.reverted.has(change.id) ?? false
+                                const isKept = tuning?.kept.has(change.id) ?? false
+                                const isSoftened = tuning?.softened.has(change.id) ?? false
+                                return (
+                                  <div key={change.id} className="rounded-xl border border-slate-100 bg-slate-50 px-2.5 py-2">
+                                    <p className="text-[11px] font-medium text-slate-700">{describeProposedChange(change)}</p>
+                                    {onTuningAction ? (
+                                      <div className="mt-1.5 flex flex-wrap gap-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => onTuningAction(message.revisionEntry!.id, change.id, 'keep')}
+                                          className={`rounded px-2 py-0.5 text-[10px] font-bold transition-colors ${isKept ? 'bg-green-200 text-green-800' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
+                                        >
+                                          keep
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => onTuningAction(message.revisionEntry!.id, change.id, 'soften')}
+                                          className={`rounded px-2 py-0.5 text-[10px] font-bold transition-colors ${isSoftened ? 'bg-yellow-200 text-yellow-800' : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'}`}
+                                        >
+                                          soften
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => onTuningAction(message.revisionEntry!.id, change.id, 'revert')}
+                                          className={`rounded px-2 py-0.5 text-[10px] font-bold transition-colors ${isReverted ? 'bg-slate-200 text-slate-700 hover:bg-green-100' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+                                        >
+                                          {isReverted ? 'restore' : 'revert'}
+                                        </button>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                )
+                              })}
+                            </div>
+                            {message.observationId ? (
+                              <button
+                                type="button"
+                                onClick={() => onOpenObservation(message.observationId)}
+                                className="mt-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[10px] font-bold text-slate-600 transition-colors hover:border-slate-300 hover:text-slate-900"
+                              >
+                                観察で見る
+                              </button>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
                     ) : null}
                     <div className={`mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold ${isAssistant ? 'text-slate-500' : 'text-rose-100'}`}>

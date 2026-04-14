@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
-import { Activity, ChevronDown, ChevronUp, Globe, HeartPulse, Home, MessageSquareText, Search, Sparkles, Timer } from 'lucide-react'
+import { Activity, ChevronDown, ChevronUp, Globe, HeartPulse, Home, MessageSquareText, Search, Timer } from 'lucide-react'
 import type { StudioViewModel, RevisionEntry, UserTuningAction, UserTuningState } from '../../types/nodeStudio'
 import { Badge, OriginBadge, TabHeader, VoiceLabel } from '../components/CommonUI'
 import { SelfRevisionCard } from '../components/SelfRevisionCard'
@@ -170,37 +170,6 @@ export const ReplyTab = ({ studioView, surfaceReply, surfaceProviderLabel, analy
       {currentRevisionEntry && (
         <SelfRevisionCard entry={currentRevisionEntry} tuning={tuning} onTuningAction={handleTuningAction} />
       )}
-
-      {studioView.appliedPlasticity.length > 0 ? (
-        <div className="bg-emerald-50/60 rounded-2xl shadow-sm border border-emerald-200 p-5">
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 mb-4 flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" /> Applied This Turn
-          </h3>
-          <p className="text-xs font-medium text-emerald-700/70 mb-3">
-            今回の返答に実際に影響した plasticity boost / tuning の一覧です。
-          </p>
-          <div className="space-y-2">
-            {studioView.appliedPlasticity.map((entry) => (
-              <div key={`${entry.kind}:${entry.key}`} className="flex items-center justify-between gap-3 rounded-xl bg-white border border-emerald-100 px-4 py-2.5 shadow-sm">
-                <div className="flex items-center gap-2 min-w-0">
-                  <Badge colorClass={
-                    entry.kind === 'relation' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' :
-                    entry.kind === 'pattern' ? 'bg-purple-100 text-purple-700 border-purple-200' :
-                    entry.kind === 'home_trigger' ? 'bg-pink-100 text-pink-700 border-pink-200' :
-                    'bg-slate-100 text-slate-700 border-slate-200'
-                  }>
-                    {entry.kind}
-                  </Badge>
-                  <span className="text-xs font-semibold text-slate-700 truncate">{entry.label}</span>
-                </div>
-                <span className={`text-xs font-bold shrink-0 ${entry.delta > 0 ? 'text-emerald-700' : 'text-red-600'}`}>
-                  {entry.delta > 0 ? '+' : ''}{entry.delta.toFixed(3)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
     </div>
   )
 }

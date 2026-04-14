@@ -36,6 +36,10 @@ const CHANGE_TARGET_LABELS: Record<string, string> = {
   fragility: 'fragility return 感度',
   trust_drop: 'trust_drop return 感度',
   unarticulated_feeling: '未言語感覚の拾い上げ',
+  self_doubt: '自己疑念ノードの拾いやすさ',
+  ambiguity: '曖昧さノードの拾いやすさ',
+  loneliness: '孤独感ノードの拾いやすさ',
+  fatigue: '疲労感ノードの拾いやすさ',
 }
 
 export const getRevisionStatusMeta = (status: ChangeStatus) => STATUS_META[status]
@@ -50,6 +54,8 @@ export const getRevisionKindLabel = (kind: ProposedChange['kind']) => {
       return 'Home Trigger'
     case 'tone_bias':
       return 'Tone Bias'
+    case 'node_weight':
+      return 'Node Boost'
   }
 }
 

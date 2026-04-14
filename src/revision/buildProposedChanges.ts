@@ -10,6 +10,7 @@ const AMBIGUITY_CERTAINTY_THRESHOLD = 0.72
 const FRAGILITY_CLOSENESS_THRESHOLD = 0.72
 // Roughly one short extra sentence: enough to avoid firing on tiny replies, but small enough for everyday inputs.
 const MIN_REPLY_LENGTH_FOR_MILD_DRIFT = 28
+const NODE_BOOST_MAIN_LABELS = new Set(['self_doubt', 'ambiguity', 'loneliness', 'fatigue'])
 
 const changeLabel = (kind: ProposedChange['kind'], key: string, delta: number) => ({
   id: `${kind}:${key}`,
@@ -120,6 +121,37 @@ export const buildProposedChanges = (
       studioView.homeCheck.reason,
       0.02,
       `Home return が効いたため ${studioView.homeCheck.reason} trigger を少し上げる`,
+    )
+  }
+
+  // Rule A: fragility / ambiguity 周辺の主ノード強化
+  if (
+    studioView.mainState &&
+    NODE_BOOST_MAIN_LABELS.has(studioView.mainState.id) &&
+    !isStrongExplanationDrift(studioView)
+  ) {
+    addChange(
+      changeBucket,
+      'node_weight',
+      studioView.mainState.id,
+      0.02,
+      `この入力で自然に前に出た主ノード (${studioView.mainState.label}) を次回少しだけ拾いやすくする`,
+    )
+    issues.push(`主ノード "${studioView.mainState.label}" の拾いやすさを小さく強化`)
+  }
+
+  // Rule B: Home return 成功時の主ノード保護
+  if (
+    studioView.homeCheck.needsReturn &&
+    studioView.adjustedReplyPreview !== studioView.rawReplyPreview &&
+    studioView.mainState
+  ) {
+    addChange(
+      changeBucket,
+      'node_weight',
+      studioView.mainState.id,
+      0.01,
+      `Home return 後に核だったノード (${studioView.mainState.label}) を次回も拾いやすくする`,
     )
   }
 
