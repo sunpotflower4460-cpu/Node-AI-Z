@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle, MinusCircle, Lock, RefreshCcw } from 'lucide-react'
 import type { RevisionEntry, UserTuningAction } from '../../revision/revisionTypes'
+import { describeProposedChange, formatRevisionDelta, getRevisionKindLabel, getRevisionStatusMeta } from '../../revision/statusMeta'
 
 type SelfRevisionCardProps = {
   entry: RevisionEntry | null
@@ -15,25 +16,6 @@ const getStatusIcon = (status: string) => {
   }
 }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'promoted': return 'bg-green-50 border-green-200 text-green-900'
-    case 'provisional': return 'bg-yellow-50 border-yellow-200 text-yellow-900'
-    case 'reverted': return 'bg-red-50 border-red-200 text-red-900'
-    default: return 'bg-slate-50 border-slate-200 text-slate-700'
-  }
-}
-
-const getKindLabel = (kind: string) => {
-  switch (kind) {
-    case 'relation_weight': return 'Relation Boost'
-    case 'pattern_weight': return 'Pattern Boost'
-    case 'home_trigger': return 'Home Trigger'
-    case 'tone_bias': return 'Tone Bias'
-    default: return kind
-  }
-}
-
 export const SelfRevisionCard = ({ entry, onTuningAction }: SelfRevisionCardProps) => {
   if (!entry) {
     return (
@@ -45,6 +27,7 @@ export const SelfRevisionCard = ({ entry, onTuningAction }: SelfRevisionCardProp
 
   const hasIssues = entry.issueTags.length > 0
   const hasChanges = entry.proposedChanges.length > 0
+  const entryStatusMeta = getRevisionStatusMeta(entry.status)
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-indigo-200 p-5 space-y-4">
@@ -60,7 +43,10 @@ export const SelfRevisionCard = ({ entry, onTuningAction }: SelfRevisionCardProp
         </div>
         <div className="flex items-center gap-2">
           {getStatusIcon(entry.status)}
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{entry.status}</span>
+          <div className="text-right">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{entryStatusMeta.label}</div>
+            <div className="text-[11px] font-medium text-slate-400">{entryStatusMeta.description}</div>
+          </div>
         </div>
       </div>
 
@@ -81,19 +67,23 @@ export const SelfRevisionCard = ({ entry, onTuningAction }: SelfRevisionCardProp
         <div className="space-y-2">
           <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-600">Proposed Changes ({entry.proposedChanges.length})</h4>
           {entry.proposedChanges.map((change) => (
-            <div key={change.id} className={`rounded-lg border p-3 ${getStatusColor(change.status)}`}>
+            <div key={change.id} className={`rounded-lg border p-3 ${getRevisionStatusMeta(change.status).panelClass}`}>
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
                     <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-white/70 rounded">
-                      {getKindLabel(change.kind)}
+                      {getRevisionKindLabel(change.kind)}
                     </span>
                     <span className="text-xs font-mono text-slate-600">{change.key}</span>
+                    <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${getRevisionStatusMeta(change.status).badgeClass}`}>
+                      {getRevisionStatusMeta(change.status).label}
+                    </span>
                   </div>
                   <p className="text-xs font-medium leading-relaxed">{change.reason}</p>
+                  <p className="mt-1 text-[11px] font-medium opacity-80">{describeProposedChange(change)}</p>
                 </div>
                 <div className="text-sm font-bold">
-                  {change.delta > 0 ? '+' : ''}{change.delta.toFixed(2)}
+                  {formatRevisionDelta(change.delta)}
                 </div>
               </div>
 
@@ -132,8 +122,8 @@ export const SelfRevisionCard = ({ entry, onTuningAction }: SelfRevisionCardProp
 
               {change.status !== 'ephemeral' && (
                 <div className="mt-2 pt-2 border-t border-current/20">
-                  <span className="text-[10px] font-bold uppercase tracking-wider opacity-75">
-                    Status: {change.status}
+                  <span className="text-[10px] font-bold tracking-wider opacity-75">
+                    {getRevisionStatusMeta(change.status).label} — {getRevisionStatusMeta(change.status).description}
                   </span>
                 </div>
               )}

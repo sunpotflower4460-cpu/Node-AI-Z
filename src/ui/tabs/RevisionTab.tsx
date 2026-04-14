@@ -1,6 +1,7 @@
 import { RefreshCcw, Database, TrendingUp, AlertTriangle } from 'lucide-react'
 import type { RevisionState, RevisionEntry, UserTuningAction } from '../../revision/revisionTypes'
 import { getRevisionSummary } from '../../revision/getRevisionSummary'
+import { describeProposedChange, formatRevisionDelta, getRevisionStatusMeta } from '../../revision/statusMeta'
 import { TabHeader, Badge } from '../components/CommonUI'
 import { SelfRevisionCard } from '../components/SelfRevisionCard'
 
@@ -40,20 +41,24 @@ export const RevisionTab = ({ revisionState, currentEntry, onTuningAction, onCle
             <div className="text-2xl font-bold text-slate-800">{summary.totalEntries}</div>
           </div>
           <div className="p-3 bg-slate-50 rounded-lg border border-slate-100">
-            <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">Ephemeral</div>
+            <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">{getRevisionStatusMeta('ephemeral').label}</div>
             <div className="text-2xl font-bold text-slate-600">{summary.ephemeralCount}</div>
+            <div className="mt-1 text-[11px] font-medium text-slate-400">{getRevisionStatusMeta('ephemeral').description}</div>
           </div>
           <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-100">
-            <div className="text-[10px] font-bold text-yellow-600 uppercase mb-1">Provisional</div>
+            <div className="text-[10px] font-bold text-yellow-600 uppercase mb-1">{getRevisionStatusMeta('provisional').label}</div>
             <div className="text-2xl font-bold text-yellow-700">{summary.provisionalCount}</div>
+            <div className="mt-1 text-[11px] font-medium text-yellow-700/70">{getRevisionStatusMeta('provisional').description}</div>
           </div>
           <div className="p-3 bg-green-50 rounded-lg border border-green-100">
-            <div className="text-[10px] font-bold text-green-600 uppercase mb-1">Promoted</div>
+            <div className="text-[10px] font-bold text-green-600 uppercase mb-1">{getRevisionStatusMeta('promoted').label}</div>
             <div className="text-2xl font-bold text-green-700">{summary.promotedCount}</div>
+            <div className="mt-1 text-[11px] font-medium text-green-700/70">{getRevisionStatusMeta('promoted').description}</div>
           </div>
           <div className="p-3 bg-red-50 rounded-lg border border-red-100">
-            <div className="text-[10px] font-bold text-red-600 uppercase mb-1">Reverted</div>
+            <div className="text-[10px] font-bold text-red-600 uppercase mb-1">{getRevisionStatusMeta('reverted').label}</div>
             <div className="text-2xl font-bold text-red-700">{summary.revertedCount}</div>
+            <div className="mt-1 text-[11px] font-medium text-red-700/70">{getRevisionStatusMeta('reverted').description}</div>
           </div>
         </div>
       </div>
@@ -111,14 +116,15 @@ export const RevisionTab = ({ revisionState, currentEntry, onTuningAction, onCle
                         {change.kind}
                       </Badge>
                       <span className="text-xs font-mono text-slate-600">{change.key}</span>
-                      <Badge colorClass={`${change.status === 'promoted' ? 'bg-green-100 text-green-700' : change.status === 'reverted' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
-                        {change.status}
+                      <Badge colorClass={getRevisionStatusMeta(change.status).badgeClass}>
+                        {getRevisionStatusMeta(change.status).label}
                       </Badge>
                     </div>
                     <p className="text-xs text-slate-700">{change.reason}</p>
+                    <p className="mt-1 text-[11px] font-medium text-slate-500">{describeProposedChange(change)} / {getRevisionStatusMeta(change.status).description}</p>
                   </div>
                   <div className="text-sm font-bold text-slate-800">
-                    {change.delta > 0 ? '+' : ''}{change.delta.toFixed(2)}
+                    {formatRevisionDelta(change.delta)}
                   </div>
                 </div>
               </div>
@@ -139,8 +145,8 @@ export const RevisionTab = ({ revisionState, currentEntry, onTuningAction, onCle
                     <div className="text-xs font-semibold text-slate-700 mb-1">"{entry.inputText.substring(0, 60)}..."</div>
                     <div className="text-[11px] text-slate-500">{new Date(entry.timestamp).toLocaleString()}</div>
                   </div>
-                  <Badge colorClass={`${entry.status === 'promoted' ? 'bg-green-100 text-green-700' : entry.status === 'provisional' ? 'bg-yellow-100 text-yellow-700' : entry.status === 'reverted' ? 'bg-red-100 text-red-700' : 'bg-slate-100 text-slate-600'}`}>
-                    {entry.status}
+                  <Badge colorClass={getRevisionStatusMeta(entry.status).badgeClass}>
+                    {getRevisionStatusMeta(entry.status).label}
                   </Badge>
                 </div>
                 <div className="flex items-center gap-2">
@@ -148,6 +154,7 @@ export const RevisionTab = ({ revisionState, currentEntry, onTuningAction, onCle
                   <span className="text-[10px] text-slate-500">•</span>
                   <span className="text-[10px] text-slate-500">{entry.issueTags.length} issues</span>
                 </div>
+                <div className="mt-2 text-[11px] font-medium text-slate-500">{getRevisionStatusMeta(entry.status).description}</div>
               </div>
             ))}
           </div>

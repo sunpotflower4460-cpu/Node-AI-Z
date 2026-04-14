@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Terminal } from 'lucide-react'
 import type { ObservationRecord } from '../../types/experience'
 import type { RevisionState, UserTuningAction } from '../../types/nodeStudio'
+import { describeProposedChange, formatRevisionDelta, getRevisionStatusMeta } from '../../revision/statusMeta'
 import { HistoryTab } from '../tabs/HistoryTab'
 import { HomeTab } from '../tabs/HomeTab'
 import { PatternsTab } from '../tabs/PatternsTab'
@@ -9,6 +10,7 @@ import { RelationsTab } from '../tabs/RelationsTab'
 import { ReplyTab } from '../tabs/ReplyTab'
 import { StatesTab } from '../tabs/StatesTab'
 import { RevisionTab } from '../tabs/RevisionTab'
+import { Badge } from '../components/CommonUI'
 
 const SAMPLE_INPUTS = [
   '仕事に対する意欲が湧かなくて、転職すべきか悩んでいる',
@@ -20,6 +22,47 @@ const SAMPLE_INPUTS = [
 
 type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision'
 type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision'
+const MIN_PLASTICITY_DISPLAY_VALUE = 0.009
+
+const TONE_NOTES: Record<string, (value: number) => string> = {
+  over_explaining: (value) => value < 0
+    ? '説明を前に出しすぎず、反応を先に置く補正が少し効いています。'
+    : '説明を支える補正が少し強まっています。',
+  certainty: (value) => value < 0
+    ? '断定を少しゆるめ、言い切らない余白を残しやすい状態です。'
+    : '言い切る強さがやや前に出やすい状態です。',
+  gentleness: () => 'やわらかさを保つ補正が少し厚くなっています。',
+}
+
+const HOME_TRIGGER_NOTES: Record<string, string> = {
+  overperformance: '過剰整理に戻る検知が、以前より少し早めに入ります。',
+  ambiguity_overload: '曖昧さが高いとき、急がず戻る検知が少し早くなっています。',
+  fragility: 'fragility が高いとき、近さを優先する return が少し早めに働きます。',
+  trust_drop: 'trust_drop を拾って関係を保つ return が少し働きやすくなっています。',
+}
+
+const PATTERN_NOTES: Record<string, string> = {
+  unarticulated_feeling: 'まだ言葉になる手前の感覚を、以前より少し拾いやすくなっています。',
+}
+
+const describeActivePlasticity = (kind: 'tone' | 'home' | 'pattern', key: string, value: number) => {
+  if (kind === 'tone') {
+    return TONE_NOTES[key]?.(value) || '返答の口調に小さな補正が乗っています。'
+  }
+  if (kind === 'home') {
+    return HOME_TRIGGER_NOTES[key] || 'Home return の入り方が少し調整されています。'
+  }
+  return PATTERN_NOTES[key] || 'このパターンは以前より少し拾われやすくなっています。'
+}
+
+const describeRelationGrowth = (key: string) => {
+  const relationParts = key.split('->')
+  if (relationParts.length !== 2 || !relationParts[0] || !relationParts[1]) {
+    return 'この relation が最近少し太くなっています。'
+  }
+  const [source, target] = relationParts
+  return `${source} と ${target} のあいだの通り道が少し太くなり、揺れや引っぱりを先に拾いやすくなっています。`
+}
 
 type ObserveModeProps = {
   currentObservation: ObservationRecord | null
@@ -94,6 +137,18 @@ export const ObserveMode = ({
   const pipelineResult = currentObservation?.pipelineResult ?? null
   const studioView = currentObservation?.studioView ?? null
   const currentRevisionEntry = currentObservation?.revisionEntry ?? null
+  const relationHighlights = Object.entries(revisionState.plasticity.relationBoosts)
+    .filter(([, value]) => value > MIN_PLASTICITY_DISPLAY_VALUE)
+    .sort((first, second) => second[1] - first[1])
+    .slice(0, 3)
+  const activePlasticityHighlights = [
+    ...Object.entries(revisionState.plasticity.toneBiases).map(([key, value]) => ({ kind: 'tone' as const, key, value })),
+    ...Object.entries(revisionState.plasticity.homeTriggerBoosts).map(([key, value]) => ({ kind: 'home' as const, key, value })),
+    ...Object.entries(revisionState.plasticity.patternBoosts).map(([key, value]) => ({ kind: 'pattern' as const, key, value })),
+  ]
+    .filter(({ value }) => Math.abs(value) > MIN_PLASTICITY_DISPLAY_VALUE)
+    .sort((first, second) => Math.abs(second.value) - Math.abs(first.value))
+    .slice(0, 4)
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -170,6 +225,83 @@ export const ObserveMode = ({
 
       {currentObservation && pipelineResult && studioView ? (
         <>
+          <section className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm md:p-5">
+            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div className="max-w-3xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-indigo-700">
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Revision / Plasticity Snapshot
+                </div>
+                <p className="mt-3 text-sm font-semibold leading-relaxed text-slate-700">
+                  {currentRevisionEntry?.note || '今回は大きな revision は発生していません。'}
+                </p>
+                <p className="mt-1 text-xs font-medium text-slate-500">
+                  JSON を開かなくても、今回どこが育ってどこを様子見しているかが分かる要約です。
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 lg:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">今回動いた boost / bias</h3>
+                {currentRevisionEntry?.proposedChanges.length ? (
+                  <div className="mt-3 space-y-3">
+                    {currentRevisionEntry.proposedChanges.slice(0, 3).map((change) => (
+                      <div key={change.id} className="rounded-xl border border-white bg-white p-3 shadow-sm">
+                        <div className="flex items-center justify-between gap-2">
+                          <Badge colorClass={getRevisionStatusMeta(change.status).badgeClass}>{getRevisionStatusMeta(change.status).label}</Badge>
+                          <span className="text-xs font-bold text-slate-700">{formatRevisionDelta(change.delta)}</span>
+                        </div>
+                        <p className="mt-2 text-sm font-semibold text-slate-800">{describeProposedChange(change)}</p>
+                        <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">{change.reason}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm font-medium leading-relaxed text-slate-500">今回は proposed change が立たなかったため、補正は据え置きです。</p>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">最近太くなった経路</h3>
+                {relationHighlights.length > 0 ? (
+                  <div className="mt-3 space-y-3">
+                    {relationHighlights.map(([key, value]) => (
+                      <div key={key} className="rounded-xl border border-white bg-white p-3 shadow-sm">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-slate-800">{key.replace('->', ' → ')}</p>
+                          <span className="text-xs font-bold text-indigo-700">{formatRevisionDelta(value)}</span>
+                        </div>
+                        <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">{describeRelationGrowth(key)}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm font-medium leading-relaxed text-slate-500">relation の太りはまだ控えめで、いまは tone / home 側の微調整が中心です。</p>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">いま効いている boost / bias</h3>
+                {activePlasticityHighlights.length > 0 ? (
+                  <div className="mt-3 space-y-3">
+                    {activePlasticityHighlights.map(({ kind, key, value }) => (
+                      <div key={`${kind}:${key}`} className="rounded-xl border border-white bg-white p-3 shadow-sm">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-semibold text-slate-800">{key}</p>
+                          <span className="text-xs font-bold text-slate-700">{formatRevisionDelta(value)}</span>
+                        </div>
+                        <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">{describeActivePlasticity(kind, key, value)}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm font-medium leading-relaxed text-slate-500">まだ塑性の蓄積は薄く、既定のふるまいが中心です。</p>
+                )}
+              </div>
+            </div>
+          </section>
+
           <div className="flex min-w-0 flex-col gap-6">
             <div className="scrollbar-hide sticky top-[92px] z-10 flex gap-2 overflow-x-auto border-b-2 border-slate-100 bg-[#F8FAFC] pb-1 pt-1">
               {(['Reply', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (

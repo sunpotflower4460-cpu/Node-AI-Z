@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { MessageCircleHeart, Send, Sparkles } from 'lucide-react'
 import type { ExperienceMessage } from '../../types/experience'
+import { describeProposedChange, getRevisionStatusMeta } from '../../revision/statusMeta'
 
 type ExperienceModeProps = {
   messages: ExperienceMessage[]
@@ -70,6 +71,18 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, onSend, onOpenO
                 <div key={message.id} className={`flex ${isAssistant ? 'justify-start' : 'justify-end'}`}>
                   <div className={`max-w-[85%] rounded-3xl px-4 py-3 shadow-sm ${isAssistant ? 'border border-slate-200 bg-slate-50 text-slate-800' : 'bg-rose-500 text-white'}`}>
                     <p className="whitespace-pre-wrap text-[15px] font-medium leading-relaxed">{message.text}</p>
+                    {isAssistant && message.revisionEntry && message.revisionEntry.proposedChanges.length > 0 ? (
+                      <div className="mt-3 rounded-2xl border border-indigo-100 bg-white/80 px-3 py-2.5 text-slate-600">
+                        <p className="text-[12px] font-medium leading-relaxed">{message.revisionEntry.note}</p>
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {message.revisionEntry.proposedChanges.slice(0, 2).map((change) => (
+                            <span key={change.id} className={`rounded-full border px-2 py-1 text-[10px] font-bold ${getRevisionStatusMeta(change.status).badgeClass}`}>
+                              {getRevisionStatusMeta(change.status).label} · {describeProposedChange(change)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
                     <div className={`mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold ${isAssistant ? 'text-slate-500' : 'text-rose-100'}`}>
                       <span>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       {isAssistant && message.observationId ? (
