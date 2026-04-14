@@ -25,7 +25,8 @@ type ObserveModeProps = {
   currentObservation: ObservationRecord | null
   history: ObservationRecord[]
   revisionState: RevisionState
-  onAnalyze: (text: string) => void
+  surfaceProviderLabel: string
+  onAnalyze: (text: string) => void | Promise<void>
   onRestore: (item: ObservationRecord) => void
   onResetCurrent: () => void
   onTuningAction: (entryId: string, changeId: string, action: UserTuningAction) => void
@@ -36,6 +37,7 @@ export const ObserveMode = ({
   currentObservation,
   history,
   revisionState,
+  surfaceProviderLabel,
   onAnalyze,
   onRestore,
   onResetCurrent,
@@ -58,9 +60,10 @@ export const ObserveMode = ({
     setIsAnalyzing(true)
 
     window.setTimeout(() => {
-      onAnalyze(trimmed)
-      setActiveTab('Reply')
-      setIsAnalyzing(false)
+      void Promise.resolve(onAnalyze(trimmed)).finally(() => {
+        setActiveTab('Reply')
+        setIsAnalyzing(false)
+      })
     }, 400)
   }
 
@@ -69,9 +72,10 @@ export const ObserveMode = ({
     setIsAnalyzing(true)
 
     window.setTimeout(() => {
-      onAnalyze(text)
-      setActiveTab('Reply')
-      setIsAnalyzing(false)
+      void Promise.resolve(onAnalyze(text)).finally(() => {
+        setActiveTab('Reply')
+        setIsAnalyzing(false)
+      })
     }, 400)
   }
 
@@ -185,7 +189,7 @@ export const ObserveMode = ({
             </div>
 
             <div className="flex flex-col">
-              {activeTab === 'Reply' ? <ReplyTab studioView={studioView} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} onTuningAction={onTuningAction} /> : null}
+              {activeTab === 'Reply' ? <ReplyTab studioView={studioView} surfaceReply={currentObservation.assistantReply} surfaceProviderLabel={surfaceProviderLabel} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} onTuningAction={onTuningAction} /> : null}
               {activeTab === 'Home' ? <HomeTab studioView={studioView} /> : null}
               {activeTab === 'States' ? <StatesTab pipelineResult={pipelineResult} /> : null}
               {activeTab === 'Relations' ? <RelationsTab pipelineResult={pipelineResult} /> : null}
