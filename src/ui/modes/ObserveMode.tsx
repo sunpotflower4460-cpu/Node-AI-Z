@@ -66,18 +66,24 @@ const describeRelationGrowth = (key: string) => {
 
 type AppliedBoostSource = 'auto' | 'keep' | 'soften' | 'lock'
 
-const getAppliedBoostSource = (entry: AppliedBoostEntry, revisionState: RevisionState): AppliedBoostSource => {
+const buildKeySourceMap = (revisionState: RevisionState): Map<string, AppliedBoostSource> => {
+  const map = new Map<string, AppliedBoostSource>()
   for (const memEntry of revisionState.memory.entries) {
     for (const change of memEntry.proposedChanges) {
-      if (change.key === entry.key) {
-        if (revisionState.tuning.locked.has(change.id)) return 'lock'
-        if (revisionState.tuning.kept.has(change.id)) return 'keep'
-        if (revisionState.tuning.softened.has(change.id)) return 'soften'
+      if (map.has(change.key)) continue
+      if (revisionState.tuning.locked.has(change.id)) {
+        map.set(change.key, 'lock')
+      } else if (revisionState.tuning.kept.has(change.id)) {
+        map.set(change.key, 'keep')
+      } else if (revisionState.tuning.softened.has(change.id)) {
+        map.set(change.key, 'soften')
       }
     }
   }
-  return 'auto'
+  return map
 }
+
+const directionWord = (delta: number) => (delta > 0 ? '強化' : '緩和')
 
 const describeAppliedEffect = (entry: AppliedBoostEntry): string => {
   const sign = entry.delta > 0 ? '+' : ''
@@ -91,9 +97,9 @@ const describeAppliedEffect = (entry: AppliedBoostEntry): string => {
       return `relation ${entry.key} に ${val} 適用`
     }
     case 'pattern':
-      return `${entry.key} パターンを ${val} 強化`
+      return `${entry.key} パターンを ${val} ${directionWord(entry.delta)}`
     case 'home_trigger':
-      return `${entry.key} home trigger を ${val} ${entry.delta > 0 ? '強化' : '緩和'}`
+      return `${entry.key} home trigger を ${val} ${directionWord(entry.delta)}`
     case 'tone':
       return `${entry.key} tone bias を ${val} 補正`
     case 'node':
@@ -357,32 +363,37 @@ export const ObserveMode = ({
               <p className="mb-3 text-xs font-medium text-emerald-700/70">
                 今回の返答に実際に影響した plasticity 補正の一覧です。source は操作の由来を示します。
               </p>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {studioView.appliedPlasticity.map((entry) => {
-                  const source = getAppliedBoostSource(entry, revisionState)
-                  const sourceMeta = SOURCE_LABEL[source]
-                  return (
-                    <div key={`${entry.kind}:${entry.key}`} className="flex flex-col gap-1.5 rounded-xl border border-emerald-100 bg-white p-3 shadow-sm">
-                      <div className="flex items-center justify-between gap-2">
-                        <Badge colorClass={
-                          entry.kind === 'relation' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' :
-                          entry.kind === 'pattern' ? 'bg-purple-100 text-purple-700 border-purple-200' :
-                          entry.kind === 'home_trigger' ? 'bg-pink-100 text-pink-700 border-pink-200' :
-                          entry.kind === 'tone' ? 'bg-teal-100 text-teal-700 border-teal-200' :
-                          'bg-slate-100 text-slate-700 border-slate-200'
-                        }>
-                          {entry.kind}
-                        </Badge>
-                        <Badge colorClass={sourceMeta.colorClass}>{sourceMeta.label}</Badge>
-                      </div>
-                      <p className="text-xs font-semibold text-slate-800">{describeAppliedEffect(entry)}</p>
-                      <span className={`self-end text-xs font-bold ${entry.delta > 0 ? 'text-emerald-700' : 'text-red-600'}`}>
-                        {entry.delta > 0 ? '+' : ''}{entry.delta.toFixed(3)}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
+              {(() => {
+                const sourceMap = buildKeySourceMap(revisionState)
+                return (
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {studioView.appliedPlasticity.map((entry) => {
+                      const source = sourceMap.get(entry.key) ?? 'auto'
+                      const sourceMeta = SOURCE_LABEL[source]
+                      return (
+                        <div key={`${entry.kind}:${entry.key}`} className="flex flex-col gap-1.5 rounded-xl border border-emerald-100 bg-white p-3 shadow-sm">
+                          <div className="flex items-center justify-between gap-2">
+                            <Badge colorClass={
+                              entry.kind === 'relation' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' :
+                              entry.kind === 'pattern' ? 'bg-purple-100 text-purple-700 border-purple-200' :
+                              entry.kind === 'home_trigger' ? 'bg-pink-100 text-pink-700 border-pink-200' :
+                              entry.kind === 'tone' ? 'bg-teal-100 text-teal-700 border-teal-200' :
+                              'bg-slate-100 text-slate-700 border-slate-200'
+                            }>
+                              {entry.kind}
+                            </Badge>
+                            <Badge colorClass={sourceMeta.colorClass}>{sourceMeta.label}</Badge>
+                          </div>
+                          <p className="text-xs font-semibold text-slate-800">{describeAppliedEffect(entry)}</p>
+                          <span className={`self-end text-xs font-bold ${entry.delta > 0 ? 'text-emerald-700' : 'text-red-600'}`}>
+                            {entry.delta > 0 ? '+' : ''}{entry.delta.toFixed(3)}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </section>
           ) : null}
 
