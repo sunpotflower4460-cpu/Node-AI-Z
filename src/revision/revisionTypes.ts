@@ -8,4 +8,8 @@ export type {
   UserTuningState,
   RevisionState,
   RevisionSummary,
+  ChangePromotionStats,
+  PromotionSummaryItem,
+  ThickenedPipeSummaryItem,
+  PromotionSummary,
 } from './types'

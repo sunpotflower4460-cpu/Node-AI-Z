@@ -3,7 +3,7 @@ import type { ChangeStatus, PlasticityState, ProposedChange, RevisionState } fro
 
 const STATUS_WEIGHTS: Record<ChangeStatus, number> = {
   ephemeral: 0.35,
-  provisional: 0.6,
+  provisional: 0.7,
   promoted: 1,
   reverted: 0,
 }
@@ -16,11 +16,13 @@ const KIND_LIMITS = {
   node_weight: PLASTICITY_LIMITS.node,
 } as const
 
-const getTuningMultiplier = (changeId: string, tuning: RevisionState['tuning']) => {
+export const getStatusWeight = (status: ChangeStatus) => STATUS_WEIGHTS[status]
+
+export const getTuningWeight = (changeId: string, tuning: RevisionState['tuning']) => {
   if (tuning.reverted.has(changeId)) return 0
   if (tuning.locked.has(changeId)) return 1
   if (tuning.softened.has(changeId)) return 0.5
-  if (tuning.kept.has(changeId)) return 0.6
+  if (tuning.kept.has(changeId)) return 1
   return 1
 }
 
@@ -48,11 +50,15 @@ const applyChangeToPlasticity = (plasticity: PlasticityState, change: ProposedCh
   }
 }
 
-export const getRevisionChangeInfluence = (change: ProposedChange, state: RevisionState): number => {
-  const statusWeight = STATUS_WEIGHTS[change.status]
-  const tuningWeight = getTuningMultiplier(change.id, state.tuning)
+export const getEffectiveChangeDelta = (change: ProposedChange, state: RevisionState): number => {
+  const statusWeight = getStatusWeight(change.status)
+  const tuningWeight = getTuningWeight(change.id, state.tuning)
   const delta = change.delta * statusWeight * tuningWeight
   return clampPlasticityValue(delta, KIND_LIMITS[change.kind])
+}
+
+export const getRevisionChangeInfluence = (change: ProposedChange, state: RevisionState): number => {
+  return getEffectiveChangeDelta(change, state)
 }
 
 export const rebuildPlasticityState = (state: RevisionState): PlasticityState => {
@@ -60,7 +66,7 @@ export const rebuildPlasticityState = (state: RevisionState): PlasticityState =>
 
   state.memory.entries.forEach((entry) => {
     entry.proposedChanges.forEach((change) => {
-      const delta = getRevisionChangeInfluence(change, state)
+      const delta = getEffectiveChangeDelta(change, state)
       if (delta !== 0) {
         applyChangeToPlasticity(plasticity, change, delta)
       }

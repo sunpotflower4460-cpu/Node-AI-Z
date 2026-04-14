@@ -160,7 +160,7 @@ export const SelfRevisionCard = ({ entry, tuning, onTuningAction }: SelfRevision
                   <div className="mt-2 pt-2 border-t border-current/20 flex items-center gap-1.5">
                     <Lock className="w-3 h-3 opacity-60" />
                     <span className="text-[10px] font-bold tracking-wider opacity-75">
-                      locked — 自動更新から除外され、常に反映されます
+                      locked — 現在の status を固定し、自動昇格・自動弱化を止めます
                     </span>
                   </div>
                 )}
@@ -178,4 +178,3 @@ export const SelfRevisionCard = ({ entry, tuning, onTuningAction }: SelfRevision
     </div>
   )
 }
-

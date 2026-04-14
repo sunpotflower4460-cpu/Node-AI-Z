@@ -196,7 +196,7 @@ export default function NodeStudioPage() {
             <h1 className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-900 md:text-xl">
               <BrainCircuit className="h-5 w-5 text-indigo-600 md:h-6 md:w-6" />
               Node-AI-Z
-              <span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">SRM-2 / Provisional Plasticity</span>
+              <span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">SRM-3 / Memory Promotion</span>
             </h1>
             <p className="mt-1 text-sm font-medium text-slate-500">
               研究するための観察ビューと、実際に話すための体験ビューを往復しながら、育つ知性を見ていく実験アプリ。

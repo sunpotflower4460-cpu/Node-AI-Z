@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Sparkles, Terminal } from 'lucide-react'
 import type { ObservationRecord } from '../../types/experience'
 import type { AppliedBoostEntry, RevisionState, UserTuningAction } from '../../types/nodeStudio'
-import { describeProposedChange, formatRevisionDelta, getRevisionStatusMeta } from '../../revision/statusMeta'
+import { buildPromotionKey, summarizePromotion } from '../../revision/promotionRules'
+import { describeProposedChange, formatRevisionDelta, getRevisionKindLabel, getRevisionStatusMeta } from '../../revision/statusMeta'
 import { HistoryTab } from '../tabs/HistoryTab'
 import { HomeTab } from '../tabs/HomeTab'
 import { PatternsTab } from '../tabs/PatternsTab'
@@ -66,17 +67,30 @@ const describeRelationGrowth = (key: string) => {
 
 type AppliedBoostSource = 'auto' | 'keep' | 'soften' | 'lock'
 
+const APPLIED_KIND_TO_REVISION_KIND = {
+  relation: 'relation_weight',
+  pattern: 'pattern_weight',
+  home_trigger: 'home_trigger',
+  tone: 'tone_bias',
+  node: 'node_weight',
+} as const
+
+const buildAppliedPromotionKey = (entry: AppliedBoostEntry) => {
+  return buildPromotionKey({ kind: APPLIED_KIND_TO_REVISION_KIND[entry.kind], key: entry.key })
+}
+
 const buildKeySourceMap = (revisionState: RevisionState): Map<string, AppliedBoostSource> => {
   const map = new Map<string, AppliedBoostSource>()
   for (const memEntry of revisionState.memory.entries) {
     for (const change of memEntry.proposedChanges) {
-      if (map.has(change.key)) continue
+      const promotionKey = buildPromotionKey(change)
+      if (map.has(promotionKey)) continue
       if (revisionState.tuning.locked.has(change.id)) {
-        map.set(change.key, 'lock')
+        map.set(promotionKey, 'lock')
       } else if (revisionState.tuning.kept.has(change.id)) {
-        map.set(change.key, 'keep')
+        map.set(promotionKey, 'keep')
       } else if (revisionState.tuning.softened.has(change.id)) {
-        map.set(change.key, 'soften')
+        map.set(promotionKey, 'soften')
       }
     }
   }
@@ -201,6 +215,7 @@ export const ObserveMode = ({
     .filter(({ value }) => Math.abs(value) > MIN_PLASTICITY_DISPLAY_VALUE)
     .sort((first, second) => Math.abs(second.value) - Math.abs(first.value))
     .slice(0, 4)
+  const promotionSummary = summarizePromotion(revisionState)
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -354,6 +369,98 @@ export const ObserveMode = ({
             </div>
           </section>
 
+          <section className="rounded-2xl border border-emerald-100 bg-white p-4 shadow-sm md:p-5">
+            <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div className="max-w-3xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-emerald-700">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Promotion / Memory Growth
+                </div>
+                <p className="mt-3 text-sm font-semibold leading-relaxed text-slate-700">
+                  ephemeral → provisional → promoted の育ち具合と、plasticity に安定反映されている記憶をまとめて表示します。
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              {[
+                { label: 'Total Entries', value: promotionSummary.growth.totalEntries, colorClass: 'bg-slate-50 border-slate-200 text-slate-800' },
+                { label: getRevisionStatusMeta('ephemeral').label, value: promotionSummary.growth.ephemeralCount, colorClass: 'bg-slate-50 border-slate-200 text-slate-700' },
+                { label: getRevisionStatusMeta('provisional').label, value: promotionSummary.growth.provisionalCount, colorClass: 'bg-yellow-50 border-yellow-200 text-yellow-800' },
+                { label: getRevisionStatusMeta('promoted').label, value: promotionSummary.growth.promotedCount, colorClass: 'bg-green-50 border-green-200 text-green-800' },
+                { label: getRevisionStatusMeta('reverted').label, value: promotionSummary.growth.revertedCount, colorClass: 'bg-red-50 border-red-200 text-red-800' },
+              ].map((item) => (
+                <div key={item.label} className={`rounded-2xl border p-3 ${item.colorClass}`}>
+                  <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">{item.label}</div>
+                  <div className="mt-2 text-2xl font-bold">{item.value}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 grid gap-4 xl:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Recently Promoted</h3>
+                {promotionSummary.recentlyPromoted.length > 0 ? (
+                  <div className="mt-3 space-y-3">
+                    {promotionSummary.recentlyPromoted.map((item) => (
+                      <div key={`${item.kind}:${item.key}`} className="rounded-xl border border-white bg-white p-3 shadow-sm">
+                        <div className="flex items-center justify-between gap-2">
+                          <Badge colorClass={getRevisionStatusMeta(item.status).badgeClass}>{getRevisionStatusMeta(item.status).label}</Badge>
+                          <span className="text-xs font-bold text-green-700">{formatRevisionDelta(item.cumulativeDelta)}</span>
+                        </div>
+                        <p className="mt-2 text-sm font-semibold text-slate-800">{getRevisionKindLabel(item.kind)} / {item.key}</p>
+                        <p className="mt-1 text-[11px] font-medium text-slate-500">keep {item.keepCount} / seen {item.occurrenceCount}</p>
+                        <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">{item.reasonSummary}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm font-medium leading-relaxed text-slate-500">まだ promoted に達した memory はありません。keep と再登場が揃うとここに出ます。</p>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Provisional Queue</h3>
+                {promotionSummary.provisionalQueue.length > 0 ? (
+                  <div className="mt-3 space-y-3">
+                    {promotionSummary.provisionalQueue.map((item) => (
+                      <div key={`${item.kind}:${item.key}`} className="rounded-xl border border-white bg-white p-3 shadow-sm">
+                        <div className="flex items-center justify-between gap-2">
+                          <Badge colorClass={getRevisionStatusMeta(item.status).badgeClass}>{getRevisionStatusMeta(item.status).label}</Badge>
+                          {item.isLocked ? <Badge colorClass="bg-indigo-100 text-indigo-700 border-indigo-200">locked</Badge> : null}
+                        </div>
+                        <p className="mt-2 text-sm font-semibold text-slate-800">{getRevisionKindLabel(item.kind)} / {item.key}</p>
+                        <p className="mt-1 text-[11px] font-medium text-slate-500">keep {item.keepCount} / occurrence {item.occurrenceCount}</p>
+                        <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">{item.reasonSummary}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm font-medium leading-relaxed text-slate-500">いまは provisional 待ちの候補が薄く、既存の記憶は安定化しています。</p>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Top Thickened Pipes</h3>
+                {promotionSummary.topThickenedPipes.length > 0 ? (
+                  <div className="mt-3 space-y-3">
+                    {promotionSummary.topThickenedPipes.map((item) => (
+                      <div key={`${item.kind}:${item.key}`} className="rounded-xl border border-white bg-white p-3 shadow-sm">
+                        <div className="flex items-center justify-between gap-2">
+                          <Badge colorClass="bg-indigo-100 text-indigo-700 border-indigo-200">{getRevisionKindLabel(item.kind)}</Badge>
+                          <span className="text-xs font-bold text-indigo-700">{formatRevisionDelta(item.delta)}</span>
+                        </div>
+                        <p className="mt-2 text-sm font-semibold text-slate-800">{item.key}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-sm font-medium leading-relaxed text-slate-500">まだ太くなった pipe は少なく、塑性は初期状態に近いです。</p>
+                )}
+              </div>
+            </div>
+          </section>
+
           {studioView.appliedPlasticity.length > 0 ? (
             <section className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 shadow-sm md:p-5">
               <div className="mb-3 flex items-center gap-2">
@@ -368,7 +475,7 @@ export const ObserveMode = ({
                 return (
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                     {studioView.appliedPlasticity.map((entry) => {
-                      const source = sourceMap.get(entry.key) ?? 'auto'
+                      const source = sourceMap.get(buildAppliedPromotionKey(entry)) ?? 'auto'
                       const sourceMeta = SOURCE_LABEL[source]
                       return (
                         <div key={`${entry.kind}:${entry.key}`} className="flex flex-col gap-1.5 rounded-xl border border-emerald-100 bg-white p-3 shadow-sm">

@@ -60,3 +60,38 @@ export type RevisionSummary = {
   topIssues: Array<{ tag: string; count: number }>
   recentChanges: ProposedChange[]
 }
+
+export type ChangePromotionStats = {
+  sameKeyOccurrences: number
+  keepCount: number
+  softenCount: number
+  revertedCount: number
+  isLocked: boolean
+  currentlyPromoted: boolean
+  currentlyProvisional: boolean
+}
+
+export type PromotionSummaryItem = {
+  kind: ProposedChange['kind']
+  key: string
+  status: ChangeStatus
+  cumulativeDelta: number
+  keepCount: number
+  occurrenceCount: number
+  reasonSummary: string
+  latestTimestamp: string
+  isLocked: boolean
+}
+
+export type ThickenedPipeSummaryItem = {
+  kind: 'relation_weight' | 'node_weight' | 'home_trigger'
+  key: string
+  delta: number
+}
+
+export type PromotionSummary = {
+  recentlyPromoted: PromotionSummaryItem[]
+  provisionalQueue: PromotionSummaryItem[]
+  growth: Pick<RevisionSummary, 'totalEntries' | 'ephemeralCount' | 'provisionalCount' | 'promotedCount' | 'revertedCount'>
+  topThickenedPipes: ThickenedPipeSummaryItem[]
+}
