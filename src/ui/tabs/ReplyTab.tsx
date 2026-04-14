@@ -6,6 +6,8 @@ import { SelfRevisionCard } from '../components/SelfRevisionCard'
 
 type ReplyTabProps = {
   studioView: StudioViewModel
+  surfaceReply: string
+  surfaceProviderLabel: string
   analyzedText: string
   isProcessOpen: boolean
   setIsProcessOpen: Dispatch<SetStateAction<boolean>>
@@ -13,7 +15,7 @@ type ReplyTabProps = {
   onTuningAction?: (entryId: string, changeId: string, action: UserTuningAction) => void
 }
 
-export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcessOpen, currentRevisionEntry, onTuningAction }: ReplyTabProps) => {
+export const ReplyTab = ({ studioView, surfaceReply, surfaceProviderLabel, analyzedText, isProcessOpen, setIsProcessOpen, currentRevisionEntry, onTuningAction }: ReplyTabProps) => {
   const handleTuningAction = (changeId: string, action: UserTuningAction) => {
     if (onTuningAction && currentRevisionEntry) {
       onTuningAction(currentRevisionEntry.id, changeId, action)
@@ -38,6 +40,11 @@ export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcess
         <div className="absolute top-0 right-0 w-32 h-32 bg-purple-50/50 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
         <div className="relative z-10">
           <VoiceLabel type="ai" />
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] font-semibold text-slate-500">
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">Surface Provider: {surfaceProviderLabel}</span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">Internal reasoning: shared</span>
+            <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1">Home-adjusted: yes</span>
+          </div>
 
           {studioView.homeCheck.needsReturn ? (
             <div className="flex flex-col gap-3 mt-4">
@@ -52,11 +59,11 @@ export const ReplyTab = ({ studioView, analyzedText, isProcessOpen, setIsProcess
               </div>
               <div className="p-5 bg-purple-50 border border-purple-200 rounded-xl shadow-sm">
                 <span className="text-[10px] font-bold text-purple-600 uppercase tracking-widest block mb-2">After Return (戻ってから話した言葉)</span>
-                <p className="text-purple-900 font-semibold text-[16px] leading-relaxed border-l-4 border-purple-300 pl-4">{studioView.adjustedReplyPreview}</p>
+                <p className="text-purple-900 font-semibold text-[16px] leading-relaxed border-l-4 border-purple-300 pl-4">{surfaceReply}</p>
               </div>
             </div>
           ) : (
-            <p className="text-slate-800 font-semibold text-[16px] leading-loose border-l-4 border-purple-300 pl-4 py-1 mt-3">{studioView.adjustedReplyPreview}</p>
+            <p className="text-slate-800 font-semibold text-[16px] leading-loose border-l-4 border-purple-300 pl-4 py-1 mt-3">{surfaceReply}</p>
           )}
         </div>
       </div>

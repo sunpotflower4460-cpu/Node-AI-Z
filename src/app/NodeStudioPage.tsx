@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BrainCircuit } from 'lucide-react'
+import { BrainCircuit, Settings2 } from 'lucide-react'
 import { runNodePipeline } from '../core/runNodePipeline'
 import { buildStudioViewModel } from '../studio/buildStudioViewModel'
 import { buildRevisionEntry } from '../revision/buildRevisionEntry'
 import { loadRevisionState, saveRevisionState, clearRevisionState } from '../revision/revisionStorage'
 import { applyUserTuning } from '../revision/applyUserTuning'
 import { addRevisionEntry } from '../revision/revisionLog'
+import { apiProviders, getApiProviderConfig } from '../config/apiProviders'
 import { loadExperienceMessages, saveExperienceMessages } from '../storage/experienceStorage'
+import { loadApiSelection, saveApiSelection } from '../storage/apiSelectionStorage'
+import { generateSurfaceReply } from '../surface/generateSurfaceReply'
+import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
 import type { ExperienceMessage, AppMode, ObservationRecord } from '../types/experience'
 import type { NodePipelineResult, PlasticityState, RevisionEntry, RevisionState, StudioViewModel, UserTuningAction } from '../types/nodeStudio'
 import { ModeSwitch } from '../ui/components/ModeSwitch'
@@ -35,7 +39,11 @@ export default function NodeStudioPage() {
   const [currentObservation, setCurrentObservation] = useState<ObservationRecord | null>(null)
   const [observeHistory, setObserveHistory] = useState<ObservationRecord[]>([])
   const [experienceMessages, setExperienceMessages] = useState<ExperienceMessage[]>(() => loadExperienceMessages())
+  const [apiSelection, setApiSelection] = useState<ApiSelectionState>(() => loadApiSelection())
   const [revisionState, setRevisionState] = useState<RevisionState>(() => loadRevisionState())
+  const [isApiPanelOpen, setIsApiPanelOpen] = useState(false)
+
+  const currentProviderConfig = useMemo(() => getApiProviderConfig(apiSelection.baseProvider), [apiSelection.baseProvider])
 
   useEffect(() => {
     saveRevisionState(revisionState)
@@ -45,14 +53,24 @@ export default function NodeStudioPage() {
     saveExperienceMessages(experienceMessages)
   }, [experienceMessages])
 
+  useEffect(() => {
+    saveApiSelection(apiSelection)
+  }, [apiSelection])
+
   const addRevisionEntryToMemory = useCallback((entry: RevisionEntry) => {
     setRevisionState((previous) => addRevisionEntry(previous, entry))
   }, [])
 
-  const createObservation = useCallback((text: string, type: ObservationRecord['type'], plasticity: PlasticityState): ObservationRecord => {
+  const createObservation = useCallback(async (
+    text: string,
+    type: ObservationRecord['type'],
+    plasticity: PlasticityState,
+    provider: ApiProviderId,
+  ): Promise<ObservationRecord> => {
     const pipelineResult = runNodePipeline(text, plasticity)
     const studioView = buildStudioViewModel(pipelineResult, plasticity)
     const revisionEntry = buildRevisionEntry(pipelineResult, studioView)
+    const assistantReply = await generateSurfaceReply({ provider, studioView })
     const timestamp = new Date().toISOString()
 
     return {
@@ -64,7 +82,7 @@ export default function NodeStudioPage() {
       pipelineResult,
       studioView,
       revisionEntry,
-      assistantReply: studioView.adjustedReplyPreview,
+      assistantReply,
     }
   }, [])
 
@@ -90,15 +108,15 @@ export default function NodeStudioPage() {
     })
   }, [experienceHistory, observeHistory])
 
-  const handleObserveAnalyze = useCallback((text: string) => {
-    const record = createObservation(text, 'observe', revisionState.plasticity)
+  const handleObserveAnalyze = useCallback(async (text: string) => {
+    const record = await createObservation(text, 'observe', revisionState.plasticity, apiSelection.baseProvider)
     addRevisionEntryToMemory(record.revisionEntry)
     setObserveHistory((previous) => [record, ...previous])
     setCurrentObservation(record)
-  }, [addRevisionEntryToMemory, createObservation, revisionState.plasticity])
+  }, [addRevisionEntryToMemory, apiSelection.baseProvider, createObservation, revisionState.plasticity])
 
-  const handleExperienceSend = useCallback((text: string) => {
-    const record = createObservation(text, 'experience', revisionState.plasticity)
+  const handleExperienceSend = useCallback(async (text: string) => {
+    const record = await createObservation(text, 'experience', revisionState.plasticity, apiSelection.baseProvider)
     const turnTimestamp = record.timestamp
 
     addRevisionEntryToMemory(record.revisionEntry)
@@ -126,7 +144,7 @@ export default function NodeStudioPage() {
         revisionEntry: record.revisionEntry,
         },
       ])
-  }, [addRevisionEntryToMemory, createObservation, revisionState.plasticity])
+  }, [addRevisionEntryToMemory, apiSelection.baseProvider, createObservation, revisionState.plasticity])
 
   const handleRestoreObservation = useCallback((record: ObservationRecord) => {
     setCurrentObservation(record)
@@ -157,6 +175,19 @@ export default function NodeStudioPage() {
     }
   }, [])
 
+  const handleBaseProviderChange = useCallback((providerId: ApiProviderId) => {
+    const providerConfig = getApiProviderConfig(providerId)
+    if (!providerConfig.available) {
+      return
+    }
+
+    setApiSelection({
+      baseProvider: providerId,
+      lastUpdatedAt: new Date().toISOString(),
+    })
+    setIsApiPanelOpen(false)
+  }, [])
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-800 selection:bg-indigo-100 selection:text-indigo-900">
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white px-4 py-4 md:px-6">
@@ -171,7 +202,61 @@ export default function NodeStudioPage() {
               研究するための観察ビューと、実際に話すための体験ビューを往復しながら、育つ知性を見ていく実験アプリ。
             </p>
           </div>
-          <ModeSwitch mode={mode} onChange={setMode} />
+          <div className="flex flex-col gap-3 lg:items-end">
+            <div className="relative flex flex-wrap items-center gap-2">
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+                Surface Provider: {currentProviderConfig.label}
+              </span>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+                Internal reasoning: shared
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsApiPanelOpen((previous) => !previous)}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-900"
+              >
+                <Settings2 className="h-3.5 w-3.5" />
+                基準APIを選ぶ
+              </button>
+
+              {isApiPanelOpen ? (
+                <div className="absolute right-0 top-full z-40 mt-2 w-[320px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+                  <div className="mb-3">
+                    <h2 className="text-sm font-bold text-slate-900">基準API選択 v0</h2>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                      基準APIは最終発話の表面にだけ影響します。Node / Home / Revision / Memory は共通です。
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2.5">
+                    {apiProviders.map((provider) => {
+                      const isSelected = provider.id === apiSelection.baseProvider
+
+                      return (
+                        <button
+                          key={provider.id}
+                          type="button"
+                          onClick={() => handleBaseProviderChange(provider.id)}
+                          disabled={!provider.available}
+                          className={`rounded-xl border p-3 text-left transition-colors ${isSelected ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white'} ${provider.available ? 'hover:border-indigo-200 hover:bg-slate-50' : 'cursor-not-allowed bg-slate-50 text-slate-400 opacity-70'}`}
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <div className="text-sm font-semibold text-slate-900">{provider.label}</div>
+                              <div className="mt-1 text-xs leading-relaxed text-slate-500">{provider.description}</div>
+                            </div>
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${provider.available ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
+                              {provider.available ? (isSelected ? 'Selected' : 'Available') : 'Disabled'}
+                            </span>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+            <ModeSwitch mode={mode} onChange={setMode} />
+          </div>
         </div>
       </header>
 
@@ -181,6 +266,7 @@ export default function NodeStudioPage() {
             currentObservation={currentObservation}
             history={history}
             revisionState={revisionState}
+            surfaceProviderLabel={currentProviderConfig.label}
             onAnalyze={handleObserveAnalyze}
             onRestore={handleRestoreObservation}
             onResetCurrent={handleResetCurrent}
@@ -190,6 +276,7 @@ export default function NodeStudioPage() {
         ) : (
           <ExperienceMode
             messages={experienceMessages}
+            surfaceProviderLabel={currentProviderConfig.label}
             onSend={handleExperienceSend}
             onOpenObservation={handleOpenObservation}
           />

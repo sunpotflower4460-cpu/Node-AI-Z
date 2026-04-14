@@ -4,11 +4,12 @@ import type { ExperienceMessage } from '../../types/experience'
 
 type ExperienceModeProps = {
   messages: ExperienceMessage[]
-  onSend: (text: string) => void
+  surfaceProviderLabel: string
+  onSend: (text: string) => void | Promise<void>
   onOpenObservation: (observationId: string) => void
 }
 
-export const ExperienceMode = ({ messages, onSend, onOpenObservation }: ExperienceModeProps) => {
+export const ExperienceMode = ({ messages, surfaceProviderLabel, onSend, onOpenObservation }: ExperienceModeProps) => {
   const [inputText, setInputText] = useState('')
   const [isSending, setIsSending] = useState(false)
 
@@ -22,8 +23,9 @@ export const ExperienceMode = ({ messages, onSend, onOpenObservation }: Experien
     setInputText('')
 
     window.setTimeout(() => {
-      onSend(trimmed)
-      setIsSending(false)
+      void Promise.resolve(onSend(trimmed)).finally(() => {
+        setIsSending(false)
+      })
     }, 250)
   }
 
@@ -43,7 +45,7 @@ export const ExperienceMode = ({ messages, onSend, onOpenObservation }: Experien
           </div>
           <div className="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500">
             <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
-            内部では記録されています
+            Surface Provider: {surfaceProviderLabel} / 内部では記録されています
           </div>
         </div>
       </section>
