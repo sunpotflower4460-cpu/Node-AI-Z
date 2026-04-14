@@ -1,5 +1,6 @@
 import { PATTERN_DICT, RELATION_DICT, NODE_DICT } from '../core/nodeData'
 import { buildHomeState, runHomeCheck, applyReturnAdjustment } from '../home/homeLayer'
+import { selectEffectivePlasticity } from '../revision/selectEffectivePlasticity'
 import type { Binding, CoreNode, HomeCheckResult, NodePipelineResult, ReturnTrace, StudioInternalProcess, StudioPattern, StudioViewModel } from '../types/nodeStudio'
 import type { PlasticityState } from '../revision/types'
 
@@ -228,6 +229,7 @@ export const buildStudioViewModel = (result: NodePipelineResult, plasticity?: Pl
   const rawReplyPreview = generateRawReplyPreview(result, mainPattern, mainConflict)
   const adjustedReplyPreview = applyReturnAdjustment(rawReplyPreview, homeCheck, plasticity)
   const responseMeta = getResponseMeta(result, mainConflict, homeCheck)
+  const appliedPlasticity = selectEffectivePlasticity(result.activatedNodes, result.bindings, result.liftedPatterns, plasticity)
 
   const returnTrace: ReturnTrace = {
     timestamp: new Date().toISOString(),
@@ -263,5 +265,6 @@ export const buildStudioViewModel = (result: NodePipelineResult, plasticity?: Pl
     homeState,
     homeCheck,
     returnTrace,
+    appliedPlasticity,
   }
 }

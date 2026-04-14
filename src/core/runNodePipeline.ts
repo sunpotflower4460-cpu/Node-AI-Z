@@ -2,10 +2,13 @@ import { BINDING_RULES, CORE_NODES, PATTERN_RULES } from './nodeData'
 import type { Binding, CoreNode, LiftedPattern, NodePipelineResult, StateVector, SuppressedNode } from '../types/nodeStudio'
 import type { PlasticityState } from '../revision/types'
 import { applyPatternBoost, applyRelationBoost, buildRelationBoostKey } from '../revision/applyPlasticity'
+import { PLASTICITY_LIMITS, clampNumber, clampPlasticityValue } from '../revision/defaultPlasticityState'
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
-export const retrieveNodes = (text: string) => {
+const MAX_NODE_SCORE = 0.99
+
+export const retrieveNodes = (text: string, plasticity?: PlasticityState) => {
   const nodes: CoreNode[] = []
   const debug: string[] = []
 
@@ -21,13 +24,20 @@ export const retrieveNodes = (text: string) => {
     })
 
     if (matchCount > 0) {
-      const score = Math.min(0.5 + matchCount * 0.15, 0.95)
+      const baseScore = Math.min(0.5 + matchCount * 0.15, 0.95)
+      const nodeBoost = clampPlasticityValue(plasticity?.nodeBoosts[core.id] ?? 0, PLASTICITY_LIMITS.node)
+      const score = clampNumber(baseScore + nodeBoost, 0, MAX_NODE_SCORE)
+      const reasons = [`入力内の「${matchedWords.join(', ')}」に反応`]
+      if (nodeBoost !== 0) {
+        reasons.push(`plasticity node boost: ${nodeBoost > 0 ? '+' : ''}${nodeBoost.toFixed(3)}`)
+        debug.push(`Node boost applied: ${core.label} ${nodeBoost > 0 ? '+' : ''}${nodeBoost.toFixed(3)}`)
+      }
       nodes.push({
         id: core.id,
         label: core.label,
         category: core.category,
         value: score,
-        reasons: [`入力内の「${matchedWords.join(', ')}」に反応`],
+        reasons,
       })
       debug.push(`Retrieved: ${core.label} (score: ${score.toFixed(2)})`)
     }
@@ -87,15 +97,19 @@ export const bindNodes = (nodes: CoreNode[], plasticity?: PlasticityState) => {
       const relationKey = buildRelationBoostKey(rule.source, rule.target)
       const baseWeight = (sourceNode.value + targetNode.value) / 2
       const weight = applyRelationBoost(baseWeight, relationKey, plasticity)
+      const boostApplied = weight - baseWeight
       bindings.push({
         id: `b_${rule.source}_${rule.target}`,
         source: rule.source,
         target: rule.target,
         type: rule.type,
         weight,
-        reasons: [`${rule.source} と ${rule.target} の共起により構造化`, weight !== baseWeight ? `plasticity boost: ${relationKey}` : ''],
+        reasons: [`${rule.source} と ${rule.target} の共起により構造化`, boostApplied !== 0 ? `plasticity boost: ${relationKey}` : ''],
       })
       debug.push(`Bound: ${rule.source} -> ${rule.target} (${rule.type})`)
+      if (boostApplied !== 0) {
+        debug.push(`Plasticity applied: relation ${relationKey} ${boostApplied > 0 ? '+' : ''}${boostApplied.toFixed(3)}`)
+      }
     }
   })
 
@@ -114,6 +128,7 @@ export const liftPatterns = (nodes: CoreNode[], bindings: Binding[], plasticity?
         .filter((node): node is CoreNode => Boolean(node))
       const baseScore = matchedNodes.reduce((total, node) => total + node.value, 0) / matchedNodes.length
       const score = applyPatternBoost(baseScore, rule.id, plasticity)
+      const boostApplied = score - baseScore
 
       patterns.push({
         id: rule.id,
@@ -125,6 +140,9 @@ export const liftPatterns = (nodes: CoreNode[], bindings: Binding[], plasticity?
           .map((binding) => `${binding.source}->${binding.target}`),
       })
       debug.push(`Lifted Pattern: ${rule.id}`)
+      if (boostApplied !== 0) {
+        debug.push(`Pattern boost applied: ${rule.id} ${boostApplied > 0 ? '+' : ''}${boostApplied.toFixed(3)}`)
+      }
     }
   })
 
@@ -193,7 +211,7 @@ export const analyzeNodeField = (nodes: CoreNode[], bindings: Binding[]) => {
 
 export const runNodePipeline = (text: string, plasticity?: PlasticityState): NodePipelineResult => {
   const startedAt = now()
-  const retrieved = retrieveNodes(text)
+  const retrieved = retrieveNodes(text, plasticity)
   const bound = bindNodes(retrieved.activatedNodes, plasticity)
   const lifted = liftPatterns(retrieved.activatedNodes, bound.bindings, plasticity)
   const analyzed = analyzeNodeField(retrieved.activatedNodes, bound.bindings)
