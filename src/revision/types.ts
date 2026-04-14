@@ -5,6 +5,7 @@ export type ProposedChange =
   | { id: string; kind: 'pattern_weight'; key: string; delta: number; reason: string; status: ChangeStatus }
   | { id: string; kind: 'home_trigger'; key: string; delta: number; reason: string; status: ChangeStatus }
   | { id: string; kind: 'tone_bias'; key: string; delta: number; reason: string; status: ChangeStatus }
+  | { id: string; kind: 'node_weight'; key: string; delta: number; reason: string; status: ChangeStatus }
 
 export type RevisionEntry = {
   id: string

@@ -277,8 +277,10 @@ export default function NodeStudioPage() {
           <ExperienceMode
             messages={experienceMessages}
             surfaceProviderLabel={currentProviderConfig.label}
+            tuning={revisionState.tuning}
             onSend={handleExperienceSend}
             onOpenObservation={handleOpenObservation}
+            onTuningAction={handleTuningAction}
           />
         )}
       </main>
