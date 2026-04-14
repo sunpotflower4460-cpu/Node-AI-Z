@@ -66,5 +66,17 @@ export const selectEffectivePlasticity = (
     }
   })
 
+  Object.entries(plasticity.toneBiases).forEach(([key, raw]) => {
+    const delta = clampPlasticityValue(raw, PLASTICITY_LIMITS.tone)
+    if (Math.abs(delta) > MIN_BOOST_THRESHOLD) {
+      applied.push({
+        kind: 'tone',
+        key,
+        delta,
+        label: `Tone bias applied: ${key} ${delta > 0 ? '+' : ''}${delta.toFixed(3)}`,
+      })
+    }
+  })
+
   return applied
 }

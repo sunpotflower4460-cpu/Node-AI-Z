@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { Activity, ChevronDown, ChevronUp, Globe, HeartPulse, Home, MessageSquareText, Search, Sparkles, Timer } from 'lucide-react'
-import type { StudioViewModel, RevisionEntry, UserTuningAction } from '../../types/nodeStudio'
+import type { StudioViewModel, RevisionEntry, UserTuningAction, UserTuningState } from '../../types/nodeStudio'
 import { Badge, OriginBadge, TabHeader, VoiceLabel } from '../components/CommonUI'
 import { SelfRevisionCard } from '../components/SelfRevisionCard'
 
@@ -12,10 +12,11 @@ type ReplyTabProps = {
   isProcessOpen: boolean
   setIsProcessOpen: Dispatch<SetStateAction<boolean>>
   currentRevisionEntry?: RevisionEntry | null
+  tuning?: UserTuningState
   onTuningAction?: (entryId: string, changeId: string, action: UserTuningAction) => void
 }
 
-export const ReplyTab = ({ studioView, surfaceReply, surfaceProviderLabel, analyzedText, isProcessOpen, setIsProcessOpen, currentRevisionEntry, onTuningAction }: ReplyTabProps) => {
+export const ReplyTab = ({ studioView, surfaceReply, surfaceProviderLabel, analyzedText, isProcessOpen, setIsProcessOpen, currentRevisionEntry, tuning, onTuningAction }: ReplyTabProps) => {
   const handleTuningAction = (changeId: string, action: UserTuningAction) => {
     if (onTuningAction && currentRevisionEntry) {
       onTuningAction(currentRevisionEntry.id, changeId, action)
@@ -167,7 +168,7 @@ export const ReplyTab = ({ studioView, surfaceReply, surfaceProviderLabel, analy
       </div>
 
       {currentRevisionEntry && (
-        <SelfRevisionCard entry={currentRevisionEntry} onTuningAction={handleTuningAction} />
+        <SelfRevisionCard entry={currentRevisionEntry} tuning={tuning} onTuningAction={handleTuningAction} />
       )}
 
       {studioView.appliedPlasticity.length > 0 ? (
