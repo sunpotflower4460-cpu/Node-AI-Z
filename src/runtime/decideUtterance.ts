@@ -22,8 +22,8 @@ export const decideUtterance = (
 
   let replyIntent = 'stay_with'
   if (shouldAnswerQuestion) replyIntent = 'answer_from_stance'
-  else if (field.fragility > 0.68) replyIntent = 'protect_before_answer'
   else if (shouldStayOpen) replyIntent = 'hold_open'
+  else if (field.fragility > 0.68) replyIntent = 'protect_before_answer'
 
   let stance = 'quiet_closeness'
   if (shouldStayOpen) stance = 'stay_open'
