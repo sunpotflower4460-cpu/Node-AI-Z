@@ -26,7 +26,13 @@ export const runCrystallizationRuntime = (
   const homeReturn = returnHome(deconditioning)
   const selfSubstrate = loadSelfSubstrate(plasticity)
   const coActivationResult = coActivate(inputText, sourceBoot, homeReturn, selfSubstrate, plasticity)
-  const otherNodes = coActivationResult.otherActivations.map(({ origin: _origin, ...node }) => node)
+  const otherNodes = coActivationResult.otherActivations.map((node) => ({
+    id: node.id,
+    label: node.label,
+    category: node.category,
+    value: node.value,
+    reasons: [...node.reasons],
+  }))
   const bound = bindNodes(otherNodes, plasticity)
   const lifted = liftPatterns(otherNodes, bound.bindings, plasticity)
   const relationalField = buildField(coActivationResult, homeReturn, plasticity)
