@@ -105,7 +105,7 @@ export const ExperienceMode = ({
                 <div key={message.id} className={`flex ${isAssistant ? 'justify-start' : 'justify-end'}`}>
                   <div className={`max-w-[85%] rounded-3xl px-4 py-3 shadow-sm ${isAssistant ? 'border border-slate-200 bg-slate-50 text-slate-800' : 'bg-rose-500 text-white'}`}>
                     <p className="whitespace-pre-wrap text-[15px] font-medium leading-relaxed">{message.text}</p>
-                     {isAssistant && message.revisionEntry && message.revisionEntry.proposedChanges.length > 0 ? (
+                    {isAssistant && message.revisionEntry && message.revisionEntry.proposedChanges.length > 0 ? (
                       <div className="mt-3 rounded-2xl border border-indigo-100 bg-white/80 text-slate-600">
                         <button
                           type="button"
@@ -165,14 +165,14 @@ export const ExperienceMode = ({
                         ) : null}
                       </div>
                     ) : null}
-                     <div className={`mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold ${isAssistant ? 'text-slate-500' : 'text-rose-100'}`}>
-                        <span>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        {isAssistant && message.surfaceMeta?.fellBack ? (
-                          <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700">
-                            fallback to internal mock
-                          </span>
-                        ) : null}
-                        {isAssistant && message.observationId ? (
+                    <div className={`mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold ${isAssistant ? 'text-slate-500' : 'text-rose-100'}`}>
+                      <span>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      {isAssistant && message.surfaceMeta?.fellBack ? (
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                          fallback to internal mock
+                        </span>
+                      ) : null}
+                      {isAssistant && message.observationId ? (
                         <>
                           <span>観察研究モードで詳しく見返せます</span>
                           <button

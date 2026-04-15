@@ -285,7 +285,7 @@ export default function NodeStudioPage() {
                     </p>
                   </div>
                   <div className="flex flex-col gap-2.5">
-                    {apiProviders.map((provider) => {
+                    {providerConfigs.map((provider) => {
                       const isSelected = provider.id === apiSelection.baseProvider
 
                       return (
@@ -297,15 +297,15 @@ export default function NodeStudioPage() {
                           className={`rounded-xl border p-3 text-left transition-colors ${isSelected ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white'} ${provider.available ? 'hover:border-indigo-200 hover:bg-slate-50' : 'cursor-not-allowed bg-slate-50 text-slate-400 opacity-70'}`}
                         >
                           <div className="flex items-center justify-between gap-3">
-                             <div>
-                               <div className="text-sm font-semibold text-slate-900">{provider.label}</div>
-                               <div className="mt-1 text-xs leading-relaxed text-slate-500">{provider.description}</div>
-                               {!provider.available && provider.unavailableReason ? (
-                                 <div className="mt-1 text-[11px] font-medium text-amber-600">{provider.unavailableReason}</div>
-                               ) : null}
-                             </div>
-                             <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${provider.available ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
-                               {provider.available ? (isSelected ? 'Selected' : 'Available') : 'Disabled'}
+                            <div>
+                              <div className="text-sm font-semibold text-slate-900">{provider.label}</div>
+                              <div className="mt-1 text-xs leading-relaxed text-slate-500">{provider.description}</div>
+                              {!provider.available && provider.unavailableReason ? (
+                                <div className="mt-1 text-[11px] font-medium text-amber-600">{provider.unavailableReason}</div>
+                              ) : null}
+                            </div>
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${provider.available ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
+                              {provider.available ? (isSelected ? 'Selected' : 'Available') : 'Disabled'}
                             </span>
                           </div>
                         </button>
