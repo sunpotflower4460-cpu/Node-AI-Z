@@ -9,6 +9,7 @@ export type ApiProviderConfig = {
   label: string
   description: string
   available: boolean
+  unavailableReason?: string
 }
 
 export type ApiSelectionState = {

@@ -1,4 +1,5 @@
 import type { NodePipelineResult, RevisionEntry, StudioViewModel } from './nodeStudio'
+import type { SurfaceReplyResult } from './surface'
 
 export type AppMode = 'observe' | 'experience'
 export type ObservationSource = AppMode
@@ -24,4 +25,5 @@ export type ExperienceMessage = {
   pipelineResult?: NodePipelineResult
   studioView?: StudioViewModel
   revisionEntry?: RevisionEntry
+  surfaceMeta?: SurfaceReplyResult
 }

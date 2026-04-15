@@ -2,18 +2,30 @@ import { useState } from 'react'
 import { ChevronDown, ChevronUp, MessageCircleHeart, RefreshCcw, Send, Sparkles } from 'lucide-react'
 import type { ExperienceMessage } from '../../types/experience'
 import type { UserTuningAction, UserTuningState } from '../../types/nodeStudio'
+import type { SurfaceReplyResult } from '../../types/surface'
 import { describeProposedChange } from '../../revision/statusMeta'
 
 type ExperienceModeProps = {
   messages: ExperienceMessage[]
   surfaceProviderLabel: string
+  surfaceProviderStatus?: string
+  lastSurfaceMeta?: SurfaceReplyResult | null
   tuning?: UserTuningState
   onSend: (text: string) => void | Promise<void>
   onOpenObservation: (observationId: string) => void
   onTuningAction?: (entryId: string, changeId: string, action: UserTuningAction) => void
 }
 
-export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, onSend, onOpenObservation, onTuningAction }: ExperienceModeProps) => {
+export const ExperienceMode = ({
+  messages,
+  surfaceProviderLabel,
+  surfaceProviderStatus,
+  lastSurfaceMeta,
+  tuning,
+  onSend,
+  onOpenObservation,
+  onTuningAction,
+}: ExperienceModeProps) => {
   const [inputText, setInputText] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [expandedRevisions, setExpandedRevisions] = useState<Set<string>>(new Set())
@@ -62,9 +74,15 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, onSend,
           </div>
           <div className="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500">
             <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
-            Surface Provider: {surfaceProviderLabel} / 内部では記録されています
+            Surface Provider: {surfaceProviderLabel} / {surfaceProviderStatus ?? 'ready'} / 内部では記録されています
           </div>
         </div>
+        {lastSurfaceMeta?.fellBack ? (
+          <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700">
+            fallback to internal mock
+            <span className="text-amber-600/90">({lastSurfaceMeta.fallbackReason ?? 'surface route unavailable'})</span>
+          </div>
+        ) : null}
       </section>
 
       <section className="flex flex-1 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
@@ -87,7 +105,7 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, onSend,
                 <div key={message.id} className={`flex ${isAssistant ? 'justify-start' : 'justify-end'}`}>
                   <div className={`max-w-[85%] rounded-3xl px-4 py-3 shadow-sm ${isAssistant ? 'border border-slate-200 bg-slate-50 text-slate-800' : 'bg-rose-500 text-white'}`}>
                     <p className="whitespace-pre-wrap text-[15px] font-medium leading-relaxed">{message.text}</p>
-                    {isAssistant && message.revisionEntry && message.revisionEntry.proposedChanges.length > 0 ? (
+                     {isAssistant && message.revisionEntry && message.revisionEntry.proposedChanges.length > 0 ? (
                       <div className="mt-3 rounded-2xl border border-indigo-100 bg-white/80 text-slate-600">
                         <button
                           type="button"
@@ -147,9 +165,14 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, onSend,
                         ) : null}
                       </div>
                     ) : null}
-                    <div className={`mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold ${isAssistant ? 'text-slate-500' : 'text-rose-100'}`}>
-                      <span>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      {isAssistant && message.observationId ? (
+                     <div className={`mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold ${isAssistant ? 'text-slate-500' : 'text-rose-100'}`}>
+                        <span>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        {isAssistant && message.surfaceMeta?.fellBack ? (
+                          <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                            fallback to internal mock
+                          </span>
+                        ) : null}
+                        {isAssistant && message.observationId ? (
                         <>
                           <span>観察研究モードで詳しく見返せます</span>
                           <button
