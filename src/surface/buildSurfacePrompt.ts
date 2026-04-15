@@ -10,11 +10,9 @@ type BuildSurfacePromptParams = {
   promotedMemories?: RevisionEntry[]
 }
 
-const INTENT_RULES: Array<{ intent: ReplyIntent; pattern: RegExp }> = [
-  { intent: 'judgment_support', pattern: /(どうすべき|どうしたら|どちらがいい|どっちがいい|べきですか|判断|アドバイス|選ぶべき|決めるべき)/i },
-  { intent: 'practical_advice', pattern: /(どうやって|何から|進め方|方法|手順|具体的|実際に|コツ|おすすめ)/i },
-  { intent: 'emotional_holding', pattern: /(つらい|辛い|苦しい|しんどい|疲れた|疲弊|わかってほしい|分かってほしい|孤独|不安で|悲しい|泣きたい)/i },
-]
+const JUDGMENT_SUPPORT_PATTERN = /(どうすべき|どうしたら|どちらがいい|どっちがいい|べきですか|判断|アドバイス|選ぶべき|決めるべき)/i
+const PRACTICAL_ADVICE_PATTERN = /(どうやって|何から|進め方|方法|手順|具体的|実際に|コツ|おすすめ)/i
+const EMOTIONAL_HOLDING_PATTERN = /(つらい|辛い|苦しい|しんどい|疲れた|疲弊|わかってほしい|分かってほしい|孤独|不安で|悲しい|泣きたい)/i
 
 const EXPLICIT_QUESTION_PATTERN = /[?？]|(どう|なぜ|何|どれ|どちら|どっち|いつ|どこ|できますか|べき|したら)/i
 const INTERNAL_LANGUAGE_PATTERN = /\b(node|home|revision|memory|pattern|plasticity)\b/i
@@ -75,8 +73,19 @@ const buildIntentInstruction = (intent: ReplyIntent, explicitQuestion: boolean) 
 }
 
 export const classifyReplyIntent = (text: string): ReplyIntent => {
-  const matched = INTENT_RULES.find((rule) => rule.pattern.test(text))
-  return matched?.intent ?? 'free_reflection'
+  if (JUDGMENT_SUPPORT_PATTERN.test(text)) {
+    return 'judgment_support'
+  }
+
+  if (PRACTICAL_ADVICE_PATTERN.test(text)) {
+    return 'practical_advice'
+  }
+
+  if (EMOTIONAL_HOLDING_PATTERN.test(text)) {
+    return 'emotional_holding'
+  }
+
+  return 'free_reflection'
 }
 
 export const containsInternalLanguage = (text: string) => INTERNAL_LANGUAGE_PATTERN.test(text)

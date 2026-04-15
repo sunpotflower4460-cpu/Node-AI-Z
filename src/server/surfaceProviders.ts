@@ -5,8 +5,10 @@ import { getProviderConfigFromEnv } from './providerAvailability'
 
 const OPENAI_URL = 'https://api.openai.com/v1/chat/completions'
 const ANTHROPIC_URL = 'https://api.anthropic.com/v1/messages'
-const GOOGLE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent'
 const PROVIDER_TIMEOUT_MS = 12000
+const DEFAULT_OPENAI_MODEL = 'gpt-4.1-mini'
+const DEFAULT_ANTHROPIC_MODEL = 'claude-3-5-haiku-latest'
+const DEFAULT_GOOGLE_MODEL = 'gemini-2.0-flash'
 
 const createReplyResult = (
   text: string,
@@ -88,7 +90,7 @@ const buildGooglePrompt = (prompt: SurfacePrompt) => {
   return `${prompt.system}\n\n${prompt.user}`
 }
 
-const requestOpenAiReply = async (apiKey: string, prompt: SurfacePrompt) => {
+const requestOpenAiReply = async (apiKey: string, prompt: SurfacePrompt, model: string) => {
   return callJsonApi(
     OPENAI_URL,
     {
@@ -98,7 +100,7 @@ const requestOpenAiReply = async (apiKey: string, prompt: SurfacePrompt) => {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4.1-mini',
+        model,
         temperature: 0.7,
         messages: [
           { role: 'system', content: prompt.system },
@@ -110,7 +112,7 @@ const requestOpenAiReply = async (apiKey: string, prompt: SurfacePrompt) => {
   )
 }
 
-const requestAnthropicReply = async (apiKey: string, prompt: SurfacePrompt) => {
+const requestAnthropicReply = async (apiKey: string, prompt: SurfacePrompt, model: string) => {
   return callJsonApi(
     ANTHROPIC_URL,
     {
@@ -121,7 +123,7 @@ const requestAnthropicReply = async (apiKey: string, prompt: SurfacePrompt) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-latest',
+        model,
         max_tokens: 350,
         temperature: 0.7,
         system: prompt.system,
@@ -134,9 +136,9 @@ const requestAnthropicReply = async (apiKey: string, prompt: SurfacePrompt) => {
   )
 }
 
-const requestGoogleReply = async (apiKey: string, prompt: SurfacePrompt) => {
+const requestGoogleReply = async (apiKey: string, prompt: SurfacePrompt, model: string) => {
   return callJsonApi(
-    `${GOOGLE_URL}?key=${encodeURIComponent(apiKey)}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
     {
       method: 'POST',
       headers: {
@@ -163,14 +165,15 @@ const requestProviderReply = async (
   provider: ApiProviderId,
   apiKey: string,
   prompt: SurfacePrompt,
+  env: Record<string, string | undefined>,
 ) => {
   switch (provider) {
     case 'openai':
-      return requestOpenAiReply(apiKey, prompt)
+      return requestOpenAiReply(apiKey, prompt, env.OPENAI_SURFACE_MODEL || DEFAULT_OPENAI_MODEL)
     case 'anthropic':
-      return requestAnthropicReply(apiKey, prompt)
+      return requestAnthropicReply(apiKey, prompt, env.ANTHROPIC_SURFACE_MODEL || DEFAULT_ANTHROPIC_MODEL)
     case 'google':
-      return requestGoogleReply(apiKey, prompt)
+      return requestGoogleReply(apiKey, prompt, env.GOOGLE_SURFACE_MODEL || DEFAULT_GOOGLE_MODEL)
     case 'internal_mock':
     default:
       return ''
@@ -203,7 +206,7 @@ export const generateSurfaceReplyFromProvider = async (
   }
 
   try {
-    const text = (await requestProviderReply(provider, apiKey, prompt)).trim()
+    const text = (await requestProviderReply(provider, apiKey, prompt, env)).trim()
     if (!text) {
       return createFallbackResult(provider, fallbackText, 'Empty provider reply')
     }
