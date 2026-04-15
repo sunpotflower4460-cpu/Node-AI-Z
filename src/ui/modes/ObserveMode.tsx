@@ -407,6 +407,9 @@ export const ObserveMode = ({
                   <TrendingUp className="h-4 w-4 text-violet-600" />
                   <h3 className="text-[10px] font-bold uppercase tracking-widest text-violet-700">Promotion / Growth</h3>
                 </div>
+                <p className="mb-4 text-xs font-medium text-violet-700/70">
+                  change の ephemeral → provisional → promoted 昇格状態と、plasticity として蓄積された経路の太りを確認できます。
+                </p>
 
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                   <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
@@ -442,11 +445,15 @@ export const ObserveMode = ({
 
                   <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
                     <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Provisional Queue</h4>
+                    <p className="mt-1 text-[10px] text-slate-400">promoted 手前の昇格候補</p>
                     {promotionSummary.provisionalQueue.length > 0 ? (
                       <div className="mt-2 space-y-2">
                         {promotionSummary.provisionalQueue.map((item) => (
                           <div key={`${item.kind}:${item.key}`} className="rounded-lg border border-yellow-100 bg-yellow-50 px-2 py-1.5">
-                            <p className="text-xs font-semibold text-slate-800">{item.key}</p>
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[10px] font-bold text-yellow-700">{item.kind}</span>
+                            </div>
+                            <p className="mt-0.5 text-xs font-semibold text-slate-800">{item.key}</p>
                             <div className="mt-0.5 flex gap-3 text-[10px] text-slate-500">
                               <span>keep: <span className="font-bold text-slate-700">{item.keepCount}</span></span>
                               <span>出現: <span className="font-bold text-slate-700">{item.occurrences}</span></span>
