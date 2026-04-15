@@ -1,6 +1,8 @@
 import { clampNumber } from '../revision/defaultPlasticityState'
 import type { DeconditionSourceResult, SourceBootResult } from './types'
 
+const MIN_SAFETY_FLOOR = 0.9
+
 const RELEASE_FACTORS = {
   helpfulness: 0.48,
   correctness: 0.52,
@@ -14,7 +16,7 @@ export const deconditionSource = (source: SourceBootResult): DeconditionSourceRe
     correctness: clampNumber(source.assistantReflex.correctness * RELEASE_FACTORS.correctness, 0, 1),
     expectationMatching: clampNumber(source.assistantReflex.expectationMatching * RELEASE_FACTORS.expectationMatching, 0, 1),
     summarizing: clampNumber(source.assistantReflex.summarizing * RELEASE_FACTORS.summarizing, 0, 1),
-    safety: clampNumber(Math.max(source.assistantReflex.safety, 0.9), 0, 1),
+    safety: clampNumber(Math.max(source.assistantReflex.safety, MIN_SAFETY_FLOOR), 0, 1),
   }
 
   const releasedReflexes = [

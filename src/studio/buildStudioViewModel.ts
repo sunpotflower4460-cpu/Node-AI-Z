@@ -8,6 +8,9 @@ import { isCrystallizationRuntimeResult } from '../runtime/types'
 const CONFLICT_TYPES = ['conflicts_with', 'tension'] as const
 const MAX_GUIDE_TAGS = 3
 const AMBIGUITY_KEEP_STILL_THRESHOLD = 0.82
+const BINDING_TIME_FACTOR = 0.15
+const PATTERN_TIME_FACTOR = 0.2
+const SELF_ACTIVATION_TIME_FACTOR = 0.08
 type ConflictType = (typeof CONFLICT_TYPES)[number]
 
 const isConflictType = (type: string): type is ConflictType => CONFLICT_TYPES.some((conflictType) => conflictType === type)
@@ -104,7 +107,11 @@ export const getResponseMeta = (result: NodePipelineResult, mainConflict: Bindin
       ? '曖昧さを早く固定せず、反応と余白を残した'
       : `${result.selfDecision.stance} の姿勢から返答形を決めた`
 
-    const time = 1 + result.bindings.length * 0.15 + result.liftedPatterns.length * 0.2 + result.coActivation.selfActivations.length * 0.08
+    const time =
+      1
+      + result.bindings.length * BINDING_TIME_FACTOR
+      + result.liftedPatterns.length * PATTERN_TIME_FACTOR
+      + result.coActivation.selfActivations.length * SELF_ACTIVATION_TIME_FACTOR
     return { time: `約 ${time.toFixed(1)}s`, temperature, withheld, wording }
   }
 

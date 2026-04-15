@@ -14,6 +14,19 @@ import { renderUtterance } from './renderUtterance'
 import type { CrystallizationRuntimeResult } from './types'
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
+const FRAGILITY_PATHWAY_THRESHOLD = 0.58
+
+const PATHWAY_ACTIVATION_RULES: Record<string, (context: {
+  relationalField: CrystallizationRuntimeResult['relationalField']
+  selfDecision: CrystallizationRuntimeResult['selfDecision']
+  homeReason: CrystallizationRuntimeResult['homeReturn']['homeCheck']['reason']
+  emergentBindings: CrystallizationRuntimeResult['emergentBindings']
+}) => boolean> = {
+  'belief:protecting_aliveness->field:fragility': ({ relationalField }) => relationalField.fragility > FRAGILITY_PATHWAY_THRESHOLD,
+  'field:ambiguity->stance:stay_open': ({ selfDecision }) => selfDecision.stance === 'stay_open',
+  'home:overperformance->utterance:soften': ({ homeReason }) => homeReason === 'overperformance',
+  'other:fatigue_signal->self:care_response': ({ emergentBindings }) => emergentBindings.some((binding) => binding.pathwayKey === 'other:fatigue_signal->self:care_response'),
+}
 
 export const runCrystallizationRuntime = (
   inputText: string,
@@ -42,22 +55,14 @@ export const runCrystallizationRuntime = (
   const crystallized = renderUtterance(coActivationResult, relationalField, meaningRise, selfDecision, homeReturn)
   const elapsedMs = now() - startedAt
 
+  const pathwayContext = {
+    relationalField,
+    selfDecision,
+    homeReason: homeReturn.homeCheck.reason,
+    emergentBindings,
+  }
   const pathwayKeysUsed = Array.from(new Set([
-    ...selfSubstrate.pathwayBiases.filter((key) => {
-      if (key === 'belief:protecting_aliveness->field:fragility') {
-        return relationalField.fragility > 0.58
-      }
-      if (key === 'field:ambiguity->stance:stay_open') {
-        return selfDecision.stance === 'stay_open'
-      }
-      if (key === 'home:overperformance->utterance:soften') {
-        return homeReturn.homeCheck.reason === 'overperformance'
-      }
-      if (key === 'other:fatigue_signal->self:care_response') {
-        return emergentBindings.some((binding) => binding.pathwayKey === key)
-      }
-      return false
-    }),
+    ...selfSubstrate.pathwayBiases.filter((key) => PATHWAY_ACTIVATION_RULES[key]?.(pathwayContext) ?? false),
     ...emergentBindings.flatMap((binding) => binding.pathwayKey ? [binding.pathwayKey] : []),
   ]))
 
