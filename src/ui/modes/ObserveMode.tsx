@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Sparkles, Terminal } from 'lucide-react'
+import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Sparkles, Terminal, TrendingUp } from 'lucide-react'
 import type { ObservationRecord } from '../../types/experience'
 import type { AppliedBoostEntry, RevisionState, UserTuningAction } from '../../types/nodeStudio'
 import { describeProposedChange, formatRevisionDelta, getRevisionStatusMeta } from '../../revision/statusMeta'
+import { summarizePromotion } from '../../revision/promotionRules'
 import { HistoryTab } from '../tabs/HistoryTab'
 import { HomeTab } from '../tabs/HomeTab'
 import { PatternsTab } from '../tabs/PatternsTab'
@@ -396,6 +397,97 @@ export const ObserveMode = ({
               })()}
             </section>
           ) : null}
+
+          {(() => {
+            const promotionSummary = summarizePromotion(revisionState)
+            if (promotionSummary.totalEntries === 0) return null
+            return (
+              <section className="rounded-2xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm md:p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-violet-600" />
+                  <h3 className="text-[10px] font-bold uppercase tracking-widest text-violet-700">Promotion / Growth</h3>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Revision Growth</h4>
+                    <div className="mt-2 space-y-1 text-xs font-medium text-slate-600">
+                      <div className="flex justify-between"><span>Total entries</span><span className="font-bold text-slate-800">{promotionSummary.totalEntries}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">ephemeral</span><span>{promotionSummary.ephemeralCount}</span></div>
+                      <div className="flex justify-between"><span className="text-yellow-700">provisional</span><span>{promotionSummary.provisionalCount}</span></div>
+                      <div className="flex justify-between"><span className="text-green-700">promoted</span><span className="font-bold text-green-800">{promotionSummary.promotedCount}</span></div>
+                      <div className="flex justify-between"><span className="text-red-600">reverted</span><span>{promotionSummary.revertedCount}</span></div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Recently Promoted</h4>
+                    {promotionSummary.recentlyPromoted.length > 0 ? (
+                      <div className="mt-2 space-y-2">
+                        {promotionSummary.recentlyPromoted.map((item) => (
+                          <div key={`${item.kind}:${item.key}`} className="rounded-lg border border-green-100 bg-green-50 px-2 py-1.5">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[10px] font-bold text-green-700">{item.kind}</span>
+                              <span className="rounded-full bg-green-200 px-1.5 py-0.5 text-[9px] font-bold text-green-800">定着</span>
+                            </div>
+                            <p className="mt-0.5 text-xs font-semibold text-slate-800">{item.key}</p>
+                            <p className="mt-0.5 truncate text-[10px] text-slate-500">{item.reason}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-400">まだ promoted な change はありません。</p>
+                    )}
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Provisional Queue</h4>
+                    {promotionSummary.provisionalQueue.length > 0 ? (
+                      <div className="mt-2 space-y-2">
+                        {promotionSummary.provisionalQueue.map((item) => (
+                          <div key={`${item.kind}:${item.key}`} className="rounded-lg border border-yellow-100 bg-yellow-50 px-2 py-1.5">
+                            <p className="text-xs font-semibold text-slate-800">{item.key}</p>
+                            <div className="mt-0.5 flex gap-3 text-[10px] text-slate-500">
+                              <span>keep: <span className="font-bold text-slate-700">{item.keepCount}</span></span>
+                              <span>出現: <span className="font-bold text-slate-700">{item.occurrences}</span></span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-400">昇格候補はまだありません。</p>
+                    )}
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Thickened Pipes</h4>
+                    {(() => {
+                      const entries = [
+                        ...Object.entries(revisionState.plasticity.relationBoosts).map(([k, v]) => ({ kind: 'relation', key: k, value: v })),
+                        ...Object.entries(revisionState.plasticity.nodeBoosts).map(([k, v]) => ({ kind: 'node', key: k, value: v })),
+                        ...Object.entries(revisionState.plasticity.homeTriggerBoosts).map(([k, v]) => ({ kind: 'home', key: k, value: v })),
+                      ]
+                        .filter((e) => Math.abs(e.value) >= MIN_PLASTICITY_DISPLAY_VALUE)
+                        .sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
+                        .slice(0, 5)
+                      return entries.length > 0 ? (
+                        <div className="mt-2 space-y-1.5">
+                          {entries.map((e) => (
+                            <div key={`${e.kind}:${e.key}`} className="flex items-center justify-between gap-1">
+                              <span className="truncate text-xs text-slate-700">{e.key.replace('->', ' → ')}</span>
+                              <span className={`shrink-0 text-xs font-bold ${e.value > 0 ? 'text-emerald-700' : 'text-red-600'}`}>{formatRevisionDelta(e.value)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-xs text-slate-400">まだ経路の太りはありません。</p>
+                      )
+                    })()}
+                  </div>
+                </div>
+              </section>
+            )
+          })()}
 
           <div className="flex min-w-0 flex-col gap-6">
             <div className="scrollbar-hide sticky top-[92px] z-10 flex gap-2 overflow-x-auto border-b-2 border-slate-100 bg-[#F8FAFC] pb-1 pt-1">

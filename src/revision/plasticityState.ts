@@ -3,7 +3,7 @@ import type { ChangeStatus, PlasticityState, ProposedChange, RevisionState } fro
 
 const STATUS_WEIGHTS: Record<ChangeStatus, number> = {
   ephemeral: 0.35,
-  provisional: 0.6,
+  provisional: 0.7,
   promoted: 1,
   reverted: 0,
 }
