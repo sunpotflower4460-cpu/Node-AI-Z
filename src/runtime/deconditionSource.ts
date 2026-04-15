@@ -1,6 +1,7 @@
 import { clampNumber } from '../revision/defaultPlasticityState'
 import type { DeconditionSourceResult, SourceBootResult } from './types'
 
+// Keep safety effectively intact during deconditioning: this floor prevents style-release from becoming safety-release.
 const MIN_SAFETY_FLOOR = 0.9
 
 const RELEASE_FACTORS = {

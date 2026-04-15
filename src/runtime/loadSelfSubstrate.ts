@@ -1,9 +1,7 @@
-import type { PlasticityState } from '../revision/types'
 import { DEFAULT_SELF_SUBSTRATE } from '../self/selfSubstrate'
 import type { SelfSubstrate } from './types'
 
-export const loadSelfSubstrate = (plasticity?: PlasticityState): SelfSubstrate => {
-  void plasticity
+export const loadSelfSubstrate = (): SelfSubstrate => {
   return {
     ...DEFAULT_SELF_SUBSTRATE,
     beliefs: DEFAULT_SELF_SUBSTRATE.beliefs.map((belief) => ({ ...belief })),

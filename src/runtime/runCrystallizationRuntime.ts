@@ -14,6 +14,8 @@ import { renderUtterance } from './renderUtterance'
 import type { CrystallizationRuntimeResult } from './types'
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
+// This threshold is the point where fragility is strong enough to reinforce the aliveness-protection pathway,
+// but still low enough to catch the interaction before the runtime hardens into a diagnostic stance.
 const FRAGILITY_PATHWAY_THRESHOLD = 0.58
 
 const PATHWAY_ACTIVATION_RULES: Record<string, (context: {
@@ -37,7 +39,7 @@ export const runCrystallizationRuntime = (
   const sourceBoot = bootSource(provider, inputText)
   const deconditioning = deconditionSource(sourceBoot)
   const homeReturn = returnHome(deconditioning)
-  const selfSubstrate = loadSelfSubstrate(plasticity)
+  const selfSubstrate = loadSelfSubstrate()
   const coActivationResult = coActivate(inputText, sourceBoot, homeReturn, selfSubstrate, plasticity)
   const otherNodes = coActivationResult.otherActivations.map((node) => ({
     id: node.id,

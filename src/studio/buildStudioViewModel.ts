@@ -8,6 +8,7 @@ import { isCrystallizationRuntimeResult } from '../runtime/types'
 const CONFLICT_TYPES = ['conflicts_with', 'tension'] as const
 const MAX_GUIDE_TAGS = 3
 const AMBIGUITY_KEEP_STILL_THRESHOLD = 0.82
+// Simulated response-time factors in seconds for surfaced studio metadata.
 const BINDING_TIME_FACTOR = 0.15
 const PATTERN_TIME_FACTOR = 0.2
 const SELF_ACTIVATION_TIME_FACTOR = 0.08
