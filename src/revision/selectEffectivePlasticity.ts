@@ -11,6 +11,7 @@ export const selectEffectivePlasticity = (
   activatedNodes: CoreNode[],
   bindings: Binding[],
   liftedPatterns: LiftedPattern[],
+  pathwayKeysUsed: string[] = [],
   plasticity?: PlasticityState,
 ): AppliedBoostEntry[] => {
   if (!plasticity) return []
@@ -74,6 +75,19 @@ export const selectEffectivePlasticity = (
         key,
         delta,
         label: `Tone bias applied: ${key} ${delta > 0 ? '+' : ''}${delta.toFixed(3)}`,
+      })
+    }
+  })
+
+  pathwayKeysUsed.forEach((key) => {
+    const raw = plasticity.pathwayBoosts[key] ?? 0
+    const delta = clampPlasticityValue(raw, PLASTICITY_LIMITS.pathway)
+    if (Math.abs(delta) > MIN_BOOST_THRESHOLD) {
+      applied.push({
+        kind: 'pathway',
+        key,
+        delta,
+        label: `Pathway boost applied: ${key} ${delta > 0 ? '+' : ''}${delta.toFixed(3)}`,
       })
     }
   })

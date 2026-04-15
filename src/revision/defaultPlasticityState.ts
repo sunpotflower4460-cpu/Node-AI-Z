@@ -6,6 +6,7 @@ export const PLASTICITY_LIMITS = {
   pattern: 0.12,
   homeTrigger: 0.1,
   tone: 0.16,
+  pathway: 0.12,
 } as const
 
 export const clampNumber = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
@@ -18,5 +19,6 @@ export const createDefaultPlasticityState = (): PlasticityState => ({
   patternBoosts: {},
   homeTriggerBoosts: {},
   toneBiases: {},
+  pathwayBoosts: {},
   lastUpdated: new Date().toISOString(),
 })

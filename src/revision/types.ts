@@ -6,6 +6,7 @@ export type ProposedChange =
   | { id: string; kind: 'home_trigger'; key: string; delta: number; reason: string; status: ChangeStatus }
   | { id: string; kind: 'tone_bias'; key: string; delta: number; reason: string; status: ChangeStatus }
   | { id: string; kind: 'node_weight'; key: string; delta: number; reason: string; status: ChangeStatus }
+  | { id: string; kind: 'pathway_weight'; key: string; delta: number; reason: string; status: ChangeStatus }
 
 export type RevisionEntry = {
   id: string
@@ -25,6 +26,7 @@ export type PlasticityState = {
   patternBoosts: Record<string, number>
   homeTriggerBoosts: Record<string, number>
   toneBiases: Record<string, number>
+  pathwayBoosts: Record<string, number>
   lastUpdated: string
 }
 

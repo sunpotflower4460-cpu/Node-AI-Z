@@ -14,6 +14,7 @@ const KIND_LIMITS = {
   home_trigger: PLASTICITY_LIMITS.homeTrigger,
   tone_bias: PLASTICITY_LIMITS.tone,
   node_weight: PLASTICITY_LIMITS.node,
+  pathway_weight: PLASTICITY_LIMITS.pathway,
 } as const
 
 const getTuningMultiplier = (changeId: string, tuning: RevisionState['tuning']) => {
@@ -44,6 +45,9 @@ const applyChangeToPlasticity = (plasticity: PlasticityState, change: ProposedCh
       break
     case 'node_weight':
       applyChangeToMap(plasticity.nodeBoosts, change.key, delta, KIND_LIMITS.node_weight)
+      break
+    case 'pathway_weight':
+      applyChangeToMap(plasticity.pathwayBoosts, change.key, delta, KIND_LIMITS.pathway_weight)
       break
   }
 }

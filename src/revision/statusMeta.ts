@@ -56,6 +56,8 @@ export const getRevisionKindLabel = (kind: ProposedChange['kind']) => {
       return 'Tone Bias'
     case 'node_weight':
       return 'Node Boost'
+    case 'pathway_weight':
+      return 'Internal Pathway'
   }
 }
 
@@ -65,6 +67,10 @@ export const getProposedChangeTargetLabel = (change: ProposedChange) => {
   if (change.kind === 'relation_weight') {
     const [source, target] = change.key.split('->')
     return source && target ? `${source} → ${target} の経路` : change.key
+  }
+
+  if (change.kind === 'pathway_weight') {
+    return `${change.key} の内的経路`
   }
 
   return CHANGE_TARGET_LABELS[change.key] || change.key

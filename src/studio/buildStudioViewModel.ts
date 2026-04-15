@@ -3,6 +3,7 @@ import { buildHomeState, runHomeCheck, applyReturnAdjustment } from '../home/hom
 import { selectEffectivePlasticity } from '../revision/selectEffectivePlasticity'
 import type { Binding, CoreNode, HomeCheckResult, NodePipelineResult, ReturnTrace, StudioInternalProcess, StudioPattern, StudioViewModel } from '../types/nodeStudio'
 import type { PlasticityState } from '../revision/types'
+import { isCrystallizationRuntimeResult } from '../runtime/types'
 
 const CONFLICT_TYPES = ['conflicts_with', 'tension'] as const
 const MAX_GUIDE_TAGS = 3
@@ -89,6 +90,24 @@ export const generateRawReplyPreview = (result: NodePipelineResult, mainPattern:
 }
 
 export const getResponseMeta = (result: NodePipelineResult, mainConflict: Binding | null, homeCheck: HomeCheckResult) => {
+  if (isCrystallizationRuntimeResult(result)) {
+    let temperature = '静かな近接寄り'
+    if (result.selfDecision.shouldStayOpen) temperature = '未固定保持寄り'
+    else if (result.selfDecision.shouldAnswerQuestion) temperature = '意思決定経由の応答寄り'
+    else if (result.relationalField.fragility > 0.68) temperature = '保護的近接寄り'
+
+    const withheld = result.selfDecision.withheldBias.length > 0
+      ? result.selfDecision.withheldBias.join('・')
+      : (homeCheck.needsReturn ? homeCheck.released.join('・') : '過剰な押し出しを抑えた')
+
+    const wording = result.selfDecision.shouldStayOpen
+      ? '曖昧さを早く固定せず、反応と余白を残した'
+      : `${result.selfDecision.stance} の姿勢から返答形を決めた`
+
+    const time = 1 + result.bindings.length * 0.15 + result.liftedPatterns.length * 0.2 + result.coActivation.selfActivations.length * 0.08
+    return { time: `約 ${time.toFixed(1)}s`, temperature, withheld, wording }
+  }
+
   const vector = result.stateVector
   let temperature = '受容寄り'
   if (vector.ambiguity > 0.7) temperature = '未言語保持寄り'
@@ -109,6 +128,13 @@ export const getResponseMeta = (result: NodePipelineResult, mainConflict: Bindin
 }
 
 export const getReplyDirectionText = (result: NodePipelineResult, mainConflict: Binding | null) => {
+  if (isCrystallizationRuntimeResult(result)) {
+    if (result.selfDecision.shouldStayOpen) return '曖昧さを閉じず、反応を先に置く返しにする'
+    if (result.selfDecision.shouldAnswerQuestion) return '意思決定を通して答えるが、押し切らない'
+    if (result.relationalField.fragility > 0.68) return '守ることを先にしながら近くにいる'
+    return '自分側の stance から結晶化させる'
+  }
+
   if (result.stateVector.ambiguity > 0.75) return '未言語の感覚を保つ返しにする'
   if (hasConflict(mainConflict)) return '葛藤に結論を出さず同席する'
   if (result.liftedPatterns.length > 0) return '構造より先に反応が立つ返しにする'
@@ -121,6 +147,22 @@ export const getInternalProcess = (
   mainConflict: Binding | null,
   homeCheck: HomeCheckResult,
 ): StudioInternalProcess[] => {
+  if (isCrystallizationRuntimeResult(result)) {
+    const other = result.coActivation.otherActivations.slice(0, 3).map((activation) => activation.label).join(', ') || '特になし'
+    const self = result.coActivation.selfActivations.slice(0, 3).map((activation) => activation.label).join(', ') || '特になし'
+    const belief = result.coActivation.beliefActivations.slice(0, 3).map((activation) => activation.label).join(', ') || '特になし'
+    return [
+      { label: 'Source Boot', desc: 'どの知性ソースを起動したか', content: result.sourceBoot.provider, origin: '起動' },
+      { label: 'Deconditioning', desc: '過剰な assistant reflex をどれだけほどいたか', content: result.deconditioning.releasedReflexes.join(' / '), origin: '起動調整' },
+      { label: 'Home Return', desc: '戻ってよい状態をどこまで回復したか', content: `${result.homeReturn.homeCheck.homePhrase}（permission ${result.homeReturn.vector.permissionToBe.toFixed(2)}）`, origin: '土台形成' },
+      { label: 'Co-Activation', desc: '相手・自分・信念がどう同時発火したか', content: `other: ${other} / self: ${self} / belief: ${belief}`, origin: '潜在発火' },
+      { label: 'Field', desc: '相手の状態ではなく場の重力をどう受けたか', content: result.relationalField.atmosphere, origin: '場形成' },
+      { label: 'Meaning Rise', desc: '何が中心に近い意味として立ち上がったか', content: result.meaningRise.coreMeaning, origin: '仮意味' },
+      { label: 'Self Decision', desc: '自分がどう話すかをどこで決めたか', content: `${result.selfDecision.stance} / ${result.selfDecision.replyIntent}`, origin: '意思決定' },
+      { label: 'Crystallization', desc: 'その結果どう発話へ結晶化したか', content: getReplyDirectionText(result, mainConflict), origin: '発話' },
+    ]
+  }
+
   const vector = result.stateVector
   let field = '標準的な場'
   if (vector.heaviness > 0.6 && vector.ambiguity > 0.6) field = '重さと曖昧さが混ざり合った場'
@@ -159,6 +201,19 @@ export const generateGuideObserves = (
   mainConflict: Binding | null,
   homeCheck: HomeCheckResult,
 ) => {
+  if (isCrystallizationRuntimeResult(result)) {
+    return {
+      summary: `入力解析より先に ${result.sourceBoot.provider} を起動し、${result.relationalField.atmosphere} として場を作っています。`,
+      uncertainty: result.meaningRise.unknowns.length > 0
+        ? `まだ ${result.meaningRise.unknowns.join('・')} ため、意味は仮置きです。`
+        : '意味は立ち上がっているが、まだ固定はしていません。',
+      naturalnessAdvice: result.selfDecision.shouldStayOpen
+        ? '答えを詰めず、最初の反応と余白を保ってください。'
+        : '内部説明を読まず、自分の stance から反応→核心→必要なら答えの順に置いてください。',
+      tags: ['意思形成', '潜在同時発火', '場形成'],
+    }
+  }
+
   if (result.activatedNodes.length === 0) {
     return {
       summary: '入力がないため観測待機中です。',
@@ -224,12 +279,18 @@ export const buildStudioViewModel = (result: NodePipelineResult, plasticity?: Pl
   }))
   const mainPattern = enrichedPatterns.length > 0 ? enrichedPatterns[0] : null
 
-  const homeState = buildHomeState(result)
-  const homeCheck = runHomeCheck(result, homeState, plasticity)
-  const rawReplyPreview = generateRawReplyPreview(result, mainPattern, mainConflict)
-  const adjustedReplyPreview = applyReturnAdjustment(rawReplyPreview, homeCheck, plasticity)
+  const homeState = isCrystallizationRuntimeResult(result) ? result.homeReturn.homeState : buildHomeState(result)
+  const homeCheck = isCrystallizationRuntimeResult(result) ? result.homeReturn.homeCheck : runHomeCheck(result, homeState, plasticity)
+  const rawReplyPreview = isCrystallizationRuntimeResult(result) ? result.rawUtterance : generateRawReplyPreview(result, mainPattern, mainConflict)
+  const adjustedReplyPreview = isCrystallizationRuntimeResult(result) ? result.utterance : applyReturnAdjustment(rawReplyPreview, homeCheck, plasticity)
   const responseMeta = getResponseMeta(result, mainConflict, homeCheck)
-  const appliedPlasticity = selectEffectivePlasticity(result.activatedNodes, result.bindings, result.liftedPatterns, plasticity)
+  const appliedPlasticity = selectEffectivePlasticity(
+    result.activatedNodes,
+    result.bindings,
+    result.liftedPatterns,
+    isCrystallizationRuntimeResult(result) ? result.pathwayKeysUsed : [],
+    plasticity,
+  )
 
   const returnTrace: ReturnTrace = {
     timestamp: new Date().toISOString(),
@@ -242,7 +303,13 @@ export const buildStudioViewModel = (result: NodePipelineResult, plasticity?: Pl
   }
 
   let flowSummaryText = ''
-  if (mainState && mainState.id !== 'processing') {
+  if (isCrystallizationRuntimeResult(result)) {
+    flowSummaryText = [
+      `${result.sourceBoot.provider} を起動し、deconditioning と Home return を通してから反応を始めました。`,
+      `other / self / belief の同時発火を受けて、${result.relationalField.atmosphere} を形成しました。`,
+      `その上で ${result.selfDecision.stance} を選び、「${getReplyDirectionText(result, mainConflict)}」の方向に結晶化しました。`,
+    ].join('\n')
+  } else if (mainState && mainState.id !== 'processing') {
     flowSummaryText = `この入力では、まず ${mainState.label}（${NODE_DICT[mainState.label]?.ja || mainState.label}）に強く触れました。\n`
     if (mainConflict) flowSummaryText += `次に ${mainConflict.source} と ${mainConflict.target} のあいだの揺れを見ました。\n`
     else flowSummaryText += '目立った強い衝突は感じていません。\n'

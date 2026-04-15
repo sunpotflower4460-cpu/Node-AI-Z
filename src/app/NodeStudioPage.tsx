@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BrainCircuit, Settings2 } from 'lucide-react'
-import { runNodePipeline } from '../core/runNodePipeline'
+import { runCrystallizationRuntime } from '../runtime/runCrystallizationRuntime'
 import { buildStudioViewModel } from '../studio/buildStudioViewModel'
 import { buildRevisionEntry } from '../revision/buildRevisionEntry'
 import { loadRevisionState, saveRevisionState, clearRevisionState } from '../revision/revisionStorage'
@@ -9,7 +9,6 @@ import { addRevisionEntry } from '../revision/revisionLog'
 import { apiProviders, getApiProviderConfig } from '../config/apiProviders'
 import { loadExperienceMessages, saveExperienceMessages } from '../storage/experienceStorage'
 import { loadApiSelection, saveApiSelection } from '../storage/apiSelectionStorage'
-import { generateSurfaceReply } from '../surface/generateSurfaceReply'
 import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
 import type { ExperienceMessage, AppMode, ObservationRecord } from '../types/experience'
 import type { NodePipelineResult, PlasticityState, RevisionEntry, RevisionState, StudioViewModel, UserTuningAction } from '../types/nodeStudio'
@@ -67,10 +66,9 @@ export default function NodeStudioPage() {
     plasticity: PlasticityState,
     provider: ApiProviderId,
   ): Promise<ObservationRecord> => {
-    const pipelineResult = runNodePipeline(text, plasticity)
+    const pipelineResult = runCrystallizationRuntime(text, provider, plasticity)
     const studioView = buildStudioViewModel(pipelineResult, plasticity)
     const revisionEntry = buildRevisionEntry(pipelineResult, studioView)
-    const assistantReply = await generateSurfaceReply({ provider, studioView })
     const timestamp = new Date().toISOString()
 
     return {
@@ -82,7 +80,7 @@ export default function NodeStudioPage() {
       pipelineResult,
       studioView,
       revisionEntry,
-      assistantReply,
+      assistantReply: pipelineResult.utterance,
     }
   }, [])
 

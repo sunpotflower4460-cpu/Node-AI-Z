@@ -1,6 +1,7 @@
 import type { NodePipelineResult, StudioViewModel } from '../types/nodeStudio'
 import { buildRelationBoostKey } from './applyPlasticity'
 import type { ProposedChange } from './revisionTypes'
+import { isCrystallizationRuntimeResult } from '../runtime/types'
 
 const generateId = () => `change_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
 
@@ -122,6 +123,28 @@ export const buildProposedChanges = (
       0.02,
       `Home return が効いたため ${studioView.homeCheck.reason} trigger を少し上げる`,
     )
+  }
+
+  if (isCrystallizationRuntimeResult(result)) {
+    result.pathwayKeysUsed.forEach((pathwayKey) => {
+      addChange(
+        changeBucket,
+        'pathway_weight',
+        pathwayKey,
+        0.02,
+        `今回の思考経路 ${pathwayKey} が自然だったため、次回も少し通りやすくする`,
+      )
+    })
+
+    if (result.selfDecision.shouldStayOpen) {
+      addChange(
+        changeBucket,
+        'pathway_weight',
+        'field:ambiguity->stance:stay_open',
+        0.02,
+        '曖昧さを抱えた場で stay_open が自然だったため、この経路を少し太くする',
+      )
+    }
   }
 
   // Rule A: fragility / ambiguity 周辺の主ノード強化
