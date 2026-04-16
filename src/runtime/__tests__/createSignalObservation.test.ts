@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { createSignalObservation } from '../createSignalObservation'
-import { createSessionLearningState } from '../../learning/sessionLearning'
-import { createPersonalLearningState } from '../../learning/personalLearning'
-import { createGlobalCandidateState } from '../../learning/globalCandidateLearning'
-import { createInfoLayer, upsertInfoEntry } from '../../knowledge/updateInfoLayer'
-import type { LearningLayers } from '../../learning/types'
+import { createSignalObservation } from '../../intelligence/_drafts/runtime/createSignalObservation'
+import { createSessionLearningState } from '../../intelligence/learning/sessionLearning'
+import { createPersonalLearningState } from '../../intelligence/learning/personalLearning'
+import { createGlobalCandidateState } from '../../intelligence/learning/globalCandidateLearning'
+import { createInfoLayer, upsertInfoEntry } from '../../intelligence/knowledge/updateInfoLayer'
+import type { LearningLayers } from '../../intelligence/learning/types'
 
 const makeLearning = (sessionId = 'test-session'): LearningLayers => ({
   session: createSessionLearningState(sessionId),

@@ -1,22 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BrainCircuit, Settings2 } from 'lucide-react'
-import { runNodePipeline } from '../core/runNodePipeline'
-import { buildStudioViewModel } from '../studio/buildStudioViewModel'
-import { buildRevisionEntry } from '../revision/buildRevisionEntry'
 import { loadRevisionState, saveRevisionState, clearRevisionState } from '../revision/revisionStorage'
 import { applyUserTuning } from '../revision/applyUserTuning'
 import { addRevisionEntry } from '../revision/revisionLog'
 import { apiProviders, getApiProviderConfig } from '../config/apiProviders'
 import { loadExperienceMessages, saveExperienceMessages } from '../storage/experienceStorage'
 import { loadApiSelection, saveApiSelection } from '../storage/apiSelectionStorage'
-import { generateSurfaceReply } from '../surface/generateSurfaceReply'
-import { runSignalRuntime } from '../signal/runSignalRuntime'
-import { buildSignalRevisionEntry } from '../signal/buildSignalRevisionEntry'
-import { runChunkedNodePipeline } from '../runtime/runChunkedNodePipeline'
-import { createPersonalLearningState, updatePersonalLearning } from '../learning/personalLearning'
-import { updateSomaticMarkers } from '../somatic/index'
-import { applyTuningToSomaticMarkers } from '../runtime/createSignalObservation'
-import type { PersonalLearningState } from '../learning/types'
+import { applyTuningToSomaticMarkers } from '../runtime/applyTuningToSomaticMarkers'
+import { runMainRuntime } from '../runtime/runMainRuntime'
+import { createPersonalLearningState, updatePersonalLearning } from '../intelligence/learning/personalLearning'
+import { updateSomaticMarkers } from '../intelligence/somatic'
+import type { PersonalLearningState } from '../intelligence/learning/types'
 import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
 import type { ExperienceMessage, AppMode, ObservationRecord, RuntimeMode } from '../types/experience'
 import type { NodePipelineResult, PlasticityState, RevisionEntry, RevisionState, StudioViewModel, UserTuningAction } from '../types/nodeStudio'
@@ -70,6 +64,31 @@ export default function NodeStudioPage() {
     setRevisionState((previous) => addRevisionEntry(previous, entry))
   }, [])
 
+  const applyObservationLearning = useCallback((record: ObservationRecord) => {
+    const somaticSignature = record.chunkedResult?.somaticSignature
+    if (!somaticSignature) {
+      return
+    }
+
+    const decisionShape = {
+      stance: 'answer' as const,
+      shouldAnswerQuestion: false,
+      shouldOfferStep: false,
+      shouldStayOpen: false,
+    }
+
+    setPersonalLearning((prev) => ({
+      ...updatePersonalLearning(prev, record.pipelineResult.pathwayKeys ?? []),
+      somaticMarkers: updateSomaticMarkers(
+        prev.somaticMarkers ?? [],
+        somaticSignature,
+        decisionShape,
+        { naturalness: 0, safety: 0, helpfulness: 0, openness: 0 },
+        Date.now(),
+      ),
+    }))
+  }, [])
+
   const createObservation = useCallback(async (
     text: string,
     type: ObservationRecord['type'],
@@ -78,60 +97,22 @@ export default function NodeStudioPage() {
     runtime: RuntimeMode,
     currentPersonalLearning: PersonalLearningState,
   ): Promise<ObservationRecord> => {
-    if (runtime === 'signal') {
-      const signalResult = runSignalRuntime(text)
-      const revisionEntry = buildSignalRevisionEntry(signalResult)
-      const timestamp = new Date().toISOString()
-      // Build a minimal NodePipelineResult / StudioViewModel so ObservationRecord shape stays consistent
-      const pipelineResult = runNodePipeline(text, plasticity)
-      const studioView = buildStudioViewModel(pipelineResult, plasticity)
-      return {
-        id: createId(type),
-        type,
-        runtimeMode: 'signal',
-        text,
-        timestamp,
-        time: formatTime(timestamp),
-        pipelineResult,
-        studioView,
-        revisionEntry,
-        assistantReply: signalResult.utterance,
-        signalResult,
-      }
-    }
-
-    const chunkedResult = runChunkedNodePipeline(
+    const timestamp = new Date().toISOString()
+    const runtimeResult = await runMainRuntime({
       text,
       plasticity,
-      0.5,
-      0,
-      undefined,
-      undefined,
-      0,
-      undefined,
-      currentPersonalLearning.somaticMarkers,
-    )
-    const pipelineResult = runNodePipeline(text, plasticity)
-    const studioView = buildStudioViewModel(pipelineResult, plasticity)
-    const revisionEntry = buildRevisionEntry(pipelineResult, studioView)
-    const assistantReply = await generateSurfaceReply({ provider, studioView })
-    const timestamp = new Date().toISOString()
+      provider,
+      runtimeMode: runtime,
+      personalLearning: currentPersonalLearning,
+    })
 
     return {
       id: createId(type),
       type,
-      runtimeMode: 'node',
       text,
       timestamp,
       time: formatTime(timestamp),
-      pipelineResult,
-      studioView,
-      revisionEntry,
-      assistantReply,
-      chunkedResult,
-      somaticSignature: chunkedResult.somaticSignature,
-      somaticInfluence: chunkedResult.somaticInfluence,
-      relevantSomaticMarkers: chunkedResult.relevantSomaticMarkers,
+      ...runtimeResult,
     }
   }, [])
 
@@ -164,26 +145,8 @@ export default function NodeStudioPage() {
     addRevisionEntryToMemory(record.revisionEntry)
     setObserveHistory((previous) => [record, ...previous])
     setCurrentObservation(record)
-    if (record.chunkedResult?.somaticSignature) {
-      const { somaticSignature } = record.chunkedResult
-      const decisionShape = {
-        stance: 'answer' as const,
-        shouldAnswerQuestion: false,
-        shouldOfferStep: false,
-        shouldStayOpen: false,
-      }
-      setPersonalLearning((prev) => ({
-        ...updatePersonalLearning(prev, record.pipelineResult.pathwayKeys ?? []),
-        somaticMarkers: updateSomaticMarkers(
-          prev.somaticMarkers ?? [],
-          somaticSignature,
-          decisionShape,
-          { naturalness: 0, safety: 0, helpfulness: 0, openness: 0 },
-          Date.now(),
-        ),
-      }))
-    }
-  }, [addRevisionEntryToMemory, apiSelection.baseProvider, createObservation, personalLearning, revisionState.plasticity, runtimeMode])
+    applyObservationLearning(record)
+  }, [addRevisionEntryToMemory, apiSelection.baseProvider, applyObservationLearning, createObservation, personalLearning, revisionState.plasticity, runtimeMode])
 
   const handleExperienceSend = useCallback(async (text: string) => {
     const record = await createObservation(text, 'experience', revisionState.plasticity, apiSelection.baseProvider, runtimeMode, personalLearning)
@@ -191,25 +154,7 @@ export default function NodeStudioPage() {
 
     addRevisionEntryToMemory(record.revisionEntry)
     setCurrentObservation(record)
-    if (record.chunkedResult?.somaticSignature) {
-      const { somaticSignature } = record.chunkedResult
-      const decisionShape = {
-        stance: 'answer' as const,
-        shouldAnswerQuestion: false,
-        shouldOfferStep: false,
-        shouldStayOpen: false,
-      }
-      setPersonalLearning((prev) => ({
-        ...updatePersonalLearning(prev, record.pipelineResult.pathwayKeys ?? []),
-        somaticMarkers: updateSomaticMarkers(
-          prev.somaticMarkers ?? [],
-          somaticSignature,
-          decisionShape,
-          { naturalness: 0, safety: 0, helpfulness: 0, openness: 0 },
-          Date.now(),
-        ),
-      }))
-    }
+    applyObservationLearning(record)
     setExperienceMessages((previous) => [
       ...previous,
       {
@@ -237,7 +182,7 @@ export default function NodeStudioPage() {
         signalResult: record.signalResult,
         },
       ])
-  }, [addRevisionEntryToMemory, apiSelection.baseProvider, createObservation, personalLearning, revisionState.plasticity, runtimeMode])
+  }, [addRevisionEntryToMemory, apiSelection.baseProvider, applyObservationLearning, createObservation, personalLearning, revisionState.plasticity, runtimeMode])
 
   const handleRestoreObservation = useCallback((record: ObservationRecord) => {
     setCurrentObservation(record)
