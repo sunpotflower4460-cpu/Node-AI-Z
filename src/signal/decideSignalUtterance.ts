@@ -2,6 +2,8 @@ import type { SignalDecision, ProtoMeaningInput, UtteranceMode, SignalReplyInten
 import { normalizeProtoMeaningInput } from './normalizeProtoMeaningInput'
 
 const ALL_MODES: UtteranceMode[] = ['receptive', 'reflective', 'boundary', 'resonant']
+// Neutral baselines before sensory modulation: moderately close, but still slightly
+// withheld so the runtime does not overstep before narrative evidence accumulates.
 const BASE_CLOSENESS = 0.46
 const BASE_WITHHELD_BIAS = 0.22
 

@@ -161,6 +161,8 @@ const NARRATIVE_RULES: NarrativeRule[] = [
   },
 ]
 
+// Narrative should be more selective than sensory so that only a few situation-level
+// meanings become the sentence core and decision anchor.
 const MIN_STRENGTH = 0.4
 const MAX_RESULTS = 5
 

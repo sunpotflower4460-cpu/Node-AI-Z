@@ -186,6 +186,8 @@ const SENSORY_RULES: SensoryRule[] = [
   },
 ]
 
+// Sensory should stay broad enough to seed the next layer, so it keeps a slightly
+// lower threshold and allows up to ~3–7 concurrent bodily-feel candidates.
 const MIN_STRENGTH = 0.3
 const MAX_RESULTS = 7
 
