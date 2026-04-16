@@ -111,5 +111,7 @@ export type SignalRuntimeResult = {
   sentencePlan: SentencePlan
   utterance: string
   debugNotes: string[]
+  /** Keys identifying which signal–pathway pairs fired this turn. Used by learning layers. */
+  pathwayKeys: string[]
   meta: { elapsedMs: number }
 }
