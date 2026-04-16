@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, MessageCircleHeart, RefreshCcw, Send, Sparkles } from 'lucide-react'
+import { Activity, ChevronDown, ChevronUp, MessageCircleHeart, RefreshCcw, Send, Sparkles } from 'lucide-react'
 import type { ExperienceMessage } from '../../types/experience'
+import type { RuntimeMode } from '../../types/experience'
 import type { UserTuningAction, UserTuningState } from '../../types/nodeStudio'
 import { describeProposedChange } from '../../revision/statusMeta'
 
@@ -8,12 +9,14 @@ type ExperienceModeProps = {
   messages: ExperienceMessage[]
   surfaceProviderLabel: string
   tuning?: UserTuningState
+  runtimeMode: RuntimeMode
+  onRuntimeModeChange: (mode: RuntimeMode) => void
   onSend: (text: string) => void | Promise<void>
   onOpenObservation: (observationId: string) => void
   onTuningAction?: (entryId: string, changeId: string, action: UserTuningAction) => void
 }
 
-export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, onSend, onOpenObservation, onTuningAction }: ExperienceModeProps) => {
+export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtimeMode, onRuntimeModeChange, onSend, onOpenObservation, onTuningAction }: ExperienceModeProps) => {
   const [inputText, setInputText] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [expandedRevisions, setExpandedRevisions] = useState<Set<string>>(new Set())
@@ -63,6 +66,26 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, onSend,
           <div className="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500">
             <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
             Surface Provider: {surfaceProviderLabel} / 内部では記録されています
+          </div>
+          <div className="flex flex-col gap-1.5 self-start">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Runtime</span>
+            <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1">
+              <button
+                type="button"
+                onClick={() => onRuntimeModeChange('node')}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${runtimeMode === 'node' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                Node
+              </button>
+              <button
+                type="button"
+                onClick={() => onRuntimeModeChange('signal')}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${runtimeMode === 'signal' ? 'bg-white text-rose-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+              >
+                <Activity className="h-3 w-3" />
+                Signal
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -149,6 +172,9 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, onSend,
                     ) : null}
                     <div className={`mt-3 flex flex-wrap items-center gap-3 text-xs font-semibold ${isAssistant ? 'text-slate-500' : 'text-rose-100'}`}>
                       <span>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      {isAssistant && message.runtimeMode === 'signal' ? (
+                        <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-rose-600">Signal Runtime</span>
+                      ) : null}
                       {isAssistant && message.observationId ? (
                         <>
                           <span>観察研究モードで詳しく見返せます</span>

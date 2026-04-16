@@ -22,7 +22,7 @@ const SAMPLE_INPUTS = [
 ]
 
 type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision'
-type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision'
+type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal'
 const MIN_PLASTICITY_DISPLAY_VALUE = 0.009
 
 const TONE_NOTES: Record<string, (value: number) => string> = {
@@ -497,6 +497,84 @@ export const ObserveMode = ({
           })()}
 
           <div className="flex min-w-0 flex-col gap-6">
+            {currentObservation.signalResult ? (
+              <section className="rounded-2xl border border-rose-200 bg-rose-50/60 p-4 shadow-sm md:p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-rose-600" />
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-rose-700">Signal Runtime Observation</h3>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="rounded-xl border border-rose-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Stimulus</h4>
+                    <div className="mt-2 space-y-1 text-xs font-medium text-slate-600">
+                      <div className="flex justify-between"><span>intensity</span><span className="font-bold text-slate-800">{currentObservation.signalResult.stimulus.intensity.toFixed(2)}</span></div>
+                      <div className="flex justify-between"><span>valence</span><span className="font-bold text-slate-800">{currentObservation.signalResult.stimulus.valence.toFixed(2)}</span></div>
+                      <div className="flex justify-between"><span>tokens</span><span className="font-bold text-slate-800">{currentObservation.signalResult.stimulus.tokens.length}</span></div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-rose-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Signals ({currentObservation.signalResult.signals.length})</h4>
+                    <div className="mt-2 space-y-1">
+                      {currentObservation.signalResult.signals.slice(0, 4).map((s) => (
+                        <div key={s.id} className="flex items-center justify-between gap-2">
+                          <span className="truncate text-xs text-slate-700">{s.label}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="rounded bg-rose-100 px-1 py-0.5 text-[9px] font-bold text-rose-700">{s.layer}</span>
+                            <span className="text-[10px] font-bold text-slate-800">{s.strength.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-rose-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Boundary</h4>
+                    <div className="mt-2 space-y-1 text-xs font-medium text-slate-600">
+                      <div className="flex justify-between"><span>tension</span><span className={`font-bold ${currentObservation.signalResult.boundaryLoopState.boundaryTension > 0.6 ? 'text-rose-700' : 'text-slate-800'}`}>{currentObservation.signalResult.boundaryLoopState.boundaryTension.toFixed(2)}</span></div>
+                      <div className="flex justify-between"><span>internal</span><span className="font-bold text-slate-800">{currentObservation.signalResult.boundaryLoopState.internalSignals.length}</span></div>
+                      <div className="flex justify-between"><span>external</span><span className="font-bold text-slate-800">{currentObservation.signalResult.boundaryLoopState.externalSignals.length}</span></div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-rose-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Field</h4>
+                    <div className="mt-2 space-y-1 text-xs font-medium text-slate-600">
+                      <div className="flex justify-between"><span>intensity</span><span className="font-bold text-slate-800">{currentObservation.signalResult.signalField.fieldIntensity.toFixed(2)}</span></div>
+                      <div className="flex justify-between"><span>co-firing groups</span><span className="font-bold text-slate-800">{currentObservation.signalResult.signalField.coFiringGroups.length}</span></div>
+                      <div className="flex justify-between"><span>resonance</span><span className="font-bold text-slate-800">{currentObservation.signalResult.selfLoopState.resonanceScore.toFixed(2)}</span></div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-rose-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Proto-Meanings</h4>
+                    <div className="mt-2 space-y-1">
+                      {currentObservation.signalResult.protoMeanings.map((pm) => (
+                        <div key={pm.id} className="flex items-center justify-between gap-2">
+                          <span className="truncate text-xs text-slate-700">{pm.texture}</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-800">w:{pm.weight.toFixed(2)}</span>
+                            <span className={`text-[10px] font-bold ${pm.valence >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>v:{pm.valence.toFixed(1)}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-rose-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Decision</h4>
+                    <div className="mt-2 space-y-1 text-xs font-medium text-slate-600">
+                      <div className="flex justify-between"><span>mode</span><span className="font-bold text-rose-700">{currentObservation.signalResult.decision.utteranceMode}</span></div>
+                      <div className="flex justify-between"><span>shouldSpeak</span><span className="font-bold text-slate-800">{currentObservation.signalResult.decision.shouldSpeak ? 'true' : 'false'}</span></div>
+                    </div>
+                    <div className="mt-2 border-t border-slate-100 pt-2">
+                      <h5 className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Sentence Plan Tone</h5>
+                      <p className="mt-1 text-xs font-bold text-slate-700">{currentObservation.signalResult.sentencePlan.tone}</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
             <div className="scrollbar-hide sticky top-[92px] z-10 flex gap-2 overflow-x-auto border-b-2 border-slate-100 bg-[#F8FAFC] pb-1 pt-1">
               {(['Reply', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
                 <button
@@ -545,6 +623,9 @@ export const ObserveMode = ({
                 <button type="button" onClick={() => { setRawViewMode('view'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'view' && isRawOpen ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>Studio View</button>
                 <button type="button" onClick={() => { setRawViewMode('home'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'home' && isRawOpen ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>Home View</button>
                 <button type="button" onClick={() => { setRawViewMode('revision'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'revision' && isRawOpen ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>Revision</button>
+                {currentObservation.signalResult ? (
+                  <button type="button" onClick={() => { setRawViewMode('signal'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'signal' && isRawOpen ? 'bg-rose-800 text-white' : 'text-rose-400 hover:bg-slate-800'}`}>Signal</button>
+                ) : null}
                 <button type="button" onClick={() => setIsRawOpen(!isRawOpen)} className="p-1.5 text-slate-500 hover:text-white">{isRawOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</button>
               </div>
             </div>
@@ -554,6 +635,7 @@ export const ObserveMode = ({
                 {rawViewMode === 'view' ? JSON.stringify(studioView, null, 2) : null}
                 {rawViewMode === 'home' ? JSON.stringify({ homeState: studioView.homeState, homeCheck: studioView.homeCheck, returnTrace: studioView.returnTrace, rawReplyPreview: studioView.rawReplyPreview, adjustedReplyPreview: studioView.adjustedReplyPreview }, null, 2) : null}
                 {rawViewMode === 'revision' ? JSON.stringify({ currentEntry: currentRevisionEntry, revisionState: { plasticity: revisionState.plasticity, memoryCount: revisionState.memory.entries.length, tuningCounts: { locked: revisionState.tuning.locked.size, softened: revisionState.tuning.softened.size, reverted: revisionState.tuning.reverted.size, kept: revisionState.tuning.kept.size } } }, null, 2) : null}
+                {rawViewMode === 'signal' && currentObservation.signalResult ? JSON.stringify(currentObservation.signalResult, null, 2) : null}
               </div>
             ) : null}
           </div>
