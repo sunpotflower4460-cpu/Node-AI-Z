@@ -55,6 +55,9 @@ export type PersonalLearningState = {
   lastUpdated: string
   /** Total turns processed across all sessions */
   totalTurns: number
+  // ── ISR v2.5 somatic markers ──────────────────────────────────────────────
+  /** Somatic marker decision patterns accumulated across sessions (ISR v2.5) */
+  somaticMarkers?: import('../somatic/types').SomaticMarker[]
 }
 
 /** A single candidate for global weight promotion */

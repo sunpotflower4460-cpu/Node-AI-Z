@@ -5,6 +5,7 @@ import type { PlasticityState } from '../revision/types'
 import type { TemporalFeatureState } from '../signal/temporalTypes'
 import type { PredictionState, PredictionModulationResult } from '../predictive/types'
 import type { ProtoMeaning, ProtoMeaningHierarchy } from '../meaning/types'
+import type { SomaticMarker, SomaticSignature, SomaticInfluence } from '../somatic/types'
 import { chunkText } from '../signal/chunkText'
 import { activateChunkFeatures } from '../signal/activateChunkFeatures'
 import { applyTemporalDecay } from '../signal/applyTemporalDecay'
@@ -21,6 +22,7 @@ import { buildEmptyPredictionState } from '../predictive/buildPredictionState'
 import { deriveSensoryProtoMeanings } from '../meaning/deriveSensoryProtoMeanings'
 import { deriveNarrativeProtoMeanings } from '../meaning/deriveNarrativeProtoMeanings'
 import { mergeProtoMeaningHierarchy } from '../meaning/mergeProtoMeaningHierarchy'
+import { deriveSomaticSignature, findRelevantSomaticMarkers, computeSomaticInfluence } from '../somatic/index'
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
@@ -47,6 +49,12 @@ export type ChunkedNodePipelineResult = NodePipelineResult & {
   sensoryProtoMeanings: ProtoMeaning[]
   narrativeProtoMeanings: ProtoMeaning[]
   protoMeaningHierarchy: ProtoMeaningHierarchy
+  /** Somatic signature derived from this turn's proto-meanings (ISR v2.5) */
+  somaticSignature?: SomaticSignature
+  /** Relevant somatic markers found this turn (ISR v2.5) */
+  relevantSomaticMarkers?: SomaticMarker[]
+  /** Somatic influence on decision computed this turn (ISR v2.5) */
+  somaticInfluence?: SomaticInfluence
 }
 
 const collectProtoMeaningPathwayKeys = (meanings: ProtoMeaning[]) => {
@@ -115,9 +123,10 @@ export const runChunkedNodePipeline = (
   personalBias?: Record<string, number>,
   afterglowStrength = 0,
   previousPredictionState?: PredictionState,
+  somaticMarkers?: SomaticMarker[],
 ): ChunkedNodePipelineResult => {
   const startedAt = now()
-  const debug: string[] = ['ISR v2.4 started', 'ISR v2.3 predictive coding retained']
+  const debug: string[] = ['ISR v2.5 started', 'ISR v2.3 predictive coding retained']
 
   // ── 1. Meaning chunks ──────────────────────────────────────────────────────
   const chunks = chunkText(text)
@@ -319,6 +328,21 @@ export const runChunkedNodePipeline = (
 
   const protoMeaningHierarchy = mergeProtoMeaningHierarchy(sensoryProtoMeanings, narrativeProtoMeanings)
 
+  // ── 14b. Somatic Marker Layer (ISR v2.5) ──────────────────────────────────
+  let somaticSignature: SomaticSignature | undefined
+  let relevantSomaticMarkers: SomaticMarker[] | undefined
+  let somaticInfluence: SomaticInfluence | undefined
+
+  if (somaticMarkers && somaticMarkers.length >= 0) {
+    somaticSignature = deriveSomaticSignature(sensoryProtoMeanings, narrativeProtoMeanings, analyzed.stateVector)
+    relevantSomaticMarkers = findRelevantSomaticMarkers(somaticSignature, somaticMarkers)
+    somaticInfluence = computeSomaticInfluence(relevantSomaticMarkers)
+    debug.push(`ISR v2.5 Somatic: signature derived, ${relevantSomaticMarkers.length} relevant marker(s), influenceStrength=${somaticInfluence.influenceStrength.toFixed(2)}`)
+    if (somaticInfluence.debugNotes.length > 0) {
+      debug.push(...somaticInfluence.debugNotes.map((note) => `  somatic: ${note}`))
+    }
+  }
+
   // ── 15. Next-turn prediction prior (ISR v2.3) ─────────────────────────────
   const nextPredictionState = updatePredictionState(activeFeatures, currentTurn)
   debug.push(
@@ -346,13 +370,13 @@ export const runChunkedNodePipeline = (
     liftedPatterns: lifted.liftedPatterns.sort((a, b) => b.score - a.score),
     stateVector: analyzed.stateVector,
     debugNotes: [
-      'ISR v2.4 Pipeline started',
-      'ISR v2.4 Hierarchical Proto Meaning enabled',
+      'ISR v2.5 Pipeline started',
+      'ISR v2.5 Somatic Marker Decision Layer enabled',
       ...debug,
       ...bound.debugNotes,
       ...lifted.debugNotes,
       ...analyzed.debugNotes,
-      `ISR v2.4 Pipeline completed in ${elapsedMs.toFixed(2)} ms`,
+      `ISR v2.5 Pipeline completed in ${elapsedMs.toFixed(2)} ms`,
     ],
     meta: {
       retrievalCount: activatedNodes.length,
@@ -367,5 +391,8 @@ export const runChunkedNodePipeline = (
     sensoryProtoMeanings,
     narrativeProtoMeanings,
     protoMeaningHierarchy,
+    somaticSignature,
+    relevantSomaticMarkers,
+    somaticInfluence,
   }
 }
