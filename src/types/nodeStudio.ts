@@ -13,6 +13,8 @@ export type NodePipelineResult = {
   stateVector: StateVector
   debugNotes: string[]
   meta: { retrievalCount: number; bindingCount: number; patternCount: number; elapsedMs: number }
+  /** Keys identifying which signal–pathway pairs fired this turn. Used by learning layers. */
+  pathwayKeys?: string[]
 }
 
 export type HomeMode = 'stable' | 'shaken' | 'overperforming' | 'withdrawing' | 'returning' | 'resting'
