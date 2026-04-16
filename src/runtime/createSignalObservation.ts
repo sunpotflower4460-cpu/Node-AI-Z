@@ -1,7 +1,9 @@
 import type { SignalRuntimeResult } from '../signal/types'
 import type { LearningLayers } from '../learning/types'
 import type { InfoEntry, InfoLayer } from '../knowledge/types'
+import type { ChunkedNodePipelineResult } from './runChunkedNodePipeline'
 import { runSignalRuntime } from '../signal/runSignalRuntime'
+import { runChunkedNodePipeline } from './runChunkedNodePipeline'
 import { updateSessionLearning } from '../learning/sessionLearning'
 import { updatePersonalLearning } from '../learning/personalLearning'
 import { updateGlobalCandidates } from '../learning/globalCandidateLearning'
@@ -25,6 +27,8 @@ export type SignalObservationInput = {
 export type SignalObservationResult = {
   /** Full signal runtime result (utterance + all intermediate states) */
   runtimeResult: SignalRuntimeResult
+  /** Chunk→feature→node runtime result for observe/debug integration */
+  chunkedResult: ChunkedNodePipelineResult
   /** Updated three-layer learning state (session + personal + globalCandidates) */
   learning: LearningLayers
   /** Updated info layer (access counts incremented if useInfoLayer was true) */
@@ -55,6 +59,7 @@ export const createSignalObservation = (
 
   // ── Signal Runtime ─────────────────────────────────────────────
   const runtimeResult = runSignalRuntime(text)
+  const chunkedResult = runChunkedNodePipeline(text)
   const firedKeys = runtimeResult.pathwayKeys
 
   // ── Session Update ─────────────────────────────────────────────
@@ -89,6 +94,7 @@ export const createSignalObservation = (
 
   return {
     runtimeResult,
+    chunkedResult,
     learning: nextLearning,
     infoLayer: nextInfoLayer,
     selectedInfoEntries,

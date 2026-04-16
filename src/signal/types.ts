@@ -1,3 +1,5 @@
+import type { ProtoMeaning as HierarchicalProtoMeaning, ProtoMeaningHierarchy, ProtoMeaningLevel } from '../meaning/types'
+
 export type SignalLayer = 'other' | 'self' | 'belief' | 'field'
 
 export type Signal = {
@@ -66,19 +68,37 @@ export type ProtoMeaning = {
   texture: ProtoMeaningTexture
 }
 
+export type ProtoMeaningInput = ProtoMeaning[] | HierarchicalProtoMeaning[] | ProtoMeaningHierarchy
+
 export type UtteranceMode = 'receptive' | 'reflective' | 'boundary' | 'resonant'
+
+export type SignalReplyIntent =
+  | 'emotional_holding'
+  | 'judgment_support'
+  | 'soft_answer_offer_step'
+  | 'boundary_hold'
 
 export type SignalDecision = {
   shouldSpeak: boolean
   utteranceMode: UtteranceMode
   suppressedModes: UtteranceMode[]
   decisionTrace: string[]
+  replyIntent?: SignalReplyIntent
+  shouldOfferStep?: boolean
+  closeness?: number
+  withheldBias?: number
+  primaryNarrativeIds?: string[]
+  primarySensoryIds?: string[]
+  pathwayKeys?: string[]
 }
 
 export type WordCandidate = {
   protoMeaningId: string
   words: string[]
   confidence: number
+  sourceLevel?: ProtoMeaningLevel | 'legacy'
+  role?: 'core' | 'tone'
+  glossJa?: string
 }
 
 export type PhrasePlan = {

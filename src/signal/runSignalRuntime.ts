@@ -56,7 +56,7 @@ export const runSignalRuntime = (inputText: string): SignalRuntimeResult => {
 
   // 8. 意思決定
   const decision = decideSignalUtterance(protoMeanings, boundaryLoopState.boundaryTension, selfLoopState.resonanceScore)
-  debug.push(`Decision: mode=${decision.utteranceMode}, shouldSpeak=${decision.shouldSpeak}`)
+  debug.push(`Decision: mode=${decision.utteranceMode}, shouldSpeak=${decision.shouldSpeak}, intent=${decision.replyIntent ?? 'n/a'}`)
 
   // 9. 単語候補化
   const wordCandidates = lexicalizeProtoMeanings(protoMeanings)
@@ -74,7 +74,10 @@ export const runSignalRuntime = (inputText: string): SignalRuntimeResult => {
   const utterance = renderSignalUtterance(sentencePlan)
 
   // 13. パスウェイキー収集 (learning layers で使用)
-  const pathwayKeys = extractPathwayKeys(signals)
+  const pathwayKeys = [...new Set([
+    ...extractPathwayKeys(signals),
+    ...(decision.pathwayKeys ?? []),
+  ])]
 
   debug.push(`Signal Runtime v0 completed. Pathway keys: ${pathwayKeys.length}`)
 
