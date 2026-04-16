@@ -1,4 +1,4 @@
-export type CoreNode = { id: string; label: string; category: string; value: number; reasons: string[] }
+export type CoreNode = { id: string; label: string; category: string; value: number; reasons: string[]; activationProfile?: Record<string, number> }
 export type SuppressedNode = { id: string; label: string; value: number; reason: string }
 export type Binding = { id: string; source: string; target: string; type: string; weight: number; reasons: string[] }
 export type LiftedPattern = { id: string; label: string; score: number; matchedNodes: string[]; matchedRelations: string[] }

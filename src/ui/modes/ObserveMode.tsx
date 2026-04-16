@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Sparkles, Terminal, TrendingUp } from 'lucide-react'
+import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Sparkles, Terminal, TrendingUp, Zap } from 'lucide-react'
 import type { ObservationRecord } from '../../types/experience'
 import type { AppliedBoostEntry, RevisionState, UserTuningAction } from '../../types/nodeStudio'
 import { describeProposedChange, formatRevisionDelta, getRevisionStatusMeta } from '../../revision/statusMeta'
@@ -497,6 +497,84 @@ export const ObserveMode = ({
           })()}
 
           <div className="flex min-w-0 flex-col gap-6">
+            {currentObservation.chunkedResult ? (
+              <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 shadow-sm md:p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-amber-600" />
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-amber-700">ISR v2.1 — Chunk → Feature → Node</h3>
+                  <span className="ml-auto rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold text-amber-600">
+                    threshold: {currentObservation.chunkedResult.chunkedStage.threshold.current.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="rounded-xl border border-amber-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Meaning Chunks ({currentObservation.chunkedResult.chunkedStage.chunks.length})</h4>
+                    <div className="mt-2 space-y-1">
+                      {currentObservation.chunkedResult.chunkedStage.chunks.map((chunk) => (
+                        <div key={chunk.index} className="flex items-start gap-1.5">
+                          <span className="mt-0.5 shrink-0 rounded bg-amber-100 px-1 py-0.5 text-[9px] font-bold text-amber-700">{chunk.index}</span>
+                          <span className="text-xs text-slate-700">{chunk.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-amber-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Feature Activations</h4>
+                    <div className="mt-2 space-y-1.5">
+                      {currentObservation.chunkedResult.chunkedStage.inhibitedFeatures.length > 0 ? (
+                        currentObservation.chunkedResult.chunkedStage.inhibitedFeatures.map((feature) => {
+                          const isActive = currentObservation.chunkedResult?.chunkedStage.activeFeatures.some((f) => f.id === feature.id) ?? false
+                          return (
+                            <div key={feature.id} className="flex items-center justify-between gap-2">
+                              <span className={`truncate text-xs ${isActive ? 'font-semibold text-slate-800' : 'text-slate-400 line-through'}`}>
+                                {feature.id}
+                              </span>
+                              <div className="flex shrink-0 items-center gap-1">
+                                {feature.strength < feature.rawStrength ? (
+                                  <span className="text-[9px] text-slate-400">{feature.rawStrength.toFixed(2)}→</span>
+                                ) : null}
+                                <span className={`text-[10px] font-bold ${isActive ? 'text-amber-700' : 'text-slate-400'}`}>
+                                  {feature.strength.toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })
+                      ) : (
+                        <p className="text-xs text-slate-400">feature 発火なし</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-amber-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Nodes with ActivationProfile</h4>
+                    <div className="mt-2 space-y-2">
+                      {currentObservation.chunkedResult.activatedNodes.filter((n) => n.activationProfile).map((node) => (
+                        <div key={node.id} className="rounded-lg border border-amber-50 bg-amber-50/40 p-2">
+                          <div className="flex items-center justify-between gap-1">
+                            <span className="text-xs font-bold text-slate-800">{node.id}</span>
+                            <span className="text-[10px] font-bold text-amber-700">{node.value.toFixed(2)}</span>
+                          </div>
+                          <div className="mt-1 space-y-0.5">
+                            {Object.entries(node.activationProfile ?? {}).map(([featureId, contrib]) => (
+                              <div key={featureId} className="flex items-center justify-between gap-1">
+                                <span className="text-[9px] text-slate-500">{featureId}</span>
+                                <span className="text-[9px] font-bold text-slate-600">{(contrib as number).toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                      {currentObservation.chunkedResult.activatedNodes.filter((n) => n.activationProfile).length === 0 ? (
+                        <p className="text-xs text-slate-400">activationProfile なし（fallback モード）</p>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
             {currentObservation.signalResult ? (
               <section className="rounded-2xl border border-rose-200 bg-rose-50/60 p-4 shadow-sm md:p-5">
                 <div className="mb-3 flex items-center gap-2">

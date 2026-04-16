@@ -12,6 +12,7 @@ import { loadApiSelection, saveApiSelection } from '../storage/apiSelectionStora
 import { generateSurfaceReply } from '../surface/generateSurfaceReply'
 import { runSignalRuntime } from '../signal/runSignalRuntime'
 import { buildSignalRevisionEntry } from '../signal/buildSignalRevisionEntry'
+import { runChunkedNodePipeline } from '../runtime/runChunkedNodePipeline'
 import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
 import type { ExperienceMessage, AppMode, ObservationRecord, RuntimeMode } from '../types/experience'
 import type { NodePipelineResult, PlasticityState, RevisionEntry, RevisionState, StudioViewModel, UserTuningAction } from '../types/nodeStudio'
@@ -93,6 +94,7 @@ export default function NodeStudioPage() {
       }
     }
 
+    const chunkedResult = runChunkedNodePipeline(text, plasticity)
     const pipelineResult = runNodePipeline(text, plasticity)
     const studioView = buildStudioViewModel(pipelineResult, plasticity)
     const revisionEntry = buildRevisionEntry(pipelineResult, studioView)
@@ -110,6 +112,7 @@ export default function NodeStudioPage() {
       studioView,
       revisionEntry,
       assistantReply,
+      chunkedResult,
     }
   }, [])
 
