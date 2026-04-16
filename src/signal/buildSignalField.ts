@@ -2,6 +2,7 @@ import type { Signal, CoFiringGroup, SignalField } from './types'
 
 const CO_FIRING_THRESHOLD = 0.45
 const COHESION_LAYER_BONUS = 0.15
+const MIN_CO_FIRING_GROUP_SIZE = 2
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v))
 
 const computeCohesion = (signals: Signal[]): number => {
@@ -56,7 +57,7 @@ export const buildSignalField = (signals: Signal[]): SignalField => {
     })
   }
 
-  const uniqueGroups = groups.filter((g) => g.signalIds.length >= 2)
+  const uniqueGroups = groups.filter((g) => g.signalIds.length >= MIN_CO_FIRING_GROUP_SIZE)
   const fieldIntensity =
     activeSignals.length > 0
       ? clamp(activeSignals.reduce((sum, s) => sum + s.strength, 0) / activeSignals.length, 0, 1)

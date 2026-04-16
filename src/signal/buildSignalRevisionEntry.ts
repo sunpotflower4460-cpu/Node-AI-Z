@@ -1,7 +1,12 @@
 import type { SignalRuntimeResult } from './types'
 import type { RevisionEntry } from '../revision/revisionTypes'
 
-const generateId = () => `sigrev_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+const generateId = () => {
+  const rand = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID().slice(0, 9)
+    : Math.random().toString(36).substring(2, 9)
+  return `sigrev_${Date.now()}_${rand}`
+}
 
 /**
  * Build a RevisionEntry from a SignalRuntimeResult.

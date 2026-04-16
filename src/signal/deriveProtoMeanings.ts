@@ -18,7 +18,12 @@ const TEXTURE_RULES: TextureRule[] = [
   { requiredSignals: ['change_signal', 'meaning_seeking'], texture: 'open', valenceDelta: 0.1 },
 ]
 
-const generateId = (index: number) => `pm_${index}_${Date.now().toString(36)}`
+const generateId = (index: number) => {
+  const rand = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+    ? crypto.randomUUID().slice(0, 8)
+    : Math.random().toString(36).substring(2, 10)
+  return `pm_${index}_${rand}`
+}
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v))
 
 const inferTexture = (signals: Signal[], valence: number): ProtoMeaningTexture => {

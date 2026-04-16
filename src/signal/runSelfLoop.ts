@@ -3,11 +3,12 @@ import type { Signal, SelfLoopState } from './types'
 const SELF_LAYERS = new Set<Signal['layer']>(['self', 'belief'])
 const LOOP_ITERATIONS = 2
 const REINFORCEMENT_RATE = 0.08
+const MAX_SIGNAL_STRENGTH = 0.99
 const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v))
 
 const reinforce = (signal: Signal, coActivated: Signal[]): Signal => {
   const boost = coActivated.reduce((sum, s) => sum + s.strength * REINFORCEMENT_RATE, 0)
-  return { ...signal, strength: clamp(signal.strength + boost, 0, 0.99) }
+  return { ...signal, strength: clamp(signal.strength + boost, 0, MAX_SIGNAL_STRENGTH) }
 }
 
 export const runSelfLoop = (signals: Signal[]): SelfLoopState => {
