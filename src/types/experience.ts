@@ -1,5 +1,6 @@
 import type { NodePipelineResult, RevisionEntry, StudioViewModel } from './nodeStudio'
 import type { SignalRuntimeResult } from '../signal/types'
+import type { ChunkedNodePipelineResult } from '../runtime/runChunkedNodePipeline'
 
 export type AppMode = 'observe' | 'experience'
 export type ObservationSource = AppMode
@@ -17,6 +18,7 @@ export type ObservationRecord = {
   revisionEntry: RevisionEntry
   assistantReply: string
   signalResult?: SignalRuntimeResult
+  chunkedResult?: ChunkedNodePipelineResult
 }
 
 export type ExperienceMessage = {
