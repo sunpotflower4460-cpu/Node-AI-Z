@@ -1,5 +1,5 @@
 import type { SomaticMarker, SomaticMarkerOutcome, SomaticSignature } from './types'
-import type { UserTuningAction } from '../revision/types'
+import type { UserTuningAction } from '../../revision/types'
 
 const clamp = (v: number) => Math.max(-1, Math.min(1, v))
 

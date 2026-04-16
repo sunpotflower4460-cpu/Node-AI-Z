@@ -1,5 +1,5 @@
 import type { SignalRuntimeResult } from './types'
-import type { RevisionEntry } from '../revision/revisionTypes'
+import type { RevisionEntry } from '../../revision/revisionTypes'
 
 const generateId = () => {
   const rand = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'

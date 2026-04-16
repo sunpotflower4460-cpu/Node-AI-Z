@@ -1,8 +1,8 @@
 import type { ChunkFeature } from './chunkTypes'
-import type { CoreNode } from '../types/nodeStudio'
-import type { PlasticityState } from '../revision/types'
-import { CORE_NODES } from '../core/nodeData'
-import { clampNumber, clampPlasticityValue, PLASTICITY_LIMITS } from '../revision/defaultPlasticityState'
+import type { CoreNode } from '../../types/nodeStudio'
+import type { PlasticityState } from '../../revision/types'
+import { CORE_NODES } from '../../core/nodeData'
+import { clampNumber, clampPlasticityValue, PLASTICITY_LIMITS } from '../../revision/defaultPlasticityState'
 
 const MAX_NODE_SCORE = 0.99
 

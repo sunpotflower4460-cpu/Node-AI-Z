@@ -1,5 +1,5 @@
 import type { ChunkFeature } from '../signal/chunkTypes'
-import type { Binding, CoreNode, StateVector } from '../types/nodeStudio'
+import type { Binding, CoreNode, StateVector } from '../../types/nodeStudio'
 import type { ProtoMeaning } from './types'
 
 type SensoryProtoMeaningInput = {

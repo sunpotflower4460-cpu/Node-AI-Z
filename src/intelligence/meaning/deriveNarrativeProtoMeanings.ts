@@ -1,4 +1,4 @@
-import type { CoreNode, StateVector } from '../types/nodeStudio'
+import type { CoreNode, StateVector } from '../../types/nodeStudio'
 import type { ProtoMeaning } from './types'
 
 type PredictionErrorSummary = {

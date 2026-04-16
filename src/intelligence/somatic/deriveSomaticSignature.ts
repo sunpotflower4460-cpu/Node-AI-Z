@@ -1,5 +1,5 @@
 import type { ProtoMeaning } from '../meaning/types'
-import type { StateVector } from '../types/nodeStudio'
+import type { StateVector } from '../../types/nodeStudio'
 import type { SomaticSignature } from './types'
 
 type Band = 'low' | 'mid' | 'high'
