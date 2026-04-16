@@ -20,6 +20,23 @@ export type SessionLearningState = {
   reinforcedKeys: string[]
   /** Number of turns processed in this session */
   turnCount: number
+  // ── ISR v2.2 activity tracking ────────────────────────────────────────────
+  /**
+   * Rolling average of feature-field intensity across recent turns (0–1).
+   * Used by dynamic threshold and decay rate micro-adjustments.
+   */
+  recentActivityAverage?: number
+  /**
+   * Peak field intensity observed in the most recent turn (0–1).
+   * Mirrors the strongest feature strength that fired last turn.
+   */
+  recentFieldIntensity?: number
+  /**
+   * Residual activation carried over from the previous turn ("afterglow").
+   * A small positive value (0–0.2) biases initial feature strengths upward
+   * when activity was high.  Fades toward 0 over turns with low activity.
+   */
+  recentAfterglow?: number
 }
 
 /** Personal learning state: persisted across sessions for a single user */
