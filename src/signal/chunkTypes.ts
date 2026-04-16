@@ -47,5 +47,10 @@ export type ChunkedPipelineStage = {
   /** Features after lateral inhibition (ISR v2.2) */
   lateralInhibitedFeatures: ChunkFeature[]
   activeFeatures: ChunkFeature[] // features that cleared the threshold
+  /**
+   * Features after prediction-error modulation (ISR v2.3).
+   * Present only when a previousPredictionState was supplied to the pipeline.
+   */
+  modulatedFeatures?: ChunkFeature[]
   debugNotes: string[]
 }

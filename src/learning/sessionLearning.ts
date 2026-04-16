@@ -1,4 +1,5 @@
 import type { SessionLearningState, PathwayStrengthMap } from './types'
+import type { PredictionState } from '../predictive/types'
 
 /** How much strength a fired pathway gains per turn */
 const SESSION_REINFORCE_RATE = 0.1
@@ -45,11 +46,15 @@ export const createSessionLearningState = (sessionId: string): SessionLearningSt
  *   - recentActivityAverage (EMA of fieldIntensity)
  *   - recentFieldIntensity
  *   - recentAfterglow (fades unless field was intense)
+ *
+ * ISR v2.3: accepts an optional nextPredictionState to carry the prediction
+ * prior forward to the next turn.
  */
 export const updateSessionLearning = (
   state: SessionLearningState,
   firedKeys: string[],
   fieldIntensity = 0,
+  nextPredictionState?: PredictionState,
 ): SessionLearningState => {
   const next: PathwayStrengthMap = { ...state.pathwayStrengths }
   const firedSet = new Set(firedKeys)
@@ -90,5 +95,6 @@ export const updateSessionLearning = (
     recentActivityAverage: Math.max(0, Math.min(1, nextAvg)),
     recentFieldIntensity: Math.max(0, Math.min(1, fieldIntensity)),
     recentAfterglow: Math.max(0, Math.min(AFTERGLOW_MAX, rawAfterglow)),
+    predictionState: nextPredictionState ?? state.predictionState,
   }
 }
