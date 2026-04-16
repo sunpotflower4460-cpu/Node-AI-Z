@@ -12,6 +12,7 @@ export const createPersonalLearningState = (): PersonalLearningState => ({
   pathwayStrengths: {},
   lastUpdated: new Date().toISOString(),
   totalTurns: 0,
+  somaticMarkers: [],
 })
 
 /**

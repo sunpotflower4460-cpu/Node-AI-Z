@@ -1,4 +1,5 @@
 import type { ProtoMeaning as HierarchicalProtoMeaning, ProtoMeaningHierarchy, ProtoMeaningLevel } from '../meaning/types'
+import type { SomaticInfluence } from '../somatic/types'
 
 export type SignalLayer = 'other' | 'self' | 'belief' | 'field'
 
@@ -90,6 +91,7 @@ export type SignalDecision = {
   primaryNarrativeIds?: string[]
   primarySensoryIds?: string[]
   pathwayKeys?: string[]
+  somaticInfluence?: SomaticInfluence
 }
 
 export type WordCandidate = {

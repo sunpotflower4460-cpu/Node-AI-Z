@@ -13,6 +13,10 @@ import { generateSurfaceReply } from '../surface/generateSurfaceReply'
 import { runSignalRuntime } from '../signal/runSignalRuntime'
 import { buildSignalRevisionEntry } from '../signal/buildSignalRevisionEntry'
 import { runChunkedNodePipeline } from '../runtime/runChunkedNodePipeline'
+import { createPersonalLearningState, updatePersonalLearning } from '../learning/personalLearning'
+import { updateSomaticMarkers } from '../somatic/index'
+import { applyTuningToSomaticMarkers } from '../runtime/createSignalObservation'
+import type { PersonalLearningState } from '../learning/types'
 import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
 import type { ExperienceMessage, AppMode, ObservationRecord, RuntimeMode } from '../types/experience'
 import type { NodePipelineResult, PlasticityState, RevisionEntry, RevisionState, StudioViewModel, UserTuningAction } from '../types/nodeStudio'
@@ -46,6 +50,7 @@ export default function NodeStudioPage() {
   const [apiSelection, setApiSelection] = useState<ApiSelectionState>(() => loadApiSelection())
   const [revisionState, setRevisionState] = useState<RevisionState>(() => loadRevisionState())
   const [isApiPanelOpen, setIsApiPanelOpen] = useState(false)
+  const [personalLearning, setPersonalLearning] = useState<PersonalLearningState>(() => createPersonalLearningState())
 
   const currentProviderConfig = useMemo(() => getApiProviderConfig(apiSelection.baseProvider), [apiSelection.baseProvider])
 
@@ -71,6 +76,7 @@ export default function NodeStudioPage() {
     plasticity: PlasticityState,
     provider: ApiProviderId,
     runtime: RuntimeMode,
+    currentPersonalLearning: PersonalLearningState,
   ): Promise<ObservationRecord> => {
     if (runtime === 'signal') {
       const signalResult = runSignalRuntime(text)
@@ -94,7 +100,17 @@ export default function NodeStudioPage() {
       }
     }
 
-    const chunkedResult = runChunkedNodePipeline(text, plasticity)
+    const chunkedResult = runChunkedNodePipeline(
+      text,
+      plasticity,
+      0.5,
+      0,
+      undefined,
+      undefined,
+      0,
+      undefined,
+      currentPersonalLearning.somaticMarkers,
+    )
     const pipelineResult = runNodePipeline(text, plasticity)
     const studioView = buildStudioViewModel(pipelineResult, plasticity)
     const revisionEntry = buildRevisionEntry(pipelineResult, studioView)
@@ -113,6 +129,9 @@ export default function NodeStudioPage() {
       revisionEntry,
       assistantReply,
       chunkedResult,
+      somaticSignature: chunkedResult.somaticSignature,
+      somaticInfluence: chunkedResult.somaticInfluence,
+      relevantSomaticMarkers: chunkedResult.relevantSomaticMarkers,
     }
   }, [])
 
@@ -141,18 +160,56 @@ export default function NodeStudioPage() {
   }, [experienceHistory, observeHistory])
 
   const handleObserveAnalyze = useCallback(async (text: string) => {
-    const record = await createObservation(text, 'observe', revisionState.plasticity, apiSelection.baseProvider, runtimeMode)
+    const record = await createObservation(text, 'observe', revisionState.plasticity, apiSelection.baseProvider, runtimeMode, personalLearning)
     addRevisionEntryToMemory(record.revisionEntry)
     setObserveHistory((previous) => [record, ...previous])
     setCurrentObservation(record)
-  }, [addRevisionEntryToMemory, apiSelection.baseProvider, createObservation, revisionState.plasticity, runtimeMode])
+    if (record.chunkedResult?.somaticSignature) {
+      const { somaticSignature } = record.chunkedResult
+      const decisionShape = {
+        stance: 'answer' as const,
+        shouldAnswerQuestion: false,
+        shouldOfferStep: false,
+        shouldStayOpen: false,
+      }
+      setPersonalLearning((prev) => ({
+        ...updatePersonalLearning(prev, record.pipelineResult.pathwayKeys ?? []),
+        somaticMarkers: updateSomaticMarkers(
+          prev.somaticMarkers ?? [],
+          somaticSignature,
+          decisionShape,
+          { naturalness: 0, safety: 0, helpfulness: 0, openness: 0 },
+          Date.now(),
+        ),
+      }))
+    }
+  }, [addRevisionEntryToMemory, apiSelection.baseProvider, createObservation, personalLearning, revisionState.plasticity, runtimeMode])
 
   const handleExperienceSend = useCallback(async (text: string) => {
-    const record = await createObservation(text, 'experience', revisionState.plasticity, apiSelection.baseProvider, runtimeMode)
+    const record = await createObservation(text, 'experience', revisionState.plasticity, apiSelection.baseProvider, runtimeMode, personalLearning)
     const turnTimestamp = record.timestamp
 
     addRevisionEntryToMemory(record.revisionEntry)
     setCurrentObservation(record)
+    if (record.chunkedResult?.somaticSignature) {
+      const { somaticSignature } = record.chunkedResult
+      const decisionShape = {
+        stance: 'answer' as const,
+        shouldAnswerQuestion: false,
+        shouldOfferStep: false,
+        shouldStayOpen: false,
+      }
+      setPersonalLearning((prev) => ({
+        ...updatePersonalLearning(prev, record.pipelineResult.pathwayKeys ?? []),
+        somaticMarkers: updateSomaticMarkers(
+          prev.somaticMarkers ?? [],
+          somaticSignature,
+          decisionShape,
+          { naturalness: 0, safety: 0, helpfulness: 0, openness: 0 },
+          Date.now(),
+        ),
+      }))
+    }
     setExperienceMessages((previous) => [
       ...previous,
       {
@@ -180,7 +237,7 @@ export default function NodeStudioPage() {
         signalResult: record.signalResult,
         },
       ])
-  }, [addRevisionEntryToMemory, apiSelection.baseProvider, createObservation, revisionState.plasticity, runtimeMode])
+  }, [addRevisionEntryToMemory, apiSelection.baseProvider, createObservation, personalLearning, revisionState.plasticity, runtimeMode])
 
   const handleRestoreObservation = useCallback((record: ObservationRecord) => {
     setCurrentObservation(record)
@@ -202,7 +259,26 @@ export default function NodeStudioPage() {
 
   const handleTuningAction = useCallback((entryId: string, changeId: string, action: UserTuningAction) => {
     setRevisionState((previous) => applyUserTuning(previous, entryId, changeId, action))
-  }, [])
+    if (currentObservation?.chunkedResult?.somaticSignature) {
+      const { somaticSignature } = currentObservation.chunkedResult
+      const decisionShape = {
+        stance: 'answer' as const,
+        shouldAnswerQuestion: false,
+        shouldOfferStep: false,
+        shouldStayOpen: false,
+      }
+      setPersonalLearning((prev) => ({
+        ...prev,
+        somaticMarkers: applyTuningToSomaticMarkers(
+          prev.somaticMarkers ?? [],
+          somaticSignature,
+          decisionShape,
+          action,
+          Date.now(),
+        ),
+      }))
+    }
+  }, [currentObservation])
 
   const handleClearRevision = useCallback(() => {
     if (confirm('Clear all revision data? This cannot be undone.')) {

@@ -640,6 +640,85 @@ export const ObserveMode = ({
                 </div>
               </section>
             ) : null}
+            {currentObservation.somaticSignature ? (
+              <section className="rounded-2xl border border-teal-200 bg-teal-50/60 p-4 shadow-sm md:p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="h-4 w-4 text-teal-600 font-bold text-xs">S</span>
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-teal-700">ISR v2.5 — Somatic Marker Decision Layer</h3>
+                  <span className="ml-auto rounded-full bg-teal-100 px-2 py-0.5 text-[9px] font-bold text-teal-600">
+                    strength: {(currentObservation.somaticInfluence?.influenceStrength ?? 0).toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="rounded-xl border border-teal-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Somatic Signature</h4>
+                    <div className="mt-2 space-y-1 text-xs text-slate-600">
+                      <div>
+                        <span className="font-bold text-slate-700">Sensory IDs: </span>
+                        <span>{currentObservation.somaticSignature.sensoryIds.join(', ') || 'none'}</span>
+                      </div>
+                      <div>
+                        <span className="font-bold text-slate-700">Narrative IDs: </span>
+                        <span>{currentObservation.somaticSignature.narrativeIds.join(', ') || 'none'}</span>
+                      </div>
+                      <div className="mt-2 grid grid-cols-2 gap-1">
+                        {Object.entries(currentObservation.somaticSignature.fieldShape).map(([key, value]) => (
+                          <div key={key} className="flex items-center justify-between gap-1">
+                            <span className="text-[9px] text-slate-500">{key.replace('Band', '')}</span>
+                            <span className={`text-[9px] font-bold rounded px-1 ${value === 'high' ? 'bg-teal-100 text-teal-700' : value === 'mid' ? 'bg-slate-100 text-slate-600' : 'bg-slate-50 text-slate-400'}`}>{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-teal-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Relevant Markers ({currentObservation.relevantSomaticMarkers?.length ?? 0})</h4>
+                    <div className="mt-2 space-y-1.5">
+                      {(currentObservation.relevantSomaticMarkers ?? []).length > 0 ? (
+                        (currentObservation.relevantSomaticMarkers ?? []).map((marker) => (
+                          <div key={marker.id} className="rounded-lg border border-teal-50 bg-teal-50/40 p-2">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[9px] font-bold text-teal-700">{marker.decisionShape.stance}</span>
+                              <span className="text-[9px] text-slate-500">×{marker.count}</span>
+                            </div>
+                            <p className="mt-0.5 text-[9px] text-slate-500 truncate">{marker.id}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-slate-400">関連するマーカーなし</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {currentObservation.somaticInfluence ? (
+                    <div className="rounded-xl border border-teal-100 bg-white p-3 shadow-sm">
+                      <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Somatic Influence</h4>
+                      <div className="mt-2 space-y-1 text-xs text-slate-600">
+                        <div className="flex justify-between">
+                          <span>influenceStrength</span>
+                          <span className="font-bold text-teal-700">{currentObservation.somaticInfluence.influenceStrength.toFixed(2)}</span>
+                        </div>
+                        {Object.entries(currentObservation.somaticInfluence.averageOutcome).map(([key, value]) => (
+                          <div key={key} className="flex justify-between">
+                            <span>{key}</span>
+                            <span className={`font-bold ${(value as number) >= 0 ? 'text-emerald-700' : 'text-rose-600'}`}>{(value as number).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {currentObservation.somaticInfluence.debugNotes.length > 0 ? (
+                        <div className="mt-2 border-t border-teal-50 pt-2 space-y-0.5">
+                          {currentObservation.somaticInfluence.debugNotes.map((note, i) => (
+                            <p key={i} className="text-[9px] text-slate-400 truncate">{note}</p>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
             {currentObservation.signalResult ? (
               <section className="rounded-2xl border border-rose-200 bg-rose-50/60 p-4 shadow-sm md:p-5">
                 <div className="mb-3 flex items-center gap-2">

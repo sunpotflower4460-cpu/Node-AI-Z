@@ -1,4 +1,5 @@
 import type { SignalDecision, ProtoMeaningInput, UtteranceMode, SignalReplyIntent } from './types'
+import type { SomaticInfluence } from '../somatic/types'
 import { normalizeProtoMeaningInput } from './normalizeProtoMeaningInput'
 
 const ALL_MODES: UtteranceMode[] = ['receptive', 'reflective', 'boundary', 'resonant']
@@ -14,6 +15,7 @@ export const decideSignalUtterance = (
   protoMeanings: ProtoMeaningInput,
   boundaryTension: number,
   resonanceScore: number,
+  somaticInfluence?: SomaticInfluence,
 ): SignalDecision => {
   const trace: string[] = []
   const { narrative, sensory } = normalizeProtoMeaningInput(protoMeanings)
@@ -84,6 +86,34 @@ export const decideSignalUtterance = (
   trace.push(`closeness=${closeness.toFixed(2)}, withheldBias=${withheldBias.toFixed(2)}, offerStep=${shouldOfferStep ? 'true' : 'false'}`)
   trace.push(`Suppressed modes: ${suppressedModes.join(', ')}`)
 
+  // ── ISR v2.5: apply somatic bias ──────────────────────────────────────────
+  if (somaticInfluence && somaticInfluence.influenceStrength > 0) {
+    const s = somaticInfluence.influenceStrength
+    const avg = somaticInfluence.averageOutcome
+
+    if (avg.naturalness < -0.2 && utteranceMode === 'boundary' && s > 0.5) {
+      utteranceMode = 'receptive'
+      trace.push(`Somatic bias: shifted boundary → receptive (naturalness=${avg.naturalness.toFixed(2)}, strength=${s.toFixed(2)})`)
+    }
+
+    if (avg.openness > 0.3 && s > 0.4) {
+      shouldOfferStep = true
+      trace.push(`Somatic bias: shouldOfferStep=true (openness=${avg.openness.toFixed(2)})`)
+    }
+
+    if (avg.helpfulness > 0.3) {
+      withheldBias -= s * 0.08
+      trace.push(`Somatic bias: withheldBias reduced by ${(s * 0.08).toFixed(3)} (helpfulness=${avg.helpfulness.toFixed(2)})`)
+    }
+
+    if (avg.naturalness < -0.2) {
+      withheldBias += s * 0.08
+      trace.push(`Somatic bias: withheldBias increased by ${(s * 0.08).toFixed(3)} (naturalness=${avg.naturalness.toFixed(2)})`)
+    }
+
+    trace.push(`Somatic influence applied: strength=${s.toFixed(2)}, markers=${somaticInfluence.matchedMarkerIds.length}`)
+  }
+
   return {
     shouldSpeak: true,
     utteranceMode,
@@ -96,5 +126,6 @@ export const decideSignalUtterance = (
     primaryNarrativeIds: primaryNarratives.map((meaning) => meaning.id),
     primarySensoryIds: primarySensory.map((meaning) => meaning.id),
     pathwayKeys,
+    somaticInfluence,
   }
 }

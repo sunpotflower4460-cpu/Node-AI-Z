@@ -19,6 +19,9 @@ export type ObservationRecord = {
   assistantReply: string
   signalResult?: SignalRuntimeResult
   chunkedResult?: ChunkedNodePipelineResult
+  somaticSignature?: import('../somatic/types').SomaticSignature
+  somaticInfluence?: import('../somatic/types').SomaticInfluence
+  relevantSomaticMarkers?: import('../somatic/types').SomaticMarker[]
 }
 
 export type ExperienceMessage = {

@@ -2,6 +2,8 @@ import type { SignalRuntimeResult } from '../signal/types'
 import type { LearningLayers } from '../learning/types'
 import type { InfoEntry, InfoLayer } from '../knowledge/types'
 import type { ChunkedNodePipelineResult } from './runChunkedNodePipeline'
+import type { SomaticMarker, SomaticSignature } from '../somatic/types'
+import type { UserTuningAction } from '../revision/types'
 import { runSignalRuntime } from '../signal/runSignalRuntime'
 import { runChunkedNodePipeline } from './runChunkedNodePipeline'
 import { updateSessionLearning } from '../learning/sessionLearning'
@@ -9,6 +11,7 @@ import { updatePersonalLearning } from '../learning/personalLearning'
 import { updateGlobalCandidates } from '../learning/globalCandidateLearning'
 import { selectInfoCandidates } from '../knowledge/selectInfoCandidates'
 import { updateInfoLayer } from '../knowledge/updateInfoLayer'
+import { updateSomaticMarkers, somaticOutcomeFromTuningAction } from '../somatic/index'
 
 export type SignalObservationInput = {
   /** Raw input text (外刺激) */
@@ -38,6 +41,29 @@ export type SignalObservationResult = {
 }
 
 /**
+ * Map an utterance mode to a somatic decision shape.
+ */
+const mapDecisionShape = (
+  utteranceMode: string,
+  replyIntent?: string,
+  shouldOfferStep?: boolean,
+): SomaticMarker['decisionShape'] => {
+  const stance = utteranceMode === 'boundary'
+    ? 'hold'
+    : utteranceMode === 'resonant'
+      ? 'open_reflect'
+      : utteranceMode === 'reflective'
+        ? 'soft_answer'
+        : 'answer'
+  return {
+    stance,
+    shouldAnswerQuestion: replyIntent?.includes('answer') ?? false,
+    shouldOfferStep: shouldOfferStep ?? false,
+    shouldStayOpen: utteranceMode === 'resonant' || utteranceMode === 'receptive',
+  }
+}
+
+/**
  * Run the full Signal-Centered Crystallization Runtime v1 flow.
  *
  * This is the primary entry point for Observe / Experience mode.
@@ -51,6 +77,7 @@ export type SignalObservationResult = {
  *   → Personal Update
  *   → Global Candidate Update
  *   → Info Layer Update (必要時のみ)
+ *   → Somatic Marker Update (ISR v2.5)
  */
 export const createSignalObservation = (
   input: SignalObservationInput,
@@ -59,14 +86,24 @@ export const createSignalObservation = (
 
   // ── Signal Runtime ─────────────────────────────────────────────
   const runtimeResult = runSignalRuntime(text)
-  const chunkedResult = runChunkedNodePipeline(text)
+  const chunkedResult = runChunkedNodePipeline(
+    text,
+    undefined,
+    0.5,
+    0,
+    undefined,
+    undefined,
+    0,
+    undefined,
+    learning.personal.somaticMarkers,
+  )
   const firedKeys = runtimeResult.pathwayKeys
 
   // ── Session Update ─────────────────────────────────────────────
   const nextSession = updateSessionLearning(learning.session, firedKeys)
 
   // ── Personal Update ────────────────────────────────────────────
-  const nextPersonal = updatePersonalLearning(learning.personal, firedKeys)
+  let nextPersonal = updatePersonalLearning(learning.personal, firedKeys)
 
   // ── Global Candidate Update ────────────────────────────────────
   const nextGlobalCandidates = updateGlobalCandidates(
@@ -75,6 +112,24 @@ export const createSignalObservation = (
     nextSession.pathwayStrengths,
     nextSession.sessionId,
   )
+
+  // ── ISR v2.5: Somatic Marker Update ───────────────────────────
+  if (chunkedResult.somaticSignature) {
+    const decisionShape = mapDecisionShape(
+      runtimeResult.decision.utteranceMode,
+      runtimeResult.decision.replyIntent,
+      runtimeResult.decision.shouldOfferStep,
+    )
+    const neutralOutcome = { naturalness: 0, safety: 0, helpfulness: 0, openness: 0 }
+    const updatedMarkers = updateSomaticMarkers(
+      nextPersonal.somaticMarkers ?? [],
+      chunkedResult.somaticSignature,
+      decisionShape,
+      neutralOutcome,
+      Date.now(),
+    )
+    nextPersonal = { ...nextPersonal, somaticMarkers: updatedMarkers }
+  }
 
   const nextLearning: LearningLayers = {
     session: nextSession,
@@ -99,4 +154,19 @@ export const createSignalObservation = (
     infoLayer: nextInfoLayer,
     selectedInfoEntries,
   }
+}
+
+/**
+ * Apply a user tuning action to the somatic markers for the current signature.
+ * Reinforces the decision pattern that was just tuned.
+ */
+export const applyTuningToSomaticMarkers = (
+  markers: SomaticMarker[],
+  signature: SomaticSignature,
+  decisionShape: SomaticMarker['decisionShape'],
+  tuningAction: UserTuningAction,
+  timestamp: number,
+): SomaticMarker[] => {
+  const outcome = somaticOutcomeFromTuningAction(tuningAction)
+  return updateSomaticMarkers(markers, signature, decisionShape, outcome, timestamp)
 }
