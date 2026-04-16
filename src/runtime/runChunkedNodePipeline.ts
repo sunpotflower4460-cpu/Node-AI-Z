@@ -4,6 +4,7 @@ import type { NodePipelineResult } from '../types/nodeStudio'
 import type { PlasticityState } from '../revision/types'
 import type { TemporalFeatureState } from '../signal/temporalTypes'
 import type { PredictionState, PredictionModulationResult } from '../predictive/types'
+import type { ProtoMeaning, ProtoMeaningHierarchy } from '../meaning/types'
 import { chunkText } from '../signal/chunkText'
 import { activateChunkFeatures } from '../signal/activateChunkFeatures'
 import { applyTemporalDecay } from '../signal/applyTemporalDecay'
@@ -17,6 +18,9 @@ import { bindNodes, liftPatterns, analyzeNodeField } from '../core/runNodePipeli
 import { applyPredictionModulation } from '../predictive/applyPredictionModulation'
 import { updatePredictionState } from '../predictive/updatePredictionState'
 import { buildEmptyPredictionState } from '../predictive/buildPredictionState'
+import { deriveSensoryProtoMeanings } from '../meaning/deriveSensoryProtoMeanings'
+import { deriveNarrativeProtoMeanings } from '../meaning/deriveNarrativeProtoMeanings'
+import { mergeProtoMeaningHierarchy } from '../meaning/mergeProtoMeaningHierarchy'
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
@@ -40,6 +44,29 @@ export type ChunkedNodePipelineResult = NodePipelineResult & {
   predictionModulationResult?: PredictionModulationResult
   /** Next-turn prediction state derived from this turn's active features (ISR v2.3) */
   nextPredictionState: PredictionState
+  sensoryProtoMeanings: ProtoMeaning[]
+  narrativeProtoMeanings: ProtoMeaning[]
+  protoMeaningHierarchy: ProtoMeaningHierarchy
+}
+
+const collectProtoMeaningPathwayKeys = (meanings: ProtoMeaning[]) => {
+  const keys: string[] = []
+
+  for (const meaning of meanings) {
+    if (meaning.level === 'sensory') {
+      keys.push(...meaning.sourceFeatureIds.map((featureId) => `feature:${featureId}->sensory:${meaning.glossJa}`))
+      continue
+    }
+
+    if (meaning.level === 'narrative') {
+      const childLabels = meaning.childIds?.map((childId) => childId.replace(/^sensory:/, '')).join('+')
+      if (childLabels) {
+        keys.push(`sensory:${childLabels}->narrative:${meaning.glossJa}`)
+      }
+    }
+  }
+
+  return [...new Set(keys)]
 }
 
 /**
@@ -90,7 +117,7 @@ export const runChunkedNodePipeline = (
   previousPredictionState?: PredictionState,
 ): ChunkedNodePipelineResult => {
   const startedAt = now()
-  const debug: string[] = ['ISR v2.3 started']
+  const debug: string[] = ['ISR v2.4 started']
 
   // ── 1. Meaning chunks ──────────────────────────────────────────────────────
   const chunks = chunkText(text)
@@ -208,12 +235,6 @@ export const runChunkedNodePipeline = (
 
   const activeFeatures = lateralInhibitedFeatures
 
-  // ── 10. Next-turn prediction prior (ISR v2.3) ─────────────────────────────
-  const nextPredictionState = updatePredictionState(activeFeatures, currentTurn)
-  debug.push(
-    `Prediction prior updated: ${nextPredictionState.expectedFeatureIds.length} feature(s) → next turn (confidence=${nextPredictionState.confidence.toFixed(3)})`,
-  )
-
   const chunkedStage: ChunkedPipelineStage = {
     chunks,
     rawFeatures,
@@ -272,6 +293,38 @@ export const runChunkedNodePipeline = (
   const lifted = liftPatterns(activatedNodes, bound.bindings, plasticity)
   const analyzed = analyzeNodeField(activatedNodes, bound.bindings)
 
+  // ── 14. Hierarchical proto-meanings (ISR v2.4) ────────────────────────────
+  const sensoryProtoMeanings = deriveSensoryProtoMeanings({
+    features: activeFeatures,
+    nodes: activatedNodes,
+    field: analyzed.stateVector,
+    bindings: bound.bindings,
+  })
+  debug.push(
+    `Sensory proto-meanings (${sensoryProtoMeanings.length}): ${sensoryProtoMeanings.map((meaning) => `${meaning.glossJa}(${meaning.strength.toFixed(2)})`).join(', ')}`,
+  )
+
+  const narrativeProtoMeanings = deriveNarrativeProtoMeanings({
+    sensoryProtoMeanings,
+    nodes: activatedNodes,
+    field: analyzed.stateVector,
+    predictionErrorSummary: {
+      overallSurprise: predictionModulation.overallSurprise,
+      featureIds: predictionModulation.surpriseSignals.map((signal) => signal.featureId),
+    },
+  })
+  debug.push(
+    `Narrative proto-meanings (${narrativeProtoMeanings.length}): ${narrativeProtoMeanings.map((meaning) => `${meaning.glossJa}(${meaning.strength.toFixed(2)})`).join(', ')}`,
+  )
+
+  const protoMeaningHierarchy = mergeProtoMeaningHierarchy(sensoryProtoMeanings, narrativeProtoMeanings)
+
+  // ── 15. Next-turn prediction prior (ISR v2.3) ─────────────────────────────
+  const nextPredictionState = updatePredictionState(activeFeatures, currentTurn)
+  debug.push(
+    `Prediction prior updated: ${nextPredictionState.expectedFeatureIds.length} feature(s) → next turn (confidence=${nextPredictionState.confidence.toFixed(3)})`,
+  )
+
   const elapsedMs = now() - startedAt
 
   // ── Pathway keys for learning ─────────────────────────────────────────────
@@ -280,6 +333,7 @@ export const runChunkedNodePipeline = (
     ...loopPathwayKeys,
     ...lateralPathwayKeys,
     ...surprisePathwayKeys,
+    ...collectProtoMeaningPathwayKeys(protoMeaningHierarchy.all),
     loopPathwayKey,
     thresholdPathwayKey,
   ]
@@ -292,12 +346,13 @@ export const runChunkedNodePipeline = (
     liftedPatterns: lifted.liftedPatterns.sort((a, b) => b.score - a.score),
     stateVector: analyzed.stateVector,
     debugNotes: [
-      'ISR v2.3 Pipeline started',
+      'ISR v2.4 Pipeline started',
+      'ISR v2.4 Hierarchical Proto Meaning enabled',
       ...debug,
       ...bound.debugNotes,
       ...lifted.debugNotes,
       ...analyzed.debugNotes,
-      `ISR v2.3 Pipeline completed in ${elapsedMs.toFixed(2)} ms`,
+      `ISR v2.4 Pipeline completed in ${elapsedMs.toFixed(2)} ms`,
     ],
     meta: {
       retrievalCount: activatedNodes.length,
@@ -309,5 +364,8 @@ export const runChunkedNodePipeline = (
     chunkedStage,
     predictionModulationResult: previousPredictionState ? predictionModulation : undefined,
     nextPredictionState,
+    sensoryProtoMeanings,
+    narrativeProtoMeanings,
+    protoMeaningHierarchy,
   }
 }

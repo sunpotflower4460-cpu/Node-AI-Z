@@ -573,6 +573,71 @@ export const ObserveMode = ({
                     </div>
                   </div>
                 </div>
+
+                <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                  <div className="rounded-xl border border-amber-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Sensory Proto Meanings</h4>
+                    <div className="mt-2 space-y-2">
+                      {currentObservation.chunkedResult.sensoryProtoMeanings.length > 0 ? (
+                        currentObservation.chunkedResult.sensoryProtoMeanings.map((meaning) => (
+                          <div key={meaning.id} className="rounded-lg border border-amber-50 bg-amber-50/40 p-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-bold text-slate-800">{meaning.glossJa}</span>
+                              <span className="text-[10px] font-bold text-amber-700">{meaning.strength.toFixed(2)}</span>
+                            </div>
+                            <p className="mt-1 text-[9px] text-slate-500">{meaning.sourceFeatureIds.join(', ') || 'feature なし'}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-slate-400">sensory proto meaning なし</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-amber-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Narrative Proto Meanings</h4>
+                    <div className="mt-2 space-y-2">
+                      {currentObservation.chunkedResult.narrativeProtoMeanings.length > 0 ? (
+                        currentObservation.chunkedResult.narrativeProtoMeanings.map((meaning) => (
+                          <div key={meaning.id} className="rounded-lg border border-amber-50 bg-amber-50/40 p-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-xs font-bold text-slate-800">{meaning.glossJa}</span>
+                              <span className="text-[10px] font-bold text-amber-700">{meaning.strength.toFixed(2)}</span>
+                            </div>
+                            <p className="mt-1 text-[9px] text-slate-500">childIds: {(meaning.childIds ?? []).join(', ') || 'なし'}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-slate-400">narrative proto meaning なし</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-amber-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Hierarchy View</h4>
+                    <div className="mt-2 space-y-2">
+                      {currentObservation.chunkedResult.protoMeaningHierarchy.narrative.length > 0 ? (
+                        currentObservation.chunkedResult.protoMeaningHierarchy.narrative.map((meaning) => (
+                          <div key={meaning.id} className="rounded-lg border border-amber-50 bg-amber-50/40 p-2">
+                            <p className="text-[10px] font-bold text-slate-800">{meaning.glossJa}</p>
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {(meaning.childIds ?? []).map((childId) => {
+                                const child = currentObservation.chunkedResult.protoMeaningHierarchy.sensory.find((sensoryMeaning) => sensoryMeaning.id === childId)
+                                return (
+                                  <span key={childId} className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold text-amber-700">
+                                    {child?.glossJa ?? childId}
+                                  </span>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-xs text-slate-400">hierarchy なし</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </section>
             ) : null}
             {currentObservation.signalResult ? (
@@ -644,10 +709,39 @@ export const ObserveMode = ({
                     <div className="mt-2 space-y-1 text-xs font-medium text-slate-600">
                       <div className="flex justify-between"><span>mode</span><span className="font-bold text-rose-700">{currentObservation.signalResult.decision.utteranceMode}</span></div>
                       <div className="flex justify-between"><span>shouldSpeak</span><span className="font-bold text-slate-800">{currentObservation.signalResult.decision.shouldSpeak ? 'true' : 'false'}</span></div>
+                      <div className="flex justify-between"><span>intent</span><span className="font-bold text-slate-800">{currentObservation.signalResult.decision.replyIntent ?? 'n/a'}</span></div>
                     </div>
                     <div className="mt-2 border-t border-slate-100 pt-2">
                       <h5 className="text-[9px] font-bold uppercase tracking-wider text-slate-400">Sentence Plan Tone</h5>
                       <p className="mt-1 text-xs font-bold text-slate-700">{currentObservation.signalResult.sentencePlan.tone}</p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-rose-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Lexicalization</h4>
+                    <div className="mt-2 space-y-2">
+                      <div>
+                        <h5 className="text-[9px] font-bold uppercase tracking-wider text-slate-400">narrative core</h5>
+                        <div className="mt-1 space-y-1">
+                          {currentObservation.signalResult.wordCandidates.filter((candidate) => candidate.role === 'core').slice(0, 3).map((candidate) => (
+                            <div key={candidate.protoMeaningId} className="flex items-center justify-between gap-2">
+                              <span className="truncate text-xs text-slate-700">{candidate.glossJa ?? candidate.protoMeaningId}</span>
+                              <span className="text-[9px] text-rose-700">{candidate.words[0]}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="border-t border-slate-100 pt-2">
+                        <h5 className="text-[9px] font-bold uppercase tracking-wider text-slate-400">sensory tone</h5>
+                        <div className="mt-1 space-y-1">
+                          {currentObservation.signalResult.wordCandidates.filter((candidate) => candidate.role === 'tone').slice(0, 3).map((candidate) => (
+                            <div key={candidate.protoMeaningId} className="flex items-center justify-between gap-2">
+                              <span className="truncate text-xs text-slate-700">{candidate.glossJa ?? candidate.protoMeaningId}</span>
+                              <span className="text-[9px] text-rose-700">{candidate.words[0]}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
