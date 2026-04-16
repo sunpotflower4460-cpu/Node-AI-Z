@@ -11,6 +11,7 @@ import { lexicalizeProtoMeanings } from './lexicalizeProtoMeanings'
 import { bindSignalPhrases } from './bindSignalPhrases'
 import { buildSignalSentencePlan } from './buildSignalSentencePlan'
 import { renderSignalUtterance } from './renderSignalUtterance'
+import { extractPathwayKeys } from '../learning/pathwayKeys'
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
@@ -71,7 +72,11 @@ export const runSignalRuntime = (inputText: string): SignalRuntimeResult => {
 
   // 12. 発話
   const utterance = renderSignalUtterance(sentencePlan)
-  debug.push('Signal Runtime v0 completed')
+
+  // 13. パスウェイキー収集 (learning layers で使用)
+  const pathwayKeys = extractPathwayKeys(signals)
+
+  debug.push(`Signal Runtime v0 completed. Pathway keys: ${pathwayKeys.length}`)
 
   const elapsedMs = now() - startedAt
 
@@ -90,6 +95,7 @@ export const runSignalRuntime = (inputText: string): SignalRuntimeResult => {
     sentencePlan,
     utterance,
     debugNotes: debug,
+    pathwayKeys,
     meta: { elapsedMs },
   }
 }
