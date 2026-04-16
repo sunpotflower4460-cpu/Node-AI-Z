@@ -1,5 +1,5 @@
-import type { ChunkFeature } from '../../ingest/chunkTypes'
-import type { PredictionState } from '../../predictive/types'
+import type { ChunkFeature } from '../ingest/chunkTypes'
+import type { PredictionState } from './types'
 
 /**
  * How much predicted strength decays relative to the actual strength.

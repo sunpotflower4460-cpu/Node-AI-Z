@@ -1,17 +1,16 @@
-import type { SignalRuntimeResult } from '../../signal/types'
-import type { LearningLayers } from '../../learning/types'
-import type { InfoEntry, InfoLayer } from '../../knowledge/types'
-import type { ChunkedNodePipelineResult } from '../../../runtime/runChunkedNodePipeline'
-import type { SomaticMarker, SomaticSignature } from '../../somatic/types'
-import type { UserTuningAction } from '../../../revision/types'
-import { runSignalRuntime } from '../../signal/runSignalRuntime'
-import { runChunkedNodePipeline } from '../../../runtime/runChunkedNodePipeline'
-import { updateSessionLearning } from '../../learning/sessionLearning'
-import { updatePersonalLearning } from '../../learning/personalLearning'
-import { updateGlobalCandidates } from '../../learning/globalCandidateLearning'
-import { selectInfoCandidates } from '../../knowledge/selectInfoCandidates'
-import { updateInfoLayer } from '../../knowledge/updateInfoLayer'
-import { updateSomaticMarkers, somaticOutcomeFromTuningAction } from '../../somatic'
+import type { SignalRuntimeResult } from '../intelligence/signal/types'
+import type { LearningLayers } from '../intelligence/learning/types'
+import type { InfoEntry, InfoLayer } from '../intelligence/knowledge/types'
+import type { ChunkedNodePipelineResult } from './runChunkedNodePipeline'
+import { runSignalRuntime } from '../intelligence/signal/runSignalRuntime'
+import { runChunkedNodePipeline } from './runChunkedNodePipeline'
+import { updateSessionLearning } from '../intelligence/learning/sessionLearning'
+import { updatePersonalLearning } from '../intelligence/learning/personalLearning'
+import { updateGlobalCandidates } from '../intelligence/learning/globalCandidateLearning'
+import { selectInfoCandidates } from '../intelligence/knowledge/selectInfoCandidates'
+import { updateInfoLayer } from '../intelligence/knowledge/updateInfoLayer'
+import { updateSomaticMarkers } from '../intelligence/somatic'
+import type { SomaticMarker } from '../intelligence/somatic/types'
 
 export type SignalObservationInput = {
   /** Raw input text (外刺激) */
@@ -154,19 +153,4 @@ export const createSignalObservation = (
     infoLayer: nextInfoLayer,
     selectedInfoEntries,
   }
-}
-
-/**
- * Apply a user tuning action to the somatic markers for the current signature.
- * Reinforces the decision pattern that was just tuned.
- */
-export const applyTuningToSomaticMarkers = (
-  markers: SomaticMarker[],
-  signature: SomaticSignature,
-  decisionShape: SomaticMarker['decisionShape'],
-  tuningAction: UserTuningAction,
-  timestamp: number,
-): SomaticMarker[] => {
-  const outcome = somaticOutcomeFromTuningAction(tuningAction)
-  return updateSomaticMarkers(markers, signature, decisionShape, outcome, timestamp)
 }

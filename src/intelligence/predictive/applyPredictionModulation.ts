@@ -1,6 +1,6 @@
 import type { ChunkFeature } from '../ingest/chunkTypes'
 import type { PredictionState, SurpriseSignal, PredictionModulationResult } from './types'
-import { computePredictionError } from '../_drafts/predictive/computePredictionError'
+import { computePredictionError } from './computePredictionError'
 
 /**
  * Fraction of surprise magnitude added as a strength boost to surprising features.

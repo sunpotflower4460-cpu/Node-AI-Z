@@ -1,5 +1,5 @@
-import type { ChunkFeature } from '../../ingest/chunkTypes'
-import type { PredictionState, PredictionError, PredictionErrorType } from '../../predictive/types'
+import type { ChunkFeature } from '../ingest/chunkTypes'
+import type { PredictionState, PredictionError, PredictionErrorType } from './types'
 
 /**
  * Error magnitude below which a prediction is considered "correct".

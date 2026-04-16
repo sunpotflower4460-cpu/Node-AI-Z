@@ -7,7 +7,7 @@ export type {
 } from './types'
 
 export { buildEmptyPredictionState } from './buildPredictionState'
-export { predictFeatures } from '../_drafts/predictive/predictFeatures'
-export { computePredictionError } from '../_drafts/predictive/computePredictionError'
+export { predictFeatures } from './predictFeatures'
+export { computePredictionError } from './computePredictionError'
 export { applyPredictionModulation } from './applyPredictionModulation'
 export { updatePredictionState } from './updatePredictionState'
