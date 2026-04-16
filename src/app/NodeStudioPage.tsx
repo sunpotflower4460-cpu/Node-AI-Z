@@ -10,8 +10,10 @@ import { apiProviders, getApiProviderConfig } from '../config/apiProviders'
 import { loadExperienceMessages, saveExperienceMessages } from '../storage/experienceStorage'
 import { loadApiSelection, saveApiSelection } from '../storage/apiSelectionStorage'
 import { generateSurfaceReply } from '../surface/generateSurfaceReply'
+import { runSignalRuntime } from '../signal/runSignalRuntime'
+import { buildSignalRevisionEntry } from '../signal/buildSignalRevisionEntry'
 import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
-import type { ExperienceMessage, AppMode, ObservationRecord } from '../types/experience'
+import type { ExperienceMessage, AppMode, ObservationRecord, RuntimeMode } from '../types/experience'
 import type { NodePipelineResult, PlasticityState, RevisionEntry, RevisionState, StudioViewModel, UserTuningAction } from '../types/nodeStudio'
 import { ModeSwitch } from '../ui/components/ModeSwitch'
 import { ExperienceMode } from '../ui/modes/ExperienceMode'
@@ -36,6 +38,7 @@ const hasObservationData = (
 
 export default function NodeStudioPage() {
   const [mode, setMode] = useState<AppMode>('observe')
+  const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>('node')
   const [currentObservation, setCurrentObservation] = useState<ObservationRecord | null>(null)
   const [observeHistory, setObserveHistory] = useState<ObservationRecord[]>([])
   const [experienceMessages, setExperienceMessages] = useState<ExperienceMessage[]>(() => loadExperienceMessages())
@@ -66,7 +69,30 @@ export default function NodeStudioPage() {
     type: ObservationRecord['type'],
     plasticity: PlasticityState,
     provider: ApiProviderId,
+    runtime: RuntimeMode,
   ): Promise<ObservationRecord> => {
+    if (runtime === 'signal') {
+      const signalResult = runSignalRuntime(text)
+      const revisionEntry = buildSignalRevisionEntry(signalResult)
+      const timestamp = new Date().toISOString()
+      // Build a minimal NodePipelineResult / StudioViewModel so ObservationRecord shape stays consistent
+      const pipelineResult = runNodePipeline(text, plasticity)
+      const studioView = buildStudioViewModel(pipelineResult, plasticity)
+      return {
+        id: createId(type),
+        type,
+        runtimeMode: 'signal',
+        text,
+        timestamp,
+        time: formatTime(timestamp),
+        pipelineResult,
+        studioView,
+        revisionEntry,
+        assistantReply: signalResult.utterance,
+        signalResult,
+      }
+    }
+
     const pipelineResult = runNodePipeline(text, plasticity)
     const studioView = buildStudioViewModel(pipelineResult, plasticity)
     const revisionEntry = buildRevisionEntry(pipelineResult, studioView)
@@ -76,6 +102,7 @@ export default function NodeStudioPage() {
     return {
       id: createId(type),
       type,
+      runtimeMode: 'node',
       text,
       timestamp,
       time: formatTime(timestamp),
@@ -92,6 +119,7 @@ export default function NodeStudioPage() {
       .map((message) => ({
         id: message.observationId,
         type: 'experience' as const,
+        runtimeMode: message.runtimeMode ?? ('node' as const),
         text: message.pipelineResult.inputText,
         timestamp: message.timestamp,
         time: formatTime(message.timestamp),
@@ -99,6 +127,7 @@ export default function NodeStudioPage() {
         studioView: message.studioView,
         revisionEntry: message.revisionEntry,
         assistantReply: message.text,
+        signalResult: message.signalResult,
       }))
   }, [experienceMessages])
 
@@ -109,14 +138,14 @@ export default function NodeStudioPage() {
   }, [experienceHistory, observeHistory])
 
   const handleObserveAnalyze = useCallback(async (text: string) => {
-    const record = await createObservation(text, 'observe', revisionState.plasticity, apiSelection.baseProvider)
+    const record = await createObservation(text, 'observe', revisionState.plasticity, apiSelection.baseProvider, runtimeMode)
     addRevisionEntryToMemory(record.revisionEntry)
     setObserveHistory((previous) => [record, ...previous])
     setCurrentObservation(record)
-  }, [addRevisionEntryToMemory, apiSelection.baseProvider, createObservation, revisionState.plasticity])
+  }, [addRevisionEntryToMemory, apiSelection.baseProvider, createObservation, revisionState.plasticity, runtimeMode])
 
   const handleExperienceSend = useCallback(async (text: string) => {
-    const record = await createObservation(text, 'experience', revisionState.plasticity, apiSelection.baseProvider)
+    const record = await createObservation(text, 'experience', revisionState.plasticity, apiSelection.baseProvider, runtimeMode)
     const turnTimestamp = record.timestamp
 
     addRevisionEntryToMemory(record.revisionEntry)
@@ -129,9 +158,11 @@ export default function NodeStudioPage() {
         role: 'user',
         text,
         timestamp: turnTimestamp,
+        runtimeMode,
         pipelineResult: record.pipelineResult,
         studioView: record.studioView,
         revisionEntry: record.revisionEntry,
+        signalResult: record.signalResult,
       },
       {
         id: createId('exp_assistant'),
@@ -139,12 +170,14 @@ export default function NodeStudioPage() {
         role: 'assistant',
         text: record.assistantReply,
         timestamp: turnTimestamp,
+        runtimeMode,
         pipelineResult: record.pipelineResult,
         studioView: record.studioView,
         revisionEntry: record.revisionEntry,
+        signalResult: record.signalResult,
         },
       ])
-  }, [addRevisionEntryToMemory, apiSelection.baseProvider, createObservation, revisionState.plasticity])
+  }, [addRevisionEntryToMemory, apiSelection.baseProvider, createObservation, revisionState.plasticity, runtimeMode])
 
   const handleRestoreObservation = useCallback((record: ObservationRecord) => {
     setCurrentObservation(record)
@@ -278,6 +311,8 @@ export default function NodeStudioPage() {
             messages={experienceMessages}
             surfaceProviderLabel={currentProviderConfig.label}
             tuning={revisionState.tuning}
+            runtimeMode={runtimeMode}
+            onRuntimeModeChange={setRuntimeMode}
             onSend={handleExperienceSend}
             onOpenObservation={handleOpenObservation}
             onTuningAction={handleTuningAction}
