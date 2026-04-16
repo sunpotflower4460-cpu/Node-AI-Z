@@ -10,6 +10,17 @@ const ACTIVITY_EMA_ALPHA = 0.3
 const AFTERGLOW_FADE = 0.6
 /** Maximum afterglow value */
 const AFTERGLOW_MAX = 0.2
+/**
+ * Field intensity threshold above which afterglow begins to accumulate.
+ * Sessions with peak intensity above this value leave a mild residual
+ * activation on the following turn.
+ */
+const AFTERGLOW_INTENSITY_THRESHOLD = 0.6
+/**
+ * Rate at which afterglow grows when field intensity exceeds the threshold.
+ * Small value (0.05) keeps the afterglow effect subtle.
+ */
+const AFTERGLOW_GROWTH_RATE = 0.05
 
 /**
  * Create a blank session learning state.
@@ -67,8 +78,8 @@ export const updateSessionLearning = (
   const prevAfterglow = state.recentAfterglow ?? 0
   // Afterglow rises slightly when field was intense, fades otherwise
   const rawAfterglow =
-    fieldIntensity > 0.6
-      ? Math.min(AFTERGLOW_MAX, prevAfterglow + fieldIntensity * 0.05)
+    fieldIntensity > AFTERGLOW_INTENSITY_THRESHOLD
+      ? Math.min(AFTERGLOW_MAX, prevAfterglow + fieldIntensity * AFTERGLOW_GROWTH_RATE)
       : prevAfterglow * AFTERGLOW_FADE
 
   return {

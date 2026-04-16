@@ -6,8 +6,11 @@ import { applyLateralInhibition } from './applyLateralInhibition'
  * Feature ids considered "self / belief / field" oriented.
  * These are the features targeted by the recurrent self loop.
  * Extend this set as new features are added to activateChunkFeatures.
+ *
+ * Exported so that callers (e.g. runChunkedNodePipeline) can reference the
+ * same set without duplicating it.
  */
-const SELF_BELIEF_FEATURE_IDS = new Set([
+export const SELF_BELIEF_FEATURE_IDS = new Set([
   'self_critique',
   'uncertainty_expression',
   'hope_signal',

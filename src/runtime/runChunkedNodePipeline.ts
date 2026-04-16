@@ -9,12 +9,19 @@ import { applyTemporalDecay } from '../signal/applyTemporalDecay'
 import { applyRefractoryGating } from '../signal/applyRefractoryGating'
 import { applyFeatureInhibition } from '../signal/applyFeatureInhibition'
 import { computeDynamicThreshold } from '../signal/computeDynamicThreshold'
-import { runRecurrentSelfLoop } from '../signal/runRecurrentSelfLoop'
+import { runRecurrentSelfLoop, SELF_BELIEF_FEATURE_IDS } from '../signal/runRecurrentSelfLoop'
 import { applyLateralInhibition } from '../signal/applyLateralInhibition'
 import { buildNodeActivationsFromFeatures } from '../signal/buildNodeActivationsFromFeatures'
 import { bindNodes, liftPatterns, analyzeNodeField } from '../core/runNodePipeline'
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
+
+/**
+ * Maximum number of lateral-inhibition pathway keys recorded per turn.
+ * Kept intentionally small: we care about the most strongly inhibited
+ * features, not an exhaustive list, to keep pathway key noise low.
+ */
+const MAX_LATERAL_PATHWAY_KEYS = 3
 
 /**
  * Result of the Integrated Signal Runtime v2.2 pipeline.
@@ -153,9 +160,7 @@ export const runChunkedNodePipeline = (
 
   // Pathway keys for self/belief features that went through the loop
   const loopPathwayKeys: string[] = loopFeatures
-    .filter((f) =>
-      ['self_critique', 'uncertainty_expression', 'hope_signal', 'distress_signal', 'longing_for_recognition'].includes(f.id),
-    )
+    .filter((f) => SELF_BELIEF_FEATURE_IDS.has(f.id))
     .map((f) => `feature:${f.id}->recurrent_loop`)
 
   // ── 8. Lateral inhibition ─────────────────────────────────────────────────
@@ -164,12 +169,13 @@ export const runChunkedNodePipeline = (
   debug.push(...lateralNotes)
 
   // Pathway keys for lateral inhibition
+  // Limited to MAX_LATERAL_PATHWAY_KEYS to avoid flooding the learning layer with noise.
   const lateralPathwayKeys: string[] = loopFeatures
     .filter((lf) => {
       const after = lateralInhibitedFeatures.find((a) => a.id === lf.id)
       return after && after.strength < lf.strength
     })
-    .slice(0, 3)
+    .slice(0, MAX_LATERAL_PATHWAY_KEYS)
     .map((f) => `feature:${f.id}->lateral_inhibition`)
 
   const activeFeatures = lateralInhibitedFeatures
