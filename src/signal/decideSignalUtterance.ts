@@ -2,6 +2,8 @@ import type { SignalDecision, ProtoMeaningInput, UtteranceMode, SignalReplyInten
 import { normalizeProtoMeaningInput } from './normalizeProtoMeaningInput'
 
 const ALL_MODES: UtteranceMode[] = ['receptive', 'reflective', 'boundary', 'resonant']
+const BASE_CLOSENESS = 0.46
+const BASE_WITHHELD_BIAS = 0.22
 
 const hasNarrative = (narratives: string[], target: string) => narratives.includes(target)
 const hasSensory = (sensory: string[], target: string) => sensory.includes(target)
@@ -25,8 +27,8 @@ export const decideSignalUtterance = (
   let utteranceMode: UtteranceMode = 'receptive'
   let replyIntent: SignalReplyIntent = 'emotional_holding'
   let shouldOfferStep = false
-  let closeness = 0.46
-  let withheldBias = 0.22
+  let closeness = BASE_CLOSENESS
+  let withheldBias = BASE_WITHHELD_BIAS
 
   if (hasSensory(sensoryGlosses, '重い')) closeness += 0.16
   if (hasSensory(sensoryGlosses, '閉じている')) closeness += 0.08

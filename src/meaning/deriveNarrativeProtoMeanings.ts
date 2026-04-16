@@ -197,7 +197,7 @@ export const deriveNarrativeProtoMeanings = (
         toneTags: rule.toneTags,
       }
     })
-    .filter((meaning) => meaning.strength >= MIN_STRENGTH && meaning.childIds && meaning.childIds.length > 0)
+    .filter((meaning) => meaning.strength >= MIN_STRENGTH && (meaning.childIds?.length ?? 0) > 0)
     .sort((left, right) => right.strength - left.strength)
     .slice(0, MAX_RESULTS)
 }

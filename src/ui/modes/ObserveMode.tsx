@@ -622,10 +622,10 @@ export const ObserveMode = ({
                             <p className="text-[10px] font-bold text-slate-800">{meaning.glossJa}</p>
                             <div className="mt-1 flex flex-wrap gap-1">
                               {(meaning.childIds ?? []).map((childId) => {
-                                const child = currentObservation.chunkedResult?.protoMeaningHierarchy.sensory.find((sensoryMeaning) => sensoryMeaning.id === childId)
+                                const sensoryChild = currentObservation.chunkedResult?.protoMeaningHierarchy.sensory.find((sensoryMeaning) => sensoryMeaning.id === childId)
                                 return (
                                   <span key={childId} className="rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold text-amber-700">
-                                    {child?.glossJa ?? childId}
+                                    {sensoryChild?.glossJa ?? childId}
                                   </span>
                                 )
                               })}
