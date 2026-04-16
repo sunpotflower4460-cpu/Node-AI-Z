@@ -117,7 +117,7 @@ export const runChunkedNodePipeline = (
   previousPredictionState?: PredictionState,
 ): ChunkedNodePipelineResult => {
   const startedAt = now()
-  const debug: string[] = ['ISR v2.4 started']
+  const debug: string[] = ['ISR v2.4 started', 'ISR v2.3 predictive coding retained']
 
   // ── 1. Meaning chunks ──────────────────────────────────────────────────────
   const chunks = chunkText(text)
