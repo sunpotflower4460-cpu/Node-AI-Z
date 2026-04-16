@@ -37,6 +37,14 @@ export type SessionLearningState = {
    * when activity was high.  Fades toward 0 over turns with low activity.
    */
   recentAfterglow?: number
+  // ── ISR v2.3 predictive coding ────────────────────────────────────────────
+  /**
+   * The prediction state generated at the end of the previous turn.
+   * Passed into the next turn's pipeline as `previousPredictionState` so
+   * that prediction errors / surprise signals can be computed.
+   * Absent on the first turn (no prior available yet).
+   */
+  predictionState?: import('../predictive/types').PredictionState
 }
 
 /** Personal learning state: persisted across sessions for a single user */

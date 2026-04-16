@@ -3,6 +3,7 @@ import type { CoreNode, SuppressedNode } from '../types/nodeStudio'
 import type { NodePipelineResult } from '../types/nodeStudio'
 import type { PlasticityState } from '../revision/types'
 import type { TemporalFeatureState } from '../signal/temporalTypes'
+import type { PredictionState, PredictionModulationResult } from '../predictive/types'
 import { chunkText } from '../signal/chunkText'
 import { activateChunkFeatures } from '../signal/activateChunkFeatures'
 import { applyTemporalDecay } from '../signal/applyTemporalDecay'
@@ -13,6 +14,9 @@ import { runRecurrentSelfLoop, SELF_BELIEF_FEATURE_IDS } from '../signal/runRecu
 import { applyLateralInhibition } from '../signal/applyLateralInhibition'
 import { buildNodeActivationsFromFeatures } from '../signal/buildNodeActivationsFromFeatures'
 import { bindNodes, liftPatterns, analyzeNodeField } from '../core/runNodePipeline'
+import { applyPredictionModulation } from '../predictive/applyPredictionModulation'
+import { updatePredictionState } from '../predictive/updatePredictionState'
+import { buildEmptyPredictionState } from '../predictive/buildPredictionState'
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
@@ -24,7 +28,7 @@ const now = () => (typeof performance !== 'undefined' ? performance.now() : Date
 const MAX_LATERAL_PATHWAY_KEYS = 3
 
 /**
- * Result of the Integrated Signal Runtime v2.2 pipeline.
+ * Result of the Integrated Signal Runtime v2.3 pipeline.
  *
  * Extends NodePipelineResult with the chunk + feature stage, so that
  * the existing binding / pattern / field pipeline receives nodes that
@@ -32,24 +36,30 @@ const MAX_LATERAL_PATHWAY_KEYS = 3
  */
 export type ChunkedNodePipelineResult = NodePipelineResult & {
   chunkedStage: ChunkedPipelineStage
+  /** Full prediction modulation result (ISR v2.3); undefined if no prior was supplied */
+  predictionModulationResult?: PredictionModulationResult
+  /** Next-turn prediction state derived from this turn's active features (ISR v2.3) */
+  nextPredictionState: PredictionState
 }
 
 /**
- * ISR v2.2 — Integrated Signal Runtime v2.2
- * (Temporal Decay + Refractory Period + Recurrent Self Loop + Lateral Inhibition)
+ * ISR v2.3 — Integrated Signal Runtime v2.3
+ * (Predictive Coding + Surprise Layer)
  *
  * Flow:
  *   text
  *   → meaning chunks
  *   → feature activations
- *   → temporal decay          [NEW v2.2]
- *   → refractory gating       [NEW v2.2]
+ *   → temporal decay          [v2.2]
+ *   → refractory gating       [v2.2]
  *   → feature inhibition
+ *   → prediction modulation   [NEW v2.3] ← compare against prior, boost surprising features
  *   → dynamic threshold filtering
- *   → recurrent self loop     [NEW v2.2]
- *   → lateral inhibition      [NEW v2.2]
+ *   → recurrent self loop     [v2.2]
+ *   → lateral inhibition      [v2.2]
  *   → node activations with activationProfile
  *   → existing binding / pattern / field pipeline
+ *   → update prediction prior [NEW v2.3]
  *
  * The result is fully compatible with NodePipelineResult; callers that
  * do not need the chunk stage can ignore `chunkedStage`.
@@ -65,6 +75,9 @@ export type ChunkedNodePipelineResult = NodePipelineResult & {
  *   self loop (feature id → delta, e.g. from personal learning state).
  * @param afterglowStrength  Residual activation from the previous turn (0–0.2).
  *   A positive value slightly boosts initial feature strengths.
+ * @param previousPredictionState  [ISR v2.3] Prior prediction from the previous turn.
+ *   If supplied, prediction errors are computed and surprise-driven modulation is applied
+ *   before the dynamic threshold / self-loop stages.  When omitted, the step is a no-op.
  */
 export const runChunkedNodePipeline = (
   text: string,
@@ -74,9 +87,10 @@ export const runChunkedNodePipeline = (
   previousTemporalStates?: Map<string, TemporalFeatureState>,
   personalBias?: Record<string, number>,
   afterglowStrength = 0,
+  previousPredictionState?: PredictionState,
 ): ChunkedNodePipelineResult => {
   const startedAt = now()
-  const debug: string[] = ['ISR v2.2 started']
+  const debug: string[] = ['ISR v2.3 started']
 
   // ── 1. Meaning chunks ──────────────────────────────────────────────────────
   const chunks = chunkText(text)
@@ -128,15 +142,29 @@ export const runChunkedNodePipeline = (
     }
   })
 
-  // ── 6. Dynamic threshold ───────────────────────────────────────────────────
+  // ── 6. Prediction modulation (ISR v2.3) ────────────────────────────────────
+  const prior = previousPredictionState ?? buildEmptyPredictionState(currentTurn)
+  const predictionModulation = applyPredictionModulation(inhibitedFeatures, prior)
+  debug.push(...predictionModulation.debugNotes)
+
+  // Pathway keys for significant surprise signals
+  const surprisePathwayKeys: string[] = predictionModulation.surpriseSignals
+    .filter((s) => s.magnitude >= 0.3)
+    .map((s) => `feature:${s.featureId}->surprise_${s.direction}`)
+
+  // Features entering the threshold stage: modulated when a prior was present,
+  // otherwise unchanged (modulation was a no-op).
+  const preThresholdFeatures = predictionModulation.features
+
+  // ── 7. Dynamic threshold ───────────────────────────────────────────────────
   const threshold = computeDynamicThreshold(recentActivityScore)
   debug.push(`Dynamic threshold: ${threshold.current.toFixed(3)} (recentActivity: ${threshold.recentActivityScore.toFixed(2)})`)
 
   const thresholdPathwayKey = `threshold:adaptive=${threshold.current.toFixed(2)}`
-  const thresholdedFeatures = inhibitedFeatures.filter((f) => f.strength >= threshold.current)
+  const thresholdedFeatures = preThresholdFeatures.filter((f) => f.strength >= threshold.current)
   debug.push(`Features after threshold (${thresholdedFeatures.length}): ${thresholdedFeatures.map((f) => f.id).join(', ')}`)
 
-  // ── 7. Recurrent self loop ─────────────────────────────────────────────────
+  // ── 8. Recurrent self loop ─────────────────────────────────────────────────
   const recurrentResult = runRecurrentSelfLoop(
     thresholdedFeatures,
     personalBias,
@@ -163,7 +191,7 @@ export const runChunkedNodePipeline = (
     .filter((f) => SELF_BELIEF_FEATURE_IDS.has(f.id))
     .map((f) => `feature:${f.id}->recurrent_loop`)
 
-  // ── 8. Lateral inhibition ─────────────────────────────────────────────────
+  // ── 9. Lateral inhibition ─────────────────────────────────────────────────
   const { features: lateralInhibitedFeatures, debugNotes: lateralNotes } =
     applyLateralInhibition(loopFeatures)
   debug.push(...lateralNotes)
@@ -180,6 +208,12 @@ export const runChunkedNodePipeline = (
 
   const activeFeatures = lateralInhibitedFeatures
 
+  // ── 10. Next-turn prediction prior (ISR v2.3) ─────────────────────────────
+  const nextPredictionState = updatePredictionState(activeFeatures, currentTurn)
+  debug.push(
+    `Prediction prior updated: ${nextPredictionState.expectedFeatureIds.length} feature(s) → next turn (confidence=${nextPredictionState.confidence.toFixed(3)})`,
+  )
+
   const chunkedStage: ChunkedPipelineStage = {
     chunks,
     rawFeatures,
@@ -190,10 +224,11 @@ export const runChunkedNodePipeline = (
     recurrentResult,
     lateralInhibitedFeatures,
     activeFeatures,
+    modulatedFeatures: previousPredictionState ? predictionModulation.features : undefined,
     debugNotes: [...debug],
   }
 
-  // ── 9. Node activations from features ─────────────────────────────────────
+  // ── 11. Node activations from features ────────────────────────────────────
   let activatedNodes: CoreNode[] = []
   if (activeFeatures.length > 0) {
     activatedNodes = buildNodeActivationsFromFeatures(activeFeatures, plasticity)
@@ -213,7 +248,7 @@ export const runChunkedNodePipeline = (
     debug.push("Fallback: 'processing' node activated")
   }
 
-  // ── 10. Suppressed nodes (mirror existing pipeline behaviour) ─────────────
+  // ── 12. Suppressed nodes (mirror existing pipeline behaviour) ─────────────
   const suppressedNodes: SuppressedNode[] = []
   const hasNode = (id: string) => activatedNodes.some((n) => n.id === id)
 
@@ -232,7 +267,7 @@ export const runChunkedNodePipeline = (
     suppressedNodes.push({ id: 'despair', label: 'despair', value: 0.15, reason: '希望の兆しによる押し返し' })
   }
 
-  // ── 11. Existing binding / pattern / field pipeline ───────────────────────
+  // ── 13. Existing binding / pattern / field pipeline ───────────────────────
   const bound = bindNodes(activatedNodes, plasticity)
   const lifted = liftPatterns(activatedNodes, bound.bindings, plasticity)
   const analyzed = analyzeNodeField(activatedNodes, bound.bindings)
@@ -244,6 +279,7 @@ export const runChunkedNodePipeline = (
     ...decayPathwayKeys,
     ...loopPathwayKeys,
     ...lateralPathwayKeys,
+    ...surprisePathwayKeys,
     loopPathwayKey,
     thresholdPathwayKey,
   ]
@@ -256,12 +292,12 @@ export const runChunkedNodePipeline = (
     liftedPatterns: lifted.liftedPatterns.sort((a, b) => b.score - a.score),
     stateVector: analyzed.stateVector,
     debugNotes: [
-      'ISR v2.2 Pipeline started',
+      'ISR v2.3 Pipeline started',
       ...debug,
       ...bound.debugNotes,
       ...lifted.debugNotes,
       ...analyzed.debugNotes,
-      `ISR v2.2 Pipeline completed in ${elapsedMs.toFixed(2)} ms`,
+      `ISR v2.3 Pipeline completed in ${elapsedMs.toFixed(2)} ms`,
     ],
     meta: {
       retrievalCount: activatedNodes.length,
@@ -271,5 +307,7 @@ export const runChunkedNodePipeline = (
     },
     pathwayKeys: allPathwayKeys,
     chunkedStage,
+    predictionModulationResult: previousPredictionState ? predictionModulation : undefined,
+    nextPredictionState,
   }
 }
