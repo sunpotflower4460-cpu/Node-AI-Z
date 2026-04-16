@@ -49,7 +49,7 @@ const FEATURE_DEFS: Array<{ id: string; triggers: string[]; perMatchStrength: nu
   },
   {
     id: 'hope_signal',
-    triggers: ['希望', '前向き', '少しだけ', '光がある', '光がある気がする', '気がする', 'かすかな', 'まだ大丈夫'],
+    triggers: ['希望', '前向き', '少しだけ', '光がある', '光がある気がする', 'かすかな', 'まだ大丈夫'],
     perMatchStrength: 0.45,
     cap: 0.8,
   },

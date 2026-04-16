@@ -525,7 +525,7 @@ export const ObserveMode = ({
                     <div className="mt-2 space-y-1.5">
                       {currentObservation.chunkedResult.chunkedStage.inhibitedFeatures.length > 0 ? (
                         currentObservation.chunkedResult.chunkedStage.inhibitedFeatures.map((feature) => {
-                          const isActive = currentObservation.chunkedResult!.chunkedStage.activeFeatures.some((f) => f.id === feature.id)
+                          const isActive = currentObservation.chunkedResult?.chunkedStage.activeFeatures.some((f) => f.id === feature.id) ?? false
                           return (
                             <div key={feature.id} className="flex items-center justify-between gap-2">
                               <span className={`truncate text-xs ${isActive ? 'font-semibold text-slate-800' : 'text-slate-400 line-through'}`}>

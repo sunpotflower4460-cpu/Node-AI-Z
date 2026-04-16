@@ -23,7 +23,16 @@ export const chunkText = (text: string): MeaningChunk[] => {
     return []
   }
 
-  // Split on 、。 and reliable clause-level conjunctions
+  // Split on 、。 and reliable clause-level conjunctions.
+  //
+  // Pattern breakdown:
+  //   [、。]                              — Japanese comma / period (primary clause boundary)
+  //   (?<=[てで])\s*(?=[^\s])            — lookbehind for te-form (…て / …で) followed by content
+  //   (?<=(?:けど|けれど|から|ので|のに|ながら))\s*
+  //                                      — lookbehind for clause-level conjunctions
+  //
+  // 「が」 and 「し」 are intentionally excluded: they also appear as the
+  // subject particle and verb stem mid-phrase and produce false splits.
   const rawParts = normalised
     .split(/[、。]|(?<=[てで])\s*(?=[^\s])|(?<=(?:けど|けれど|から|ので|のに|ながら))\s*/)
     .map((part) => part.trim())
