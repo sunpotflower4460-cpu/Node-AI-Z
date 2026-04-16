@@ -7,33 +7,17 @@ import { apiProviders, getApiProviderConfig } from '../config/apiProviders'
 import { loadExperienceMessages, saveExperienceMessages } from '../storage/experienceStorage'
 import { loadApiSelection, saveApiSelection } from '../storage/apiSelectionStorage'
 import { applyTuningToSomaticMarkers } from '../runtime/applyTuningToSomaticMarkers'
-import { runMainRuntime } from '../runtime/runMainRuntime'
-import { createPersonalLearningState, updatePersonalLearning } from '../intelligence/learning/personalLearning'
-import { updateSomaticMarkers } from '../intelligence/somatic'
+import { createExperienceTurnMessages, createObservationRecord } from '../runtime/createObservationRecord'
+import { DEFAULT_OBSERVATION_DECISION_SHAPE, updatePersonalLearningFromObservation } from '../runtime/updatePersonalLearningFromObservation'
+import { createPersonalLearningState } from '../intelligence/learning/personalLearning'
 import type { PersonalLearningState } from '../intelligence/learning/types'
 import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
 import type { ExperienceMessage, AppMode, ObservationRecord, RuntimeMode } from '../types/experience'
-import type { NodePipelineResult, PlasticityState, RevisionEntry, RevisionState, StudioViewModel, UserTuningAction } from '../types/nodeStudio'
+import type { RevisionEntry, RevisionState, UserTuningAction } from '../types/nodeStudio'
+import { mapExperienceMessagesToObservationHistory, mergeObservationHistories } from '../studio/mapExperienceMessagesToObservationHistory'
 import { ModeSwitch } from '../ui/components/ModeSwitch'
 import { ExperienceMode } from '../ui/modes/ExperienceMode'
 import { ObserveMode } from '../ui/modes/ObserveMode'
-
-const createId = (prefix: string) => {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}_${crypto.randomUUID()}`
-  }
-
-  const highResolutionTime = typeof performance !== 'undefined' ? performance.now().toFixed(5) : '0'
-  return `${prefix}_${Date.now()}_${highResolutionTime}_${Math.random().toString(36).slice(2, 8)}`
-}
-
-const formatTime = (timestamp: string) => new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-
-const hasObservationData = (
-  message: ExperienceMessage,
-): message is ExperienceMessage & { pipelineResult: NodePipelineResult; studioView: StudioViewModel; revisionEntry: RevisionEntry } => {
-  return message.role === 'assistant' && Boolean(message.pipelineResult && message.studioView && message.revisionEntry)
-}
 
 export default function NodeStudioPage() {
   const [mode, setMode] = useState<AppMode>('observe')
@@ -65,124 +49,50 @@ export default function NodeStudioPage() {
   }, [])
 
   const applyObservationLearning = useCallback((record: ObservationRecord) => {
-    const somaticSignature = record.chunkedResult?.somaticSignature
-    if (!somaticSignature) {
-      return
-    }
-
-    const decisionShape = {
-      stance: 'answer' as const,
-      shouldAnswerQuestion: false,
-      shouldOfferStep: false,
-      shouldStayOpen: false,
-    }
-
-    setPersonalLearning((prev) => ({
-      ...updatePersonalLearning(prev, record.pipelineResult.pathwayKeys ?? []),
-      somaticMarkers: updateSomaticMarkers(
-        prev.somaticMarkers ?? [],
-        somaticSignature,
-        decisionShape,
-        { naturalness: 0, safety: 0, helpfulness: 0, openness: 0 },
-        Date.now(),
-      ),
-    }))
+    setPersonalLearning((previous) => updatePersonalLearningFromObservation(previous, record))
   }, [])
 
   const createObservation = useCallback(async (
     text: string,
     type: ObservationRecord['type'],
-    plasticity: PlasticityState,
     provider: ApiProviderId,
     runtime: RuntimeMode,
     currentPersonalLearning: PersonalLearningState,
   ): Promise<ObservationRecord> => {
-    const timestamp = new Date().toISOString()
-    const runtimeResult = await runMainRuntime({
+    return createObservationRecord({
+      type,
       text,
-      plasticity,
       provider,
       runtimeMode: runtime,
       personalLearning: currentPersonalLearning,
+      plasticity: revisionState.plasticity,
     })
-
-    return {
-      id: createId(type),
-      type,
-      text,
-      timestamp,
-      time: formatTime(timestamp),
-      ...runtimeResult,
-    }
-  }, [])
+  }, [revisionState.plasticity])
 
   const experienceHistory = useMemo<ObservationRecord[]>(() => {
-    return experienceMessages
-      .filter(hasObservationData)
-      .map((message) => ({
-        id: message.observationId,
-        type: 'experience' as const,
-        runtimeMode: message.runtimeMode ?? ('node' as const),
-        text: message.pipelineResult.inputText,
-        timestamp: message.timestamp,
-        time: formatTime(message.timestamp),
-        pipelineResult: message.pipelineResult,
-        studioView: message.studioView,
-        revisionEntry: message.revisionEntry,
-        assistantReply: message.text,
-        signalResult: message.signalResult,
-      }))
+    return mapExperienceMessagesToObservationHistory(experienceMessages)
   }, [experienceMessages])
 
   const history = useMemo(() => {
-    return [...observeHistory, ...experienceHistory].sort((first, second) => {
-      return new Date(second.timestamp).getTime() - new Date(first.timestamp).getTime()
-    })
+    return mergeObservationHistories(observeHistory, experienceHistory)
   }, [experienceHistory, observeHistory])
 
   const handleObserveAnalyze = useCallback(async (text: string) => {
-    const record = await createObservation(text, 'observe', revisionState.plasticity, apiSelection.baseProvider, runtimeMode, personalLearning)
+    const record = await createObservation(text, 'observe', apiSelection.baseProvider, runtimeMode, personalLearning)
     addRevisionEntryToMemory(record.revisionEntry)
     setObserveHistory((previous) => [record, ...previous])
     setCurrentObservation(record)
     applyObservationLearning(record)
-  }, [addRevisionEntryToMemory, apiSelection.baseProvider, applyObservationLearning, createObservation, personalLearning, revisionState.plasticity, runtimeMode])
+  }, [addRevisionEntryToMemory, apiSelection.baseProvider, applyObservationLearning, createObservation, personalLearning, runtimeMode])
 
   const handleExperienceSend = useCallback(async (text: string) => {
-    const record = await createObservation(text, 'experience', revisionState.plasticity, apiSelection.baseProvider, runtimeMode, personalLearning)
-    const turnTimestamp = record.timestamp
+    const record = await createObservation(text, 'experience', apiSelection.baseProvider, runtimeMode, personalLearning)
 
     addRevisionEntryToMemory(record.revisionEntry)
     setCurrentObservation(record)
     applyObservationLearning(record)
-    setExperienceMessages((previous) => [
-      ...previous,
-      {
-        id: createId('exp_user'),
-        observationId: record.id,
-        role: 'user',
-        text,
-        timestamp: turnTimestamp,
-        runtimeMode,
-        pipelineResult: record.pipelineResult,
-        studioView: record.studioView,
-        revisionEntry: record.revisionEntry,
-        signalResult: record.signalResult,
-      },
-      {
-        id: createId('exp_assistant'),
-        observationId: record.id,
-        role: 'assistant',
-        text: record.assistantReply,
-        timestamp: turnTimestamp,
-        runtimeMode,
-        pipelineResult: record.pipelineResult,
-        studioView: record.studioView,
-        revisionEntry: record.revisionEntry,
-        signalResult: record.signalResult,
-        },
-      ])
-  }, [addRevisionEntryToMemory, apiSelection.baseProvider, applyObservationLearning, createObservation, personalLearning, revisionState.plasticity, runtimeMode])
+    setExperienceMessages((previous) => [...previous, ...createExperienceTurnMessages(record)])
+  }, [addRevisionEntryToMemory, apiSelection.baseProvider, applyObservationLearning, createObservation, personalLearning, runtimeMode])
 
   const handleRestoreObservation = useCallback((record: ObservationRecord) => {
     setCurrentObservation(record)
@@ -206,18 +116,12 @@ export default function NodeStudioPage() {
     setRevisionState((previous) => applyUserTuning(previous, entryId, changeId, action))
     if (currentObservation?.chunkedResult?.somaticSignature) {
       const { somaticSignature } = currentObservation.chunkedResult
-      const decisionShape = {
-        stance: 'answer' as const,
-        shouldAnswerQuestion: false,
-        shouldOfferStep: false,
-        shouldStayOpen: false,
-      }
       setPersonalLearning((prev) => ({
         ...prev,
         somaticMarkers: applyTuningToSomaticMarkers(
           prev.somaticMarkers ?? [],
           somaticSignature,
-          decisionShape,
+          DEFAULT_OBSERVATION_DECISION_SHAPE,
           action,
           Date.now(),
         ),

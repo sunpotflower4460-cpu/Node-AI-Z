@@ -1,6 +1,6 @@
 import type { ChunkFeature } from '../ingest/chunkTypes'
 import type { PredictionState } from './types'
-import { predictFeatures } from '../_drafts/predictive/predictFeatures'
+import { predictFeatures } from './predictFeatures'
 
 /**
  * Build the next-turn PredictionState from the current turn's active features.

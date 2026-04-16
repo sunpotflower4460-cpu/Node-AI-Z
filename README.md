@@ -15,34 +15,46 @@ Node-AI-Z は、固定人格の AI を完成品として置くためのアプリ
 
 「分析 UI」そのものが目的ではなく、**育つ知性を観察する実験場**であることが、このリポジトリの中心です。
 
-## 現在の構成
+## 現在の背骨
 
-### Node Pipeline
-入力テキストから Node を活性化し、Binding / Pattern / State Vector を立ち上げる基礎層です。反応の材料を決めます。
+### アプリ骨格
 
-### Home Layer
-過剰反応や断定をそのまま返さないための帰還層です。homeCheck と return adjustment によって、返答前に一度「戻る」処理をかけます。
+- `src/app/` — 画面ルート。Observe / Experience の切り替えと runtime 呼び出しの入口。
+- `src/ui/` — モード UI、各タブ、共通コンポーネント。
+- `src/studio/` — 観察用の整形層。runtime 結果を Studio 表示用にまとめる。
+- `src/surface/` — 表面返答の生成。
+- `src/home/` — Home Layer。返答前の帰還とトーン調整。
+- `src/core/` — 既存 Node Pipeline。本体の node / relation / pattern / state vector を組み立てる。
+- `src/revision/` — Self-Revision / Memory / Promotion。
+- `src/storage/` — localStorage まわりの永続化。
+- `src/config/` — provider 設定などの構成値。
+- `src/types/` — Observe / Experience / runtime で共有する型。
 
-### Studio ViewModel
-Pipeline の結果を観察 UI 向けに整形する層です。Reply / Home / Pattern / Internal Process / Guide Observe など、研究表示に必要な情報をまとめます。
+### Runtime 入口
 
-### Self-Revision / Memory Layer
-返答ごとに revision entry と変更候補を生成し、memory に蓄積します。ユーザーが keep / soften / revert / lock を選べる形で、可視な自己修正を支えます。
+- `src/runtime/runMainRuntime.ts` — UI からの正規入口。
+- `src/runtime/runLegacyNodePipeline.ts` — 既存 Node Pipeline 導線。
+- `src/runtime/runSignalIntelligenceRuntime.ts` — signal 系 intelligence runtime 導線。
 
-### Observe Mode
-既存の Node Studio UI をベースにした研究ビューです。Node / Relation / Pattern / Home / Revision を横断的に観察できます。
+Observe / Experience のどちらもまず `runMainRuntime` を通り、必要に応じて legacy node pipeline と signal-intelligence runtime を切り替えます。
 
-### Experience Mode
-自然に話すための入口です。表面はチャット風でも、返答生成には既存の pipeline / home / revision を使い、結果は研究モードへ戻せます。
+### 脳寄り拡張の置き場
 
-### Base API Selection v0
-Node-AI-Z では基準APIを選べますが、Node / Home / Revision / Memory は共通です。現時点では internal_mock を既定とし、外部 provider は将来的な表面比較用の拡張先として扱います。
+- `src/intelligence/ingest/` — テキストを意味 chunk / feature に分ける入口。
+- `src/intelligence/signal/` — signal-centered runtime 本体。
+- `src/intelligence/predictive/` — predictive coding / surprise modulation。
+- `src/intelligence/meaning/` — sensory / narrative proto meaning。
+- `src/intelligence/somatic/` — somatic marker と somatic influence。
+- `src/intelligence/persona/` — persona 系の正式拡張置き場。
+- `src/intelligence/learning/` — session / personal / global の学習層。
+- `src/intelligence/knowledge/` — info layer と選択ロジック。
+- `src/intelligence/_drafts/` — 未接続の実験保管庫。本流 import 先にはしない。
 
-### Runtime Entry
-UI は `src/runtime/runMainRuntime.ts` を入口にし、既存 Node Pipeline と signal-centered intelligence runtime を切り替える構成です。
+### いまの本体
 
-### Intelligence Extensions
-signal / predictive / meaning / somatic / learning / knowledge / ingest の脳寄り拡張は `src/intelligence/` 配下へ集約しています。未接続の試作は `src/intelligence/_drafts/` に退避します。
+- Observe は `src/app/` → `src/runtime/` → `src/studio/` / `src/revision/` / `src/ui/` の流れで内部構造を見ます。
+- Experience は `src/app/` → `src/runtime/` → `src/surface/` を通って会話しつつ、同じ revision / memory を蓄積します。
+- Legacy Node Pipeline と Main Runtime 導線は両方とも現行構造のまま残しています。
 
 ## モード説明
 
@@ -119,4 +131,4 @@ npm run lint
 npm run test:run
 ```
 
-`test:run` では promotion rules / promoteRevisionState を含む 75 テストが通ることを確認済みです（詳細: `docs/reports/`）。
+`test:run` では現行の Vitest スイートが通ることを確認してください。
