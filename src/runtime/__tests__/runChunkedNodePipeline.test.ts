@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { chunkText } from '../../intelligence/ingest/chunkText'
-import { activateChunkFeatures } from '../../intelligence/ingest/activateChunkFeatures'
-import { applyFeatureInhibition } from '../../intelligence/signal/applyFeatureInhibition'
-import { computeDynamicThreshold } from '../../intelligence/signal/computeDynamicThreshold'
-import { buildNodeActivationsFromFeatures } from '../../intelligence/signal/buildNodeActivationsFromFeatures'
+import { chunkText } from '../../signal/ingest/chunkText'
+import { activateChunkFeatures } from '../../signal/ingest/activateChunkFeatures'
+import { applyFeatureInhibition } from '../../signal/applyFeatureInhibition'
+import { computeDynamicThreshold } from '../../signal/computeDynamicThreshold'
+import { buildNodeActivationsFromFeatures } from '../../signal/buildNodeActivationsFromFeatures'
 import { runChunkedNodePipeline } from '../runChunkedNodePipeline'
 
 // ── chunkText ─────────────────────────────────────────────────────────────────

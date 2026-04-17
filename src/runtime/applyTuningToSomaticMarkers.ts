@@ -1,5 +1,5 @@
-import type { SomaticMarker, SomaticSignature } from '../intelligence/somatic/types'
-import { somaticOutcomeFromTuningAction, updateSomaticMarkers } from '../intelligence/somatic'
+import type { SomaticMarker, SomaticSignature } from '../somatic/types'
+import { somaticOutcomeFromTuningAction, updateSomaticMarkers } from '../somatic'
 import type { UserTuningAction } from '../revision/types'
 
 export const applyTuningToSomaticMarkers = (

@@ -1,6 +1,6 @@
-import { updatePersonalLearning } from '../intelligence/learning/personalLearning'
-import type { PersonalLearningState } from '../intelligence/learning/types'
-import { updateSomaticMarkers } from '../intelligence/somatic'
+import { updatePersonalLearning } from '../learning/personalLearning'
+import type { PersonalLearningState } from '../learning/types'
+import { updateSomaticMarkers } from '../somatic'
 import type { ObservationRecord } from '../types/experience'
 
 export const DEFAULT_OBSERVATION_DECISION_SHAPE = {

@@ -1,9 +1,14 @@
-import type { PersonalLearningState } from '../intelligence/learning/types'
+import type { PersonalLearningState } from '../learning/types'
 import type { ApiProviderId } from '../types/apiProvider'
 import type { ExperienceMessage, ObservationRecord, RuntimeMode } from '../types/experience'
 import type { PlasticityState } from '../types/nodeStudio'
 import { runMainRuntime, type RuntimeSource } from './runMainRuntime'
 
+/**
+ * Observation builder for UI flows.
+ * The page supplies observation metadata and input; runtime route selection stays
+ * behind `runMainRuntime`, and the result comes back as a single observation record.
+ */
 export type CreateObservationRecordInput = {
   type: ObservationRecord['type']
   text: string

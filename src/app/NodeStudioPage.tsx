@@ -9,8 +9,8 @@ import { loadApiSelection, saveApiSelection } from '../storage/apiSelectionStora
 import { applyTuningToSomaticMarkers } from '../runtime/applyTuningToSomaticMarkers'
 import { createExperienceTurnMessages, createObservationRecord } from '../runtime/createObservationRecord'
 import { DEFAULT_OBSERVATION_DECISION_SHAPE, updatePersonalLearningFromObservation } from '../runtime/updatePersonalLearningFromObservation'
-import { createPersonalLearningState } from '../intelligence/learning/personalLearning'
-import type { PersonalLearningState } from '../intelligence/learning/types'
+import { createPersonalLearningState } from '../learning/personalLearning'
+import type { PersonalLearningState } from '../learning/types'
 import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
 import type { ExperienceMessage, AppMode, ObservationRecord, RuntimeMode } from '../types/experience'
 import type { RevisionEntry, RevisionState, UserTuningAction } from '../types/nodeStudio'
@@ -56,14 +56,14 @@ export default function NodeStudioPage() {
     text: string,
     type: ObservationRecord['type'],
     provider: ApiProviderId,
-    runtime: RuntimeMode,
+    runtimeMode: RuntimeMode,
     currentPersonalLearning: PersonalLearningState,
   ): Promise<ObservationRecord> => {
     return createObservationRecord({
       type,
       text,
       provider,
-      runtimeMode: runtime,
+      runtimeMode,
       personalLearning: currentPersonalLearning,
       plasticity: revisionState.plasticity,
     })
@@ -77,22 +77,31 @@ export default function NodeStudioPage() {
     return mergeObservationHistories(observeHistory, experienceHistory)
   }, [experienceHistory, observeHistory])
 
-  const handleObserveAnalyze = useCallback(async (text: string) => {
-    const record = await createObservation(text, 'observe', apiSelection.baseProvider, runtimeMode, personalLearning)
+  const commitObservationRecord = useCallback((record: ObservationRecord, type: ObservationRecord['type']) => {
     addRevisionEntryToMemory(record.revisionEntry)
-    setObserveHistory((previous) => [record, ...previous])
     setCurrentObservation(record)
     applyObservationLearning(record)
-  }, [addRevisionEntryToMemory, apiSelection.baseProvider, applyObservationLearning, createObservation, personalLearning, runtimeMode])
+
+    if (type === 'observe') {
+      setObserveHistory((previous) => [record, ...previous])
+      return
+    }
+
+    setExperienceMessages((previous) => [...previous, ...createExperienceTurnMessages(record)])
+  }, [addRevisionEntryToMemory, applyObservationLearning])
+
+  const handleObservationSubmit = useCallback(async (text: string, type: ObservationRecord['type']) => {
+    const record = await createObservation(text, type, apiSelection.baseProvider, runtimeMode, personalLearning)
+    commitObservationRecord(record, type)
+  }, [apiSelection.baseProvider, commitObservationRecord, createObservation, personalLearning, runtimeMode])
+
+  const handleObserveAnalyze = useCallback(async (text: string) => {
+    await handleObservationSubmit(text, 'observe')
+  }, [handleObservationSubmit])
 
   const handleExperienceSend = useCallback(async (text: string) => {
-    const record = await createObservation(text, 'experience', apiSelection.baseProvider, runtimeMode, personalLearning)
-
-    addRevisionEntryToMemory(record.revisionEntry)
-    setCurrentObservation(record)
-    applyObservationLearning(record)
-    setExperienceMessages((previous) => [...previous, ...createExperienceTurnMessages(record)])
-  }, [addRevisionEntryToMemory, apiSelection.baseProvider, applyObservationLearning, createObservation, personalLearning, runtimeMode])
+    await handleObservationSubmit(text, 'experience')
+  }, [handleObservationSubmit])
 
   const handleRestoreObservation = useCallback((record: ObservationRecord) => {
     setCurrentObservation(record)
@@ -157,7 +166,7 @@ export default function NodeStudioPage() {
             <h1 className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-900 md:text-xl">
               <BrainCircuit className="h-5 w-5 text-indigo-600 md:h-6 md:w-6" />
               Node-AI-Z
-              <span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">SRM-2 / Provisional Plasticity</span>
+              <span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">SRM-3 / CPU Runtime</span>
             </h1>
             <p className="mt-1 text-sm font-medium text-slate-500">
               研究するための観察ビューと、実際に話すための体験ビューを往復しながら、育つ知性を見ていく実験アプリ。
