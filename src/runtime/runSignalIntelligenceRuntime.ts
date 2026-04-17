@@ -37,14 +37,14 @@ export type SignalIntelligenceRuntimeResult = {
 
 const runSignalCenteredRoute = (
   text: string,
-  legacyResult: ReturnType<typeof runLegacyNodePipeline>,
+  legacySnapshot: ReturnType<typeof runLegacyNodePipeline>,
 ): SignalIntelligenceRuntimeResult => {
   const signalResult = runSignalRuntime(text)
 
   return {
     runtimeMode: 'signal',
-    pipelineResult: legacyResult.pipelineResult,
-    studioView: legacyResult.studioView,
+    pipelineResult: legacySnapshot.pipelineResult,
+    studioView: legacySnapshot.studioView,
     revisionEntry: buildSignalRevisionEntry(signalResult),
     assistantReply: signalResult.utterance,
     signalResult,
@@ -56,9 +56,9 @@ const runSignalAssistedNodeRoute = async ({
   plasticity,
   provider,
   personalLearning,
-  legacyResult,
-}: SignalIntelligenceRuntimeInput & {
-  legacyResult: ReturnType<typeof runLegacyNodePipeline>
+  legacySnapshot,
+}: Omit<SignalIntelligenceRuntimeInput, 'runtimeMode'> & {
+  legacySnapshot: ReturnType<typeof runLegacyNodePipeline>
 }): Promise<SignalIntelligenceRuntimeResult> => {
   const chunkedResult = runChunkedNodePipeline(
     text,
@@ -71,13 +71,13 @@ const runSignalAssistedNodeRoute = async ({
     undefined,
     personalLearning.somaticMarkers,
   )
-  const assistantReply = await generateSurfaceReply({ provider, studioView: legacyResult.studioView })
+  const assistantReply = await generateSurfaceReply({ provider, studioView: legacySnapshot.studioView })
 
   return {
     runtimeMode: 'node',
-    pipelineResult: legacyResult.pipelineResult,
-    studioView: legacyResult.studioView,
-    revisionEntry: legacyResult.revisionEntry,
+    pipelineResult: legacySnapshot.pipelineResult,
+    studioView: legacySnapshot.studioView,
+    revisionEntry: legacySnapshot.revisionEntry,
     assistantReply,
     chunkedResult,
     somaticSignature: chunkedResult.somaticSignature,
@@ -98,18 +98,17 @@ export const runSignalIntelligenceRuntime = async ({
   runtimeMode,
   personalLearning,
 }: SignalIntelligenceRuntimeInput): Promise<SignalIntelligenceRuntimeResult> => {
-  const legacyResult = runLegacyNodePipeline(text, plasticity)
+  const legacySnapshot = runLegacyNodePipeline(text, plasticity)
 
   if (runtimeMode === 'signal') {
-    return runSignalCenteredRoute(text, legacyResult)
+    return runSignalCenteredRoute(text, legacySnapshot)
   }
 
   return runSignalAssistedNodeRoute({
     text,
     plasticity,
     provider,
-    runtimeMode,
     personalLearning,
-    legacyResult,
+    legacySnapshot,
   })
 }
