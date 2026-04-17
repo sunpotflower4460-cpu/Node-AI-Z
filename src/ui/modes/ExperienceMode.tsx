@@ -60,7 +60,7 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtime
             </div>
             <h2 className="text-2xl font-bold tracking-tight text-slate-900">自然に話しながら、裏では観察が積み上がる入口</h2>
             <p className="mt-3 max-w-xl text-sm font-medium leading-relaxed text-slate-500 md:text-[15px]">
-              表では会話を主役にしつつ、裏では pipeline / home / revision が動きます。必要なときだけ観察研究モードに戻って、内部の変化を見返せます。
+              表では会話を主役にしつつ、裏では runMainRuntime が legacy backbone または signal-centered route を選び、revision / memory を積み上げます。必要なときだけ観察研究モードに戻って、内部の変化を見返せます。
             </p>
           </div>
           <div className="inline-flex items-center gap-2 self-start rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-500">
@@ -97,11 +97,11 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtime
               <div className="rounded-full bg-rose-100 p-4 text-rose-600">
                 <MessageCircleHeart className="h-8 w-8" />
               </div>
-              <h3 className="mt-4 text-lg font-bold text-slate-800">ここから話し始められます</h3>
-              <p className="mt-2 max-w-md text-sm font-medium leading-relaxed text-slate-500">
-                返答は既存の Node Pipeline / Home Layer / 返答調整レイヤーを通して生成されます。詳しい内部観察はあとから研究モードで開けます。
-              </p>
-            </div>
+               <h3 className="mt-4 text-lg font-bold text-slate-800">ここから話し始められます</h3>
+               <p className="mt-2 max-w-md text-sm font-medium leading-relaxed text-slate-500">
+                 返答は runMainRuntime から legacy backbone または signal-centered route を通って生成されます。詳しい内部観察はあとから研究モードで開けます。
+               </p>
+             </div>
           ) : (
             messages.map((message) => {
               const isAssistant = message.role === 'assistant'

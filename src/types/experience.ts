@@ -1,5 +1,5 @@
 import type { NodePipelineResult, RevisionEntry, StudioViewModel } from './nodeStudio'
-import type { SignalRuntimeResult } from '../intelligence/signal/types'
+import type { SignalRuntimeResult } from '../signal/types'
 import type { ChunkedNodePipelineResult } from '../runtime/runChunkedNodePipeline'
 
 export type AppMode = 'observe' | 'experience'
@@ -19,9 +19,9 @@ export type ObservationRecord = {
   assistantReply: string
   signalResult?: SignalRuntimeResult
   chunkedResult?: ChunkedNodePipelineResult
-  somaticSignature?: import('../intelligence/somatic/types').SomaticSignature
-  somaticInfluence?: import('../intelligence/somatic/types').SomaticInfluence
-  relevantSomaticMarkers?: import('../intelligence/somatic/types').SomaticMarker[]
+  somaticSignature?: import('../somatic/types').SomaticSignature
+  somaticInfluence?: import('../somatic/types').SomaticInfluence
+  relevantSomaticMarkers?: import('../somatic/types').SomaticMarker[]
 }
 
 export type ExperienceMessage = {

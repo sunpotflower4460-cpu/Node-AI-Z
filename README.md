@@ -1,120 +1,142 @@
 # Node-AI-Z
 
-結晶思考モデルを観察・体験・自己修正していくための実験アプリです。Node / Home / Revision / Memory を通じて、育つ知性の構造を見ていきます。現在は **SRM-3（Memory 昇格ロジック）の最小実装済み** 段階です。
+Node-AI-Z は、Observe / Experience / Revision / Memory を往復しながら、CPU ベースで育つ知性の背骨と脳寄り拡張を同じ runtime で観察する実験アプリです。
 
-## コンセプト
+## 現在の中核体験
 
-Node-AI-Z は、固定人格の AI を完成品として置くためのアプリではありません。
-入力に対して、場の判断 → 反応 → 姿勢 → Home への帰還 → 発話 → Self-Revision という流れを通し、応答がその都度「結晶化」することを観察するための環境です。
+### Observe
+- `observe` は研究モードです。
+- 入力を `runMainRuntime` に通し、Node / Relation / Pattern / Home / Revision を観察します。
+- `studio` が runtime 結果を観察 UI 向けに整形します。
 
-目指しているのは、ただ正しく返す AI ではなく、反応し、戻り、少しずつ育つ AI です。
-そのためにアプリは二層構造になっています。
+### Experience
+- `experience` は会話モードです。
+- UI は `mode` と `runtimeMode` と入力を渡し、runtime が返した結果を会話履歴へ積みます。
+- 表面返答は `surface` が整え、必要なときだけ Observe に戻って内部を見返します。
 
-- **観察研究モード**: 内部プロセスを見て、構造・修正候補・変化を研究する
-- **体験モード**: 表面では自然に話しつつ、裏側では同じ pipeline / home / revision / memory を動かして記録する
+### Revision / Memory
+- `revision` は Self-Revision / Promotion / Memory の層です。
+- 各ターンの revision entry を蓄積し、tuning と promotion を通して plasticity を更新します。
+- `storage` は会話履歴や API 選択などの永続化、`revisionStorage` は revision state の永続化を担当します。
 
-「分析 UI」そのものが目的ではなく、**育つ知性を観察する実験場**であることが、このリポジトリの中心です。
+## 現在のアーキテクチャ
 
-## 現在の背骨
+### 背骨（現行本体）
 
-### アプリ骨格
+現在の本体は、既存 Node Pipeline を中心にした次の背骨です。
 
-- `src/app/` — 画面ルート。Observe / Experience の切り替えと runtime 呼び出しの入口。
-- `src/ui/` — モード UI、各タブ、共通コンポーネント。
-- `src/studio/` — 観察用の整形層。runtime 結果を Studio 表示用にまとめる。
-- `src/surface/` — 表面返答の生成。
+- `src/app/` — アプリ入口。Observe / Experience の切り替えと状態管理。
+- `src/ui/` — モード UI、タブ、共通コンポーネント。
+- `src/studio/` — Observe / Debug 表示向け整形層。runtime 結果を研究ビューへ変換します。
+- `src/surface/` — 表面返答の整形。
 - `src/home/` — Home Layer。返答前の帰還とトーン調整。
-- `src/core/` — 既存 Node Pipeline。本体の node / relation / pattern / state vector を組み立てる。
-- `src/revision/` — Self-Revision / Memory / Promotion。
-- `src/storage/` — localStorage まわりの永続化。
+- `src/core/` — 既存 Node Pipeline の核。node / relation / pattern / state vector を組み立てます。
+- `src/revision/` — Self-Revision / Promotion / Memory。
+- `src/storage/` — localStorage 系永続化。
 - `src/config/` — provider 設定などの構成値。
-- `src/types/` — Observe / Experience / runtime で共有する型。
+- `src/types/` — Observe / Experience / runtime 共有型。
 
-### Runtime 入口
+### runtime（実行入口の統合）
 
-- `src/runtime/runMainRuntime.ts` — UI からの正規入口。
-- `src/runtime/runLegacyNodePipeline.ts` — 既存 Node Pipeline 導線。
-- `src/runtime/runSignalIntelligenceRuntime.ts` — signal 系 intelligence runtime 導線。
+`src/runtime/` は UI から下位処理を隠すための統合入口です。
 
-Observe / Experience のどちらもまず `runMainRuntime` を通り、必要に応じて legacy node pipeline と signal-intelligence runtime を切り替えます。
+- `runMainRuntime` — 最上位入口。UI はここに mode / input を渡し、内部 route の選択は runtime に閉じます。
+- `runLegacyNodePipeline` — 既存 Node Pipeline をそのまま走らせ、studio / revision 用スナップショットを返す legacy 背骨。
+- `runSignalIntelligenceRuntime` — signal-centered route を束ねる入口。`runtimeMode` に応じて pure signal route と signal-assisted node route を切り替えます。
+- `runChunkedNodePipeline` — chunk / feature / activationProfile を通した signal 前段付き legacy 拡張。
+- `createObservationRecord` — runtime 結果を Observe / Experience 共通の observation record にまとめます。
 
-### 脳寄り拡張の置き場
+### 脳寄り拡張（今後の拡張核）
 
-- `src/intelligence/ingest/` — テキストを意味 chunk / feature に分ける入口。
-- `src/intelligence/signal/` — signal-centered runtime 本体。
-- `src/intelligence/predictive/` — predictive coding / surprise modulation。
-- `src/intelligence/meaning/` — sensory / narrative proto meaning。
-- `src/intelligence/somatic/` — somatic marker と somatic influence。
-- `src/intelligence/persona/` — persona 系の正式拡張置き場。
-- `src/intelligence/learning/` — session / personal / global の学習層。
-- `src/intelligence/knowledge/` — info layer と選択ロジック。
-- `src/intelligence/_drafts/` — 未接続の実験保管庫。本流 import 先にはしない。
+現在は次の top-level ディレクトリを正式採用します。`src/intelligence/...` 集約案は採用しません。
 
-### いまの本体
+```text
+src/
+  app/
+  ui/
+  studio/
+  surface/
+  home/
+  core/
+  revision/
+  storage/
+  config/
+  types/
 
-- Observe は `src/app/` → `src/runtime/` → `src/studio/` / `src/revision/` / `src/ui/` の流れで内部構造を見ます。
-- Experience は `src/app/` → `src/runtime/` → `src/surface/` を通って会話しつつ、同じ revision / memory を蓄積します。
-- Legacy Node Pipeline と Main Runtime 導線は両方とも現行構造のまま残しています。
+  runtime/
+  signal/
+  predictive/
+  meaning/
+  somatic/
+  persona/
+  learning/
+  knowledge/
+```
 
-## モード説明
+各層の意味は次のとおりです。
 
-### 観察研究モード
-内部構造を見るためのモードです。Node Studio として、反応・構造・修正・帰還を観察し、実験や比較に使います。
+- `src/signal/` — signal 系の時間処理・抑制・loop・signal-centered runtime。本ディレクトリ内の `signal/ingest/` が chunk / feature 入口を持ちます。
+- `src/predictive/` — prior / surprise / prediction error。
+- `src/meaning/` — sensory / narrative proto meaning。
+- `src/somatic/` — 過去パターンによる decision 補正。
+- `src/persona/` — 全層重みフィルタの正式置き場。現時点では拡張ポイントを確保している段階です。
+- `src/learning/` — session / personal / global candidate learning。
+- `src/knowledge/` — 長期構造・情報層。
 
-### 体験モード
-AI と自然に話すためのモードです。ただし裏では各発話ごとに pipeline が走り、homeCheck / revision candidate / memory が記録されます。必要になったら「観察で見る」から研究ビューに戻れます。
+### 用語の基準
 
-## 現在実装済み
+- **Observe** — 観察研究モード。observation record を読む場所。
+- **Studio** — 観察表示の整形層。runtime の実行そのものではありません。
+- **Runtime** — 実行入口と route 切り替え。UI はここより下を直接知らない前提です。
+- **Legacy Node Pipeline** — `core` / `home` / `revision` を支える既存の背骨です。
+- **Signal Intelligence Route** — signal-centered route。pure signal と signal-assisted node の両方を含みます。
+- **Chunk / Feature / ActivationProfile** — signal 側の前段ステージ。
+- **Proto Meaning** — `meaning` 層が作る sensory / narrative の意味候補。
+- **Node Activation** — feature を受けて既存 Node Pipeline へ橋渡しされる活性化結果です。
 
-- Node Pipeline による node retrieval / relation binding / pattern lifting / state analysis
-- Home Layer による return 判定と返答トーン調整
-- Studio ViewModel による研究 UI 向け表示整形
-- Reply / States / Relations / Patterns / Home / History / Revision タブ
-- Self-Revision entry の生成、memory 蓄積、tuning アクション
-- **観察研究モード / 体験モードの切り替え**
-- 体験モードの疑似対話（`runNodePipeline` + `buildStudioViewModel` + `adjustedReplyPreview`）
-- 体験モード会話のセッション保持と localStorage 保存
-- 体験モードから観察研究モードへ戻る導線
-- **基準API選択 v0（表面化のみ / 既定は `internal_mock`）**
-- **plasticity / revision の詳細可視化は ObserveMode が正規の観察場所**（Applied This Turn 等）
-- **体験モードでも最小 tuning が可能**（各応答の下に Self-Revision 折りたたみカード / keep・soften・revert）
-- **plasticity 反映**（node / relation / pattern / home trigger / tone bias の小さな補正を可視化し、次回 run に反映）
-- **SRM-3 最小実装済み**: change 単位の `ephemeral` / `provisional` / `promoted` / `reverted` 状態管理、昇格判定ロジック（`promotionRules.ts`）、全 state 再計算（`promoteRevisionState.ts`）が入っており、`revisionLog.ts` の update 導線で自動的に通る。Observe の Promotion / Growth セクションで可視化。
-- **ISR v2.2（Integrated Signal Runtime v2.2）実装済み**: Meaning Chunk → Feature Activation → Temporal Decay → Refractory Gating → Feature Inhibition → Dynamic Threshold → Recurrent Self Loop → Lateral Inhibition → Node Activation の完全パイプライン。発火は1回で確定せず、数ステップの収束ループを経る。抑制性シグナルと動的閾値により、反応の前景化が少し脳寄りになった。
-- **ISR v2.4（Hierarchical Proto Meaning）導入済み**: sensory proto meaning（体感寄り）と narrative proto meaning（物語寄り）を分け、Sensory → Narrative の階層として観察できるようにした。decision は narrative を主入力に、sensory は tone / texture の調整に使う。somatic marker は次段階。
+## runtime 順序の現在地
 
-### Revision / Memory / Promotion（SRM-3）の主要ファイル
+現在の実行順は次の整理です。
 
-| ファイル | 役割 |
-|---|---|
-| `src/revision/promotionRules.ts` | change ごとの昇格判定（ephemeral → provisional → promoted）|
-| `src/revision/promoteRevisionState.ts` | state 全体の status 再計算と plasticity 再構築 |
-| `src/revision/revisionLog.ts` | entry 追加後に `promoteRevisionState` を通す update 導線 |
-| `src/revision/revisionTypes.ts` | `ChangeStatus`（ephemeral / provisional / promoted / reverted）型定義 |
+1. UI (`NodeStudioPage`) は入力を `createObservationRecord` に渡す
+2. `createObservationRecord` は `runMainRuntime` を呼ぶ
+3. `runMainRuntime` は route を選ぶ
+   - `legacy-node-pipeline` → `runLegacyNodePipeline`
+   - 既定 (`signal-intelligence`) → `runSignalIntelligenceRuntime`
+4. `runSignalIntelligenceRuntime` は `runtimeMode` を見る
+   - `signal` → `runSignalRuntime` を使う pure signal route
+   - `node` → `runChunkedNodePipeline` を付与しつつ legacy 背骨を返す signal-assisted node route
+5. runtime の結果を `studio` / `surface` / `revision` がそれぞれの用途へ流す
 
-### ISR v2.2 の主要ファイル
+現時点では、**既存 Node Pipeline が依然として重要な背骨**です。新しい signal-centered runtime は発展中であり、Observe / Experience の入口は `runMainRuntime` に統一していきます。
 
-| ファイル | 役割 |
-|---|---|
-| `src/intelligence/signal/temporalTypes.ts` | `TemporalFeatureState` / `RecurrentLoopResult<T>` 型定義 |
-| `src/intelligence/signal/applyTemporalDecay.ts` | 指数減衰を feature 強度に適用 |
-| `src/intelligence/signal/applyRefractoryGating.ts` | 不応期による再発火抑制 |
-| `src/intelligence/signal/runRecurrentSelfLoop.ts` | 収束条件付き再帰 self/belief ループ |
-| `src/intelligence/signal/applyLateralInhibition.ts` | winner-take-more 側方抑制 |
-| `src/runtime/runChunkedNodePipeline.ts` | ISR v2.2 完全パイプライン（chunk→node まで）|
+## 今後の実装ロードマップ
 
-## 今後の予定
+次の機能追加は、原則としてこの順で積みます。
 
-- SRM-3.5 / SRM-4 相当の refinement・summarization（昇格後の要約と重複圧縮）
-- plasticity の反映方針の見直しと memory 昇格条件の整備
-- tuning UI のさらなる強化
-- より自然な体験会話と対話継続性の向上
+1. chunk / feature / activationProfile
+2. temporal / recurrent / threshold
+3. predictive layer
+4. hierarchical proto meaning
+5. somatic marker
+6. persona weight vector
+7. learning 三層の本格化
+8. knowledge / external info hook
+9. 必要なら GPGPU
 
-## 開発メモ / 哲学
+この順番より前に大きな統合を増やさず、背骨 → signal 前段 → 学習 / 知識 の順で広げます。
 
-このアプリは、分析して終わるためのものではありません。変化を観察しながら、戻したり、比べたり、一緒に育てるためのものです。
+## 何がまだ experimental か
 
-AI が勝手に不可視な形で変わるのではなく、**変化が見えること・戻せること・共同で育てられること**を重視しています。
+- Node-AI-Z は**完全な脳再現ではありません**。
+- 現在は**CPU ベース**です。
+- `signal / predictive / meaning / somatic / persona` は段階的導入中です。
+- `runSignalRuntime` を含む signal-centered route はまだ発展中です。
+- `persona` は正式ディレクトリとして確保済みですが、runtime への本格接続はこれからです。
+- `learning` のうち global learning の本格昇格はこれからです。
+- `knowledge` は長期構造の置き場として存在しますが、外部情報 hook を含む本格連携はこれからです。
+
+つまり、**できていること**は「既存 Node Pipeline を背骨にしながら、signal-centered route を段階導入できる骨格がある」ことです。**これから入れること**は「persona / global learning / knowledge hook を正式運用に持ち上げること」です。
 
 ## セットアップ
 
@@ -130,5 +152,3 @@ npm run build
 npm run lint
 npm run test:run
 ```
-
-`test:run` では現行の Vitest スイートが通ることを確認してください。
