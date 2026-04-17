@@ -41,6 +41,16 @@ export const fuseLexicalAndSignal = (
     integratedTensions.push('問いは明確で比較整理へ進みやすい')
   }
 
+  if (integratedTensions.length === 0) {
+    if ((lexicalState.optionLabels?.length ?? 0) >= 2) {
+      integratedTensions.push('複数の選択肢を見ながらまだ寄り方を探している')
+    } else if (lexicalState.requestType === 'advice' || lexicalState.requestType === 'choice') {
+      integratedTensions.push('答えは求めているが温度調整が必要')
+    } else if (lexicalState.requestType === 'reflection' || lexicalState.requestType === 'comfort') {
+      integratedTensions.push('意味化と受け止めのバランスを見ている')
+    }
+  }
+
   if (dimensions.heaviness >= 0.56) dominantTextures.push('重い')
   if (dimensions.fragility >= 0.56 || dimensions.tension >= 0.54) dominantTextures.push('揺れる')
   if (dimensions.openness <= 0.4) dominantTextures.push('少し閉じている')
