@@ -37,9 +37,27 @@ export type SignalIntelligenceRuntimeResult = {
 
 const runSignalCenteredRoute = (
   text: string,
+  plasticity: PlasticityState | undefined,
+  personalLearning: PersonalLearningState,
   legacySnapshot: ReturnType<typeof runLegacyNodePipeline>,
 ): SignalIntelligenceRuntimeResult => {
-  const signalResult = runSignalRuntime(text)
+  const chunkedResult = runChunkedNodePipeline(
+    text,
+    plasticity,
+    0.5,
+    0,
+    undefined,
+    undefined,
+    0,
+    undefined,
+    personalLearning.somaticMarkers,
+  )
+  const signalResult = runSignalRuntime(text, {
+    optionAwareness: chunkedResult.optionAwareness,
+    optionDecision: chunkedResult.optionDecision,
+    optionUtteranceHints: chunkedResult.optionUtteranceHints,
+    somaticInfluence: chunkedResult.somaticInfluence,
+  })
 
   return {
     runtimeMode: 'signal',
@@ -48,6 +66,10 @@ const runSignalCenteredRoute = (
     revisionEntry: buildSignalRevisionEntry(signalResult),
     assistantReply: signalResult.utterance,
     signalResult,
+    chunkedResult,
+    somaticSignature: chunkedResult.somaticSignature,
+    somaticInfluence: chunkedResult.somaticInfluence,
+    relevantSomaticMarkers: chunkedResult.relevantSomaticMarkers,
   }
 }
 
@@ -101,7 +123,7 @@ export const runSignalIntelligenceRuntime = async ({
   const legacySnapshot = runLegacyNodePipeline(text, plasticity)
 
   if (runtimeMode === 'signal') {
-    return runSignalCenteredRoute(text, legacySnapshot)
+    return runSignalCenteredRoute(text, plasticity, personalLearning, legacySnapshot)
   }
 
   return runSignalAssistedNodeRoute({

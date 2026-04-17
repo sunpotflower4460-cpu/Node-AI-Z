@@ -256,4 +256,12 @@ describe('runChunkedNodePipeline', () => {
       expect(result.suppressedNodes.some((n) => n.id === 'excitement')).toBe(true)
     }
   })
+
+  it('derives option awareness when competing choices are present', () => {
+    const result = runChunkedNodePipeline('転職するか、このまま続けるかで迷っている')
+    expect(result.detectedOptions.length).toBeGreaterThanOrEqual(2)
+    expect(result.optionAwareness?.summaryLabel.length).toBeGreaterThan(0)
+    expect(result.optionDecision?.stance).toBeTruthy()
+    expect(result.optionUtteranceHints?.suggestedClose.length).toBeGreaterThan(0)
+  })
 })

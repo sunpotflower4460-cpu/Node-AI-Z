@@ -22,7 +22,7 @@ export const buildSignalSentencePlan = (
 ): SentencePlan => {
   const lead = phrases[0]?.phrase ?? 'ここに来てくれた感じがあります。'
   const body = phrases.slice(1, 3).map((p) => p.phrase)
-  const close = CLOSING_BY_MODE[decision.utteranceMode]
+  const close = decision.optionUtteranceHints?.suggestedClose ?? CLOSING_BY_MODE[decision.utteranceMode]
   const tone = resolveTone(protoMeanings, decision.utteranceMode)
 
   return { lead, body, close, tone }
