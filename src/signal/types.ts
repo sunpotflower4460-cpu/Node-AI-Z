@@ -1,6 +1,9 @@
 import type { ProtoMeaning as HierarchicalProtoMeaning, ProtoMeaningHierarchy, ProtoMeaningLevel } from '../meaning/types'
 import type { OptionAwareness, OptionDecisionShape, OptionUtteranceHints } from '../option/types'
 import type { SomaticInfluence } from '../somatic/types'
+import type { FusedState } from '../fusion/types'
+import type { LexicalState } from '../lexical/types'
+import type { MicroSignalState } from './packetTypes'
 
 export type SignalLayer = 'other' | 'self' | 'belief' | 'field'
 
@@ -96,6 +99,9 @@ export type SignalDecision = {
   optionAwareness?: OptionAwareness
   optionDecision?: OptionDecisionShape
   optionUtteranceHints?: OptionUtteranceHints
+  fusedState?: FusedState
+  lexicalState?: LexicalState
+  microSignalState?: MicroSignalState
 }
 
 export type WordCandidate = {
@@ -139,5 +145,8 @@ export type SignalRuntimeResult = {
   debugNotes: string[]
   /** Keys identifying which signal–pathway pairs fired this turn. Used by learning layers. */
   pathwayKeys: string[]
+  fusedState?: FusedState
+  lexicalState?: LexicalState
+  microSignalState?: MicroSignalState
   meta: { elapsedMs: number }
 }

@@ -209,6 +209,7 @@ describe('runChunkedNodePipeline', () => {
   it('returns a chunkedStage with chunks and features', () => {
     const result = runChunkedNodePipeline('意欲が湧かなくて、転職すべきか悩んでいる')
     expect(result.chunkedStage.chunks.length).toBeGreaterThan(0)
+    expect(result.dualStream.fusedState.fusedConfidence).toBeGreaterThan(0)
   })
 
   it('activates at least one node', () => {

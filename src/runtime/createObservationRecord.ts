@@ -76,6 +76,11 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       studioView: record.studioView,
       revisionEntry: record.revisionEntry,
       signalResult: record.signalResult,
+      chunkedResult: record.chunkedResult,
+      dualStreamResult: record.dualStreamResult,
+      somaticSignature: record.somaticSignature,
+      somaticInfluence: record.somaticInfluence,
+      relevantSomaticMarkers: record.relevantSomaticMarkers,
     },
     {
       id: createObservationId('exp_assistant'),
@@ -88,6 +93,11 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       studioView: record.studioView,
       revisionEntry: record.revisionEntry,
       signalResult: record.signalResult,
+      chunkedResult: record.chunkedResult,
+      dualStreamResult: record.dualStreamResult,
+      somaticSignature: record.somaticSignature,
+      somaticInfluence: record.somaticInfluence,
+      relevantSomaticMarkers: record.relevantSomaticMarkers,
     },
   ]
 }

@@ -8,6 +8,7 @@ import type { RuntimeMode } from '../types/experience'
 import type { PlasticityState } from '../types/nodeStudio'
 import { runLegacyNodePipeline } from './runLegacyNodePipeline'
 import { runChunkedNodePipeline } from './runChunkedNodePipeline'
+import type { DualStreamRuntimeResult } from './runDualStreamRuntime'
 
 /**
  * Signal-intelligence route payload.
@@ -30,6 +31,7 @@ export type SignalIntelligenceRuntimeResult = {
   assistantReply: string
   signalResult?: SignalRuntimeResult
   chunkedResult?: ReturnType<typeof runChunkedNodePipeline>
+  dualStreamResult?: DualStreamRuntimeResult
   somaticSignature?: ReturnType<typeof runChunkedNodePipeline>['somaticSignature']
   somaticInfluence?: ReturnType<typeof runChunkedNodePipeline>['somaticInfluence']
   relevantSomaticMarkers?: ReturnType<typeof runChunkedNodePipeline>['relevantSomaticMarkers']
@@ -57,6 +59,9 @@ const runSignalCenteredRoute = (
     optionDecision: chunkedResult.optionDecision,
     optionUtteranceHints: chunkedResult.optionUtteranceHints,
     somaticInfluence: chunkedResult.somaticInfluence,
+    fusedState: chunkedResult.dualStream.fusedState,
+    lexicalState: chunkedResult.dualStream.lexicalState,
+    microSignalState: chunkedResult.dualStream.microSignalState,
   })
 
   return {
@@ -67,6 +72,7 @@ const runSignalCenteredRoute = (
     assistantReply: signalResult.utterance,
     signalResult,
     chunkedResult,
+    dualStreamResult: chunkedResult.dualStream,
     somaticSignature: chunkedResult.somaticSignature,
     somaticInfluence: chunkedResult.somaticInfluence,
     relevantSomaticMarkers: chunkedResult.relevantSomaticMarkers,
@@ -102,6 +108,7 @@ const runSignalAssistedNodeRoute = async ({
     revisionEntry: legacySnapshot.revisionEntry,
     assistantReply,
     chunkedResult,
+    dualStreamResult: chunkedResult.dualStream,
     somaticSignature: chunkedResult.somaticSignature,
     somaticInfluence: chunkedResult.somaticInfluence,
     relevantSomaticMarkers: chunkedResult.relevantSomaticMarkers,

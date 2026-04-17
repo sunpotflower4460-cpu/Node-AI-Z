@@ -100,6 +100,9 @@ export const createSignalObservation = (
     optionDecision: chunkedResult.optionDecision,
     optionUtteranceHints: chunkedResult.optionUtteranceHints,
     somaticInfluence: chunkedResult.somaticInfluence,
+    fusedState: chunkedResult.dualStream.fusedState,
+    lexicalState: chunkedResult.dualStream.lexicalState,
+    microSignalState: chunkedResult.dualStream.microSignalState,
   })
   const firedKeys = runtimeResult.pathwayKeys
 

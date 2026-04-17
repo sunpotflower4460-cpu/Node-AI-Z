@@ -31,6 +31,11 @@ export const mapExperienceMessagesToObservationHistory = (
       revisionEntry: message.revisionEntry,
       assistantReply: message.text,
       signalResult: message.signalResult,
+      chunkedResult: message.chunkedResult,
+      dualStreamResult: message.dualStreamResult,
+      somaticSignature: message.somaticSignature,
+      somaticInfluence: message.somaticInfluence,
+      relevantSomaticMarkers: message.relevantSomaticMarkers,
     }))
 }
 

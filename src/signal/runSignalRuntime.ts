@@ -1,6 +1,9 @@
 import type { SignalRuntimeResult } from './types'
 import type { OptionAwareness, OptionDecisionShape, OptionUtteranceHints } from '../option/types'
 import type { SomaticInfluence } from '../somatic/types'
+import type { FusedState } from '../fusion/types'
+import type { LexicalState } from '../lexical/types'
+import type { MicroSignalState } from './packetTypes'
 import { createStimulusPacket } from './createStimulusPacket'
 import { activateSignals } from './activateSignals'
 import { runSelfLoop } from './runSelfLoop'
@@ -22,6 +25,9 @@ type SignalRuntimeContext = {
   optionDecision?: OptionDecisionShape
   optionUtteranceHints?: OptionUtteranceHints
   somaticInfluence?: SomaticInfluence
+  fusedState?: FusedState
+  lexicalState?: LexicalState
+  microSignalState?: MicroSignalState
 }
 
 /**
@@ -72,10 +78,13 @@ export const runSignalRuntime = (inputText: string, context?: SignalRuntimeConte
     selfLoopState.resonanceScore,
     context?.somaticInfluence,
     context
-      ? {
+        ? {
           awareness: context.optionAwareness,
           optionDecision: context.optionDecision,
           optionUtteranceHints: context.optionUtteranceHints,
+          fusedState: context.fusedState,
+          lexicalState: context.lexicalState,
+          microSignalState: context.microSignalState,
         }
       : undefined,
   )
@@ -90,7 +99,10 @@ export const runSignalRuntime = (inputText: string, context?: SignalRuntimeConte
   debug.push(`Phrase plan: ${phrasePlan.length} phrases`)
 
   // 11. 文骨格生成
-  const sentencePlan = buildSignalSentencePlan(phrasePlan, protoMeanings, decision)
+  const sentencePlan = buildSignalSentencePlan(phrasePlan, protoMeanings, decision, {
+    lexicalState: context?.lexicalState,
+    microSignalState: context?.microSignalState,
+  })
   debug.push(`Sentence plan: tone=${sentencePlan.tone}`)
 
   // 12. 発話
@@ -122,6 +134,9 @@ export const runSignalRuntime = (inputText: string, context?: SignalRuntimeConte
     utterance,
     debugNotes: debug,
     pathwayKeys,
+    fusedState: context?.fusedState,
+    lexicalState: context?.lexicalState,
+    microSignalState: context?.microSignalState,
     meta: { elapsedMs },
   }
 }
