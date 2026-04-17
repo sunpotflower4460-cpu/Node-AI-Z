@@ -32,6 +32,7 @@ import {
   mapOptionAwarenessToDecision,
   mapOptionAwarenessToUtteranceHints,
 } from '../option'
+import { runDualStreamRuntime, type DualStreamRuntimeResult } from './runDualStreamRuntime'
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
@@ -59,6 +60,7 @@ export type ChunkedNodePipelineResult = NodePipelineResult & {
   narrativeProtoMeanings: ProtoMeaning[]
   protoMeaningHierarchy: ProtoMeaningHierarchy
   detectedOptions: OptionNode[]
+  dualStream: DualStreamRuntimeResult
   optionCompetition?: OptionCompetitionResult
   optionAwareness?: OptionAwareness
   optionDecision?: OptionDecisionShape
@@ -367,6 +369,12 @@ export const runChunkedNodePipeline = (
     nodes: activatedNodes,
     field: analyzed.stateVector,
   })
+  const dualStream = runDualStreamRuntime({
+    text,
+    chunks,
+    detectedOptions,
+    field: analyzed.stateVector,
+  })
   const optionFields = detectedOptions.length > 0
     ? buildOptionFields({
         options: detectedOptions,
@@ -384,13 +392,14 @@ export const runChunkedNodePipeline = (
     ? summarizeOptionAwareness({ options: detectedOptions, competition: optionCompetition })
     : undefined
   const optionDecision = optionAwareness
-    ? mapOptionAwarenessToDecision({ awareness: optionAwareness })
+    ? mapOptionAwarenessToDecision({ awareness: optionAwareness, fusedState: dualStream.fusedState })
     : undefined
   const optionUtteranceHints = optionAwareness && optionDecision
     ? mapOptionAwarenessToUtteranceHints({
         options: detectedOptions,
         awareness: optionAwareness,
         decision: optionDecision,
+        fusedState: dualStream.fusedState,
       })
     : undefined
 
@@ -407,6 +416,9 @@ export const runChunkedNodePipeline = (
   if (optionDecision) {
     debug.push(`Option decision shaping: stance=${optionDecision.stance}, preferred=${optionDecision.preferredOptionId ?? 'none'}`)
   }
+  debug.push(
+    `Dual stream: lexical=${dualStream.lexicalState.requestType ?? 'none'}, cues=${dualStream.microCues.map((cue) => cue.id).join(', ') || 'none'}, fieldTone=${dualStream.microSignalState.fieldTone}, fused=${dualStream.fusedState.fusedConfidence.toFixed(2)}`,
+  )
 
   // ── 14b. Somatic Marker Layer (ISR v2.5) ──────────────────────────────────
   let somaticSignature: SomaticSignature | undefined
@@ -473,6 +485,7 @@ export const runChunkedNodePipeline = (
     narrativeProtoMeanings,
     protoMeaningHierarchy,
     detectedOptions,
+    dualStream,
     optionCompetition,
     optionAwareness,
     optionDecision,

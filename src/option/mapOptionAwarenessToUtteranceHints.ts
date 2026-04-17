@@ -1,15 +1,18 @@
+import type { FusedState } from '../fusion/types'
 import type { OptionAwareness, OptionDecisionShape, OptionNode, OptionUtteranceHints } from './types'
 
 type MapOptionAwarenessToUtteranceHintsInput = {
   options: OptionNode[]
   awareness: OptionAwareness
   decision: OptionDecisionShape
+  fusedState?: FusedState
 }
 
 export const mapOptionAwarenessToUtteranceHints = ({
   options,
   awareness,
   decision,
+  fusedState,
 }: MapOptionAwarenessToUtteranceHintsInput): OptionUtteranceHints => {
   const optionLabels = new Map(options.map((option) => [option.id, option.label]))
   const ranked = Object.entries(awareness.optionRatios)
@@ -41,6 +44,23 @@ export const mapOptionAwarenessToUtteranceHints = ({
     hesitationTone = 'balanced'
     suggestedClose = `いまは「${favoredOptionLabel}」寄りですが、揺れを残したままでよさそうです。`
     notes.push('優勢側を薄く保つ')
+  }
+
+  if (fusedState) {
+    const { dimensions, fieldTone } = fusedState.microSignalState
+    if (fieldTone === 'low-band' || (dimensions.heaviness >= 0.62 && dimensions.openness <= 0.42)) {
+      hesitationTone = 'gentle_hold'
+      suggestedClose = 'いまは選択肢を急いで固めるより、まずこの重さを支えながら見ていく方が自然そうです。'
+      notes.push('dual-stream: low-band なので支える閉じ方に寄せる')
+    } else if (
+      (fusedState.lexicalState.requestType === 'advice' || fusedState.lexicalState.requestType === 'choice')
+      && fieldTone === 'high-band'
+      && favoredOptionLabel
+    ) {
+      hesitationTone = 'forward'
+      suggestedClose = `いまは「${favoredOptionLabel}」を軸にしつつ、必要なら他の選択肢とも比べていけそうです。`
+      notes.push('dual-stream: high-band なので比較提案を前に出す')
+    }
   }
 
   return {

@@ -1,6 +1,9 @@
 import type { SignalDecision, ProtoMeaningInput, UtteranceMode, SignalReplyIntent } from './types'
 import type { OptionAwareness, OptionDecisionShape, OptionUtteranceHints } from '../option/types'
 import type { SomaticInfluence } from '../somatic/types'
+import type { FusedState } from '../fusion/types'
+import type { LexicalState } from '../lexical/types'
+import type { MicroSignalState } from './packetTypes'
 import { normalizeProtoMeaningInput } from './normalizeProtoMeaningInput'
 
 const ALL_MODES: UtteranceMode[] = ['receptive', 'reflective', 'boundary', 'resonant']
@@ -16,6 +19,9 @@ type SignalDecisionOptionContext = {
   awareness?: OptionAwareness
   optionDecision?: OptionDecisionShape
   optionUtteranceHints?: OptionUtteranceHints
+  fusedState?: FusedState
+  lexicalState?: LexicalState
+  microSignalState?: MicroSignalState
 }
 
 export const decideSignalUtterance = (
@@ -161,6 +167,43 @@ export const decideSignalUtterance = (
     }
   }
 
+  if (optionContext?.fusedState) {
+    const fusedState = optionContext.fusedState
+    const lexicalState = optionContext.lexicalState ?? fusedState.lexicalState
+    const microSignalState = optionContext.microSignalState ?? fusedState.microSignalState
+    const { dimensions, fieldTone } = microSignalState
+
+    trace.push(
+      `Dual stream: request=${lexicalState.requestType ?? 'none'}, fieldTone=${fieldTone}, textures=${fusedState.dominantTextures.join(', ') || 'none'}, confidence=${fusedState.fusedConfidence.toFixed(2)}`,
+    )
+
+    if (lexicalState.requestType === 'advice' && dimensions.heaviness >= 0.62 && dimensions.openness <= 0.42) {
+      utteranceMode = utteranceMode === 'boundary' ? 'boundary' : 'reflective'
+      replyIntent = 'soft_answer_offer_step'
+      shouldOfferStep = true
+      closeness += 0.06
+      withheldBias += 0.06
+      trace.push('Dual stream shaping: advice request kept soft because heaviness is high and openness is low')
+    } else if (
+      (lexicalState.requestType === 'advice' || lexicalState.requestType === 'choice')
+      && dimensions.openness >= 0.58
+      && dimensions.clarity >= 0.54
+      && utteranceMode === 'receptive'
+    ) {
+      utteranceMode = 'reflective'
+      replyIntent = 'soft_answer_offer_step'
+      shouldOfferStep = true
+      withheldBias = Math.max(0, withheldBias - 0.04)
+      trace.push('Dual stream shaping: openness and clarity allow a clearer comparative answer')
+    }
+
+    if (dimensions.fragility >= 0.64) {
+      closeness += 0.04
+      withheldBias += 0.05
+      trace.push('Dual stream shaping: fragility raised closeness and caution')
+    }
+  }
+
   return {
     shouldSpeak: true,
     utteranceMode,
@@ -177,5 +220,8 @@ export const decideSignalUtterance = (
     optionAwareness: optionContext?.awareness,
     optionDecision: optionContext?.optionDecision,
     optionUtteranceHints: optionContext?.optionUtteranceHints,
+    fusedState: optionContext?.fusedState,
+    lexicalState: optionContext?.lexicalState ?? optionContext?.fusedState?.lexicalState,
+    microSignalState: optionContext?.microSignalState ?? optionContext?.fusedState?.microSignalState,
   }
 }

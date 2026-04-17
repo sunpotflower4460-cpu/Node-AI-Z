@@ -22,7 +22,7 @@ const SAMPLE_INPUTS = [
 ]
 
 type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision'
-type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal'
+type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal' | 'dual'
 const MIN_PLASTICITY_DISPLAY_VALUE = 0.009
 
 const TONE_NOTES: Record<string, (value: number) => string> = {
@@ -190,6 +190,7 @@ export const ObserveMode = ({
   const pipelineResult = currentObservation?.pipelineResult ?? null
   const studioView = currentObservation?.studioView ?? null
   const currentRevisionEntry = currentObservation?.revisionEntry ?? null
+  const dualStreamResult = currentObservation?.dualStreamResult ?? currentObservation?.chunkedResult?.dualStream ?? null
   const relationHighlights = Object.entries(revisionState.plasticity.relationBoosts)
     .filter(([, value]) => value > MIN_PLASTICITY_DISPLAY_VALUE)
     .sort((first, second) => second[1] - first[1])
@@ -497,6 +498,110 @@ export const ObserveMode = ({
           })()}
 
           <div className="flex min-w-0 flex-col gap-6">
+            {dualStreamResult ? (
+              <section className="rounded-2xl border border-violet-200 bg-violet-50/60 p-4 shadow-sm md:p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-violet-600" />
+                  <h3 className="text-[10px] font-bold uppercase tracking-wider text-violet-700">Dual Stream Architecture v1</h3>
+                  <span className="ml-auto rounded-full bg-violet-100 px-2 py-0.5 text-[9px] font-bold text-violet-600">
+                    fused: {dualStreamResult.fusedState.fusedConfidence.toFixed(2)}
+                  </span>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Lexical Stream</h4>
+                    <div className="mt-2 space-y-1.5 text-[11px] text-slate-600">
+                      <div className="flex justify-between gap-2"><span>requestType</span><span className="font-bold text-slate-800">{dualStreamResult.lexicalState.requestType ?? 'none'}</span></div>
+                      <div className="flex justify-between gap-2"><span>explicitQuestion</span><span className="font-bold text-slate-800">{dualStreamResult.lexicalState.explicitQuestion ? 'true' : 'false'}</span></div>
+                      <div><span className="font-bold text-slate-700">optionLabels: </span>{dualStreamResult.lexicalState.optionLabels?.join(', ') ?? 'none'}</div>
+                      <div><span className="font-bold text-slate-700">entities: </span>{dualStreamResult.lexicalState.explicitEntities?.join(', ') ?? 'none'}</div>
+                      <div><span className="font-bold text-slate-700">tensions: </span>{dualStreamResult.lexicalState.explicitTensions?.join(', ') ?? 'none'}</div>
+                      <div><span className="font-bold text-slate-700">syntax: </span>{dualStreamResult.lexicalState.syntaxHints?.join(', ') ?? 'none'}</div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Signal Packets</h4>
+                    <div className="mt-2 space-y-2">
+                      {dualStreamResult.signalPackets.map((packet) => (
+                        <div key={packet.id} className="rounded-lg border border-violet-50 bg-violet-50/30 p-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-bold text-slate-800">{packet.id}</span>
+                            <span className="text-[10px] font-bold text-violet-700">{packet.chunkText}</span>
+                          </div>
+                          <div className="mt-1 grid grid-cols-2 gap-1 text-[10px] text-slate-500">
+                            <div className="flex justify-between"><span>salience</span><span className="font-bold text-slate-800">{packet.salience.toFixed(2)}</span></div>
+                            <div className="flex justify-between"><span>charge</span><span className="font-bold text-slate-800">{packet.emotionalCharge.toFixed(2)}</span></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Micro Cues</h4>
+                    <div className="mt-2 space-y-2">
+                      {dualStreamResult.microCues.length > 0 ? dualStreamResult.microCues.map((cue) => (
+                        <div key={cue.id} className="rounded-lg border border-violet-50 bg-violet-50/30 p-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-bold text-slate-800">{cue.id}</span>
+                            <span className="text-[10px] font-bold text-violet-700">{cue.strength.toFixed(2)}</span>
+                          </div>
+                          <p className="mt-1 text-[9px] text-slate-500">{cue.reasons.join(' / ')}</p>
+                        </div>
+                      )) : <p className="text-xs text-slate-400">micro cue なし</p>}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Micro Signal Dimensions</h4>
+                    <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-slate-600">
+                      {Object.entries(dualStreamResult.microSignalState.dimensions).map(([key, value]) => (
+                        <div key={key} className="flex justify-between gap-2">
+                          <span>{key}</span>
+                          <span className="font-bold text-slate-800">{value.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Field Tone</h4>
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-700">{dualStreamResult.microSignalState.fieldTone}</span>
+                      <span className="text-[10px] text-slate-500">{dualStreamResult.fusedState.dominantTextures.join(' / ') || 'texture なし'}</span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Fused State</h4>
+                    <div className="mt-2 space-y-2 text-[10px] text-slate-600">
+                      <div>
+                        <div className="font-bold text-slate-700">integratedTensions</div>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {(dualStreamResult.fusedState.integratedTensions.length > 0 ? dualStreamResult.fusedState.integratedTensions : ['none']).map((tension) => (
+                            <span key={tension} className="rounded-full bg-violet-100 px-2 py-0.5 font-bold text-violet-700">{tension}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-700">dominantTextures</div>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {dualStreamResult.fusedState.dominantTextures.map((texture) => (
+                            <span key={texture} className="rounded-full bg-slate-100 px-2 py-0.5 font-bold text-slate-700">{texture}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span>fusedConfidence</span>
+                        <span className="font-bold text-slate-800">{dualStreamResult.fusedState.fusedConfidence.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
             {currentObservation.chunkedResult ? (
               <section className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 shadow-sm md:p-5">
                 <div className="mb-3 flex items-center gap-2">
@@ -972,6 +1077,9 @@ export const ObserveMode = ({
                 {currentObservation.signalResult ? (
                   <button type="button" onClick={() => { setRawViewMode('signal'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'signal' && isRawOpen ? 'bg-rose-800 text-white' : 'text-rose-400 hover:bg-slate-800'}`}>Signal</button>
                 ) : null}
+                {dualStreamResult ? (
+                  <button type="button" onClick={() => { setRawViewMode('dual'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'dual' && isRawOpen ? 'bg-violet-800 text-white' : 'text-violet-400 hover:bg-slate-800'}`}>Dual</button>
+                ) : null}
                 <button type="button" onClick={() => setIsRawOpen(!isRawOpen)} className="p-1.5 text-slate-500 hover:text-white">{isRawOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</button>
               </div>
             </div>
@@ -982,6 +1090,7 @@ export const ObserveMode = ({
                 {rawViewMode === 'home' ? JSON.stringify({ homeState: studioView.homeState, homeCheck: studioView.homeCheck, returnTrace: studioView.returnTrace, rawReplyPreview: studioView.rawReplyPreview, adjustedReplyPreview: studioView.adjustedReplyPreview }, null, 2) : null}
                 {rawViewMode === 'revision' ? JSON.stringify({ currentEntry: currentRevisionEntry, revisionState: { plasticity: revisionState.plasticity, memoryCount: revisionState.memory.entries.length, tuningCounts: { locked: revisionState.tuning.locked.size, softened: revisionState.tuning.softened.size, reverted: revisionState.tuning.reverted.size, kept: revisionState.tuning.kept.size } } }, null, 2) : null}
                 {rawViewMode === 'signal' && currentObservation.signalResult ? JSON.stringify(currentObservation.signalResult, null, 2) : null}
+                {rawViewMode === 'dual' && dualStreamResult ? JSON.stringify(dualStreamResult, null, 2) : null}
               </div>
             ) : null}
           </div>
