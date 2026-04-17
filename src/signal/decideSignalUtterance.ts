@@ -1,4 +1,5 @@
 import type { SignalDecision, ProtoMeaningInput, UtteranceMode, SignalReplyIntent } from './types'
+import type { OptionAwareness, OptionDecisionShape, OptionUtteranceHints } from '../option/types'
 import type { SomaticInfluence } from '../somatic/types'
 import { normalizeProtoMeaningInput } from './normalizeProtoMeaningInput'
 
@@ -11,11 +12,18 @@ const BASE_WITHHELD_BIAS = 0.22
 const hasNarrative = (narratives: string[], target: string) => narratives.includes(target)
 const hasSensory = (sensory: string[], target: string) => sensory.includes(target)
 
+type SignalDecisionOptionContext = {
+  awareness?: OptionAwareness
+  optionDecision?: OptionDecisionShape
+  optionUtteranceHints?: OptionUtteranceHints
+}
+
 export const decideSignalUtterance = (
   protoMeanings: ProtoMeaningInput,
   boundaryTension: number,
   resonanceScore: number,
   somaticInfluence?: SomaticInfluence,
+  optionContext?: SignalDecisionOptionContext,
 ): SignalDecision => {
   const trace: string[] = []
   const { narrative, sensory } = normalizeProtoMeaningInput(protoMeanings)
@@ -114,6 +122,45 @@ export const decideSignalUtterance = (
     trace.push(`Somatic influence applied: strength=${s.toFixed(2)}, markers=${somaticInfluence.matchedMarkerIds.length}`)
   }
 
+  if (optionContext?.awareness) {
+    const ratioSummary = Object.entries(optionContext.awareness.optionRatios)
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 2)
+      .map(([optionId, ratio]) => `${optionId}:${ratio}`)
+      .join(', ')
+    trace.push(`Option awareness: ${optionContext.awareness.summaryLabel} [${ratioSummary}]`)
+  }
+
+  if (optionContext?.optionDecision) {
+    const optionDecision = optionContext.optionDecision
+    trace.push(`Option decision: stance=${optionDecision.stance}, preferred=${optionDecision.preferredOptionId ?? 'none'}`)
+
+    if (optionDecision.stance === 'observe' && utteranceMode !== 'boundary') {
+      utteranceMode = 'receptive'
+      replyIntent = 'emotional_holding'
+      withheldBias += 0.08
+      trace.push('Option shaping: receptive hold (hesitation kept explicit)')
+    } else if (optionDecision.stance === 'bridge' && utteranceMode !== 'boundary') {
+      utteranceMode = 'reflective'
+      replyIntent = 'soft_answer_offer_step'
+      shouldOfferStep = true
+      withheldBias = Math.max(0, withheldBias - 0.04)
+      trace.push('Option shaping: reflective bridge (middle path suggested)')
+    } else if (optionDecision.stance === 'lean' && utteranceMode === 'receptive') {
+      utteranceMode = 'reflective'
+      replyIntent = 'soft_answer_offer_step'
+      shouldOfferStep = true
+      trace.push('Option shaping: reflective lean (slight foregrounding)')
+    } else if (optionDecision.stance === 'commit' && utteranceMode !== 'boundary') {
+      utteranceMode = resonanceScore > 0.55 ? 'resonant' : 'reflective'
+      replyIntent = 'soft_answer_offer_step'
+      shouldOfferStep = true
+      closeness += 0.04
+      withheldBias = Math.max(0, withheldBias - 0.05)
+      trace.push('Option shaping: favored option foregrounded')
+    }
+  }
+
   return {
     shouldSpeak: true,
     utteranceMode,
@@ -127,5 +174,8 @@ export const decideSignalUtterance = (
     primarySensoryIds: primarySensory.map((meaning) => meaning.id),
     pathwayKeys,
     somaticInfluence,
+    optionAwareness: optionContext?.awareness,
+    optionDecision: optionContext?.optionDecision,
+    optionUtteranceHints: optionContext?.optionUtteranceHints,
   }
 }

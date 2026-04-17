@@ -638,6 +638,101 @@ export const ObserveMode = ({
                     </div>
                   </div>
                 </div>
+
+                <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                  <div className="rounded-xl border border-indigo-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Option Fields</h4>
+                    <div className="mt-2 space-y-2">
+                      {currentObservation.chunkedResult.detectedOptions.length > 0 && currentObservation.chunkedResult.optionCompetition ? (
+                        currentObservation.chunkedResult.optionCompetition.optionFields.map((field) => {
+                          const option = currentObservation.chunkedResult?.detectedOptions.find((candidate) => candidate.id === field.optionId)
+                          return (
+                            <div key={field.optionId} className="rounded-lg border border-indigo-50 bg-indigo-50/30 p-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-xs font-bold text-slate-800">{option?.label ?? field.optionId}</span>
+                                <span className="text-[10px] font-bold text-indigo-700">{field.netPull.toFixed(2)}</span>
+                              </div>
+                              <div className="mt-1 grid grid-cols-2 gap-1 text-[9px] text-slate-500">
+                                <div className="flex justify-between"><span>support</span><span className="font-bold text-slate-700">{field.totalSupport.toFixed(2)}</span></div>
+                                <div className="flex justify-between"><span>resistance</span><span className="font-bold text-slate-700">{field.totalResistance.toFixed(2)}</span></div>
+                                <div className="flex justify-between"><span>reason</span><span>{field.reasonWeight.toFixed(2)}</span></div>
+                                <div className="flex justify-between"><span>sensory</span><span>{field.sensoryWeight.toFixed(2)}</span></div>
+                                <div className="flex justify-between"><span>identity</span><span>{field.identityFitWeight.toFixed(2)}</span></div>
+                                <div className="flex justify-between"><span>risk</span><span>{field.riskWeight.toFixed(2)}</span></div>
+                              </div>
+                            </div>
+                          )
+                        })
+                      ) : (
+                        <p className="text-xs text-slate-400">option field なし</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-indigo-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Explicit Option Awareness</h4>
+                    {currentObservation.chunkedResult.optionAwareness ? (
+                      <div className="mt-2 space-y-2">
+                        <div className="rounded-lg border border-indigo-50 bg-indigo-50/30 p-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-bold text-slate-800">{currentObservation.chunkedResult.optionAwareness.summaryLabel}</span>
+                            <span className="text-[10px] font-bold text-indigo-700">{currentObservation.chunkedResult.optionAwareness.confidence.toFixed(2)}</span>
+                          </div>
+                          <div className="mt-2 space-y-1">
+                            {Object.entries(currentObservation.chunkedResult.optionAwareness.optionRatios).map(([optionId, ratio]) => {
+                              const option = currentObservation.chunkedResult?.detectedOptions.find((candidate) => candidate.id === optionId)
+                              return (
+                                <div key={optionId} className="flex items-center justify-between gap-2 text-[10px] text-slate-600">
+                                  <span>{option?.label ?? optionId}</span>
+                                  <span className="font-bold text-slate-800">{ratio}</span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-600">
+                          <div className="rounded-lg bg-slate-50 p-2">
+                            <div className="text-slate-400">difference</div>
+                            <div className="font-bold text-slate-800">{currentObservation.chunkedResult.optionAwareness.differenceMagnitude.toFixed(2)}</div>
+                          </div>
+                          <div className="rounded-lg bg-slate-50 p-2">
+                            <div className="text-slate-400">hesitation</div>
+                            <div className="font-bold text-slate-800">{currentObservation.chunkedResult.optionAwareness.hesitationStrength.toFixed(2)}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-400">option awareness なし</p>
+                    )}
+                  </div>
+
+                  <div className="rounded-xl border border-indigo-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Decision / Utterance Shaping</h4>
+                    {currentObservation.chunkedResult.optionDecision ? (
+                      <div className="mt-2 space-y-2">
+                        <div className="rounded-lg border border-indigo-50 bg-indigo-50/30 p-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-bold text-slate-800">{currentObservation.chunkedResult.optionDecision.stance}</span>
+                            <span className="text-[10px] font-bold text-indigo-700">{currentObservation.chunkedResult.optionDecision.confidence.toFixed(2)}</span>
+                          </div>
+                          <div className="mt-1 space-y-0.5">
+                            {currentObservation.chunkedResult.optionDecision.notes.map((note, index) => (
+                              <p key={index} className="text-[9px] text-slate-500">{note}</p>
+                            ))}
+                          </div>
+                        </div>
+                        {currentObservation.chunkedResult.optionUtteranceHints ? (
+                          <div className="rounded-lg border border-indigo-50 bg-white p-2">
+                            <div className="text-[10px] font-bold text-slate-700">{currentObservation.chunkedResult.optionUtteranceHints.ratioText ?? 'ratio なし'}</div>
+                            <p className="mt-1 text-[10px] text-slate-500">{currentObservation.chunkedResult.optionUtteranceHints.suggestedClose}</p>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <p className="mt-2 text-xs text-slate-400">decision shaping なし</p>
+                    )}
+                  </div>
+                </div>
               </section>
             ) : null}
             {currentObservation.somaticSignature ? (

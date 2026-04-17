@@ -1,4 +1,6 @@
 import type { SignalRuntimeResult } from './types'
+import type { OptionAwareness, OptionDecisionShape, OptionUtteranceHints } from '../option/types'
+import type { SomaticInfluence } from '../somatic/types'
 import { createStimulusPacket } from './createStimulusPacket'
 import { activateSignals } from './activateSignals'
 import { runSelfLoop } from './runSelfLoop'
@@ -15,6 +17,13 @@ import { extractPathwayKeys } from '../learning/pathwayKeys'
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
+type SignalRuntimeContext = {
+  optionAwareness?: OptionAwareness
+  optionDecision?: OptionDecisionShape
+  optionUtteranceHints?: OptionUtteranceHints
+  somaticInfluence?: SomaticInfluence
+}
+
 /**
  * Signal layer runtime.
  * Owns the signal-centered route: time, loops, boundary shaping, proto-meaning,
@@ -24,7 +33,7 @@ const now = () => (typeof performance !== 'undefined' ? performance.now() : Date
  * → 同時発火の場形成 → 結びつき → Proto-Meaning → 意思決定
  * → 単語候補化 → 句の結合 → 文骨格生成 → 発話
  */
-export const runSignalRuntime = (inputText: string): SignalRuntimeResult => {
+export const runSignalRuntime = (inputText: string, context?: SignalRuntimeContext): SignalRuntimeResult => {
   const startedAt = now()
   const debug: string[] = ['Signal Runtime v0 started']
 
@@ -57,7 +66,19 @@ export const runSignalRuntime = (inputText: string): SignalRuntimeResult => {
   debug.push(`Proto-meanings: ${protoMeanings.map((pm) => `${pm.texture}(${pm.weight.toFixed(2)})`).join(', ')}`)
 
   // 8. 意思決定
-  const decision = decideSignalUtterance(protoMeanings, boundaryLoopState.boundaryTension, selfLoopState.resonanceScore)
+  const decision = decideSignalUtterance(
+    protoMeanings,
+    boundaryLoopState.boundaryTension,
+    selfLoopState.resonanceScore,
+    context?.somaticInfluence,
+    context
+      ? {
+          awareness: context.optionAwareness,
+          optionDecision: context.optionDecision,
+          optionUtteranceHints: context.optionUtteranceHints,
+        }
+      : undefined,
+  )
   debug.push(`Decision: mode=${decision.utteranceMode}, shouldSpeak=${decision.shouldSpeak}, intent=${decision.replyIntent ?? 'n/a'}`)
 
   // 9. 単語候補化

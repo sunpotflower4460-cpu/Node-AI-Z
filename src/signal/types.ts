@@ -1,4 +1,5 @@
 import type { ProtoMeaning as HierarchicalProtoMeaning, ProtoMeaningHierarchy, ProtoMeaningLevel } from '../meaning/types'
+import type { OptionAwareness, OptionDecisionShape, OptionUtteranceHints } from '../option/types'
 import type { SomaticInfluence } from '../somatic/types'
 
 export type SignalLayer = 'other' | 'self' | 'belief' | 'field'
@@ -92,6 +93,9 @@ export type SignalDecision = {
   primarySensoryIds?: string[]
   pathwayKeys?: string[]
   somaticInfluence?: SomaticInfluence
+  optionAwareness?: OptionAwareness
+  optionDecision?: OptionDecisionShape
+  optionUtteranceHints?: OptionUtteranceHints
 }
 
 export type WordCandidate = {

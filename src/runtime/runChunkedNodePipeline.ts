@@ -6,6 +6,7 @@ import type { TemporalFeatureState } from '../signal/temporalTypes'
 import type { PredictionState, PredictionModulationResult } from '../predictive/types'
 import type { ProtoMeaning, ProtoMeaningHierarchy } from '../meaning/types'
 import type { SomaticMarker, SomaticSignature, SomaticInfluence } from '../somatic/types'
+import type { OptionAwareness, OptionCompetitionResult, OptionDecisionShape, OptionNode, OptionUtteranceHints } from '../option/types'
 import { chunkText } from '../signal/ingest/chunkText'
 import { activateChunkFeatures } from '../signal/ingest/activateChunkFeatures'
 import { applyTemporalDecay } from '../signal/applyTemporalDecay'
@@ -23,6 +24,14 @@ import { deriveSensoryProtoMeanings } from '../meaning/deriveSensoryProtoMeaning
 import { deriveNarrativeProtoMeanings } from '../meaning/deriveNarrativeProtoMeanings'
 import { mergeProtoMeaningHierarchy } from '../meaning/mergeProtoMeaningHierarchy'
 import { deriveSomaticSignature, findRelevantSomaticMarkers, computeSomaticInfluence } from '../somatic'
+import {
+  detectOptions,
+  buildOptionFields,
+  applyOptionCompetition,
+  summarizeOptionAwareness,
+  mapOptionAwarenessToDecision,
+  mapOptionAwarenessToUtteranceHints,
+} from '../option'
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
@@ -49,6 +58,11 @@ export type ChunkedNodePipelineResult = NodePipelineResult & {
   sensoryProtoMeanings: ProtoMeaning[]
   narrativeProtoMeanings: ProtoMeaning[]
   protoMeaningHierarchy: ProtoMeaningHierarchy
+  detectedOptions: OptionNode[]
+  optionCompetition?: OptionCompetitionResult
+  optionAwareness?: OptionAwareness
+  optionDecision?: OptionDecisionShape
+  optionUtteranceHints?: OptionUtteranceHints
   /** Somatic signature derived from this turn's proto-meanings (ISR v2.5) */
   somaticSignature?: SomaticSignature
   /** Relevant somatic markers found this turn (ISR v2.5) */
@@ -72,6 +86,24 @@ const collectProtoMeaningPathwayKeys = (meanings: ProtoMeaning[]) => {
         keys.push(`sensory:${childLabels}->narrative:${meaning.glossJa}`)
       }
     }
+  }
+
+  return [...new Set(keys)]
+}
+
+const collectOptionPathwayKeys = (
+  options: OptionNode[],
+  awareness?: OptionAwareness,
+  decision?: OptionDecisionShape,
+) => {
+  const keys = options.map((option) => `option:${option.id}->detected`)
+
+  if (awareness?.dominantOptionId) {
+    keys.push(`option:${awareness.dominantOptionId}->awareness:${awareness.summaryLabel}`)
+  }
+
+  if (decision?.preferredOptionId) {
+    keys.push(`option:${decision.preferredOptionId}->decision:${decision.stance}`)
   }
 
   return [...new Set(keys)]
@@ -328,6 +360,54 @@ export const runChunkedNodePipeline = (
 
   const protoMeaningHierarchy = mergeProtoMeaningHierarchy(sensoryProtoMeanings, narrativeProtoMeanings)
 
+  // ── 14a. Option Field Network v1 ────────────────────────────────────────────
+  const detectedOptions = detectOptions({
+    chunks,
+    narrativeProtoMeanings,
+    nodes: activatedNodes,
+    field: analyzed.stateVector,
+  })
+  const optionFields = detectedOptions.length > 0
+    ? buildOptionFields({
+        options: detectedOptions,
+        chunks,
+        sensoryProtoMeanings,
+        narrativeProtoMeanings,
+        nodes: activatedNodes,
+        field: analyzed.stateVector,
+      })
+    : []
+  const optionCompetition = optionFields.length > 0
+    ? applyOptionCompetition({ optionFields })
+    : undefined
+  const optionAwareness = optionCompetition
+    ? summarizeOptionAwareness({ options: detectedOptions, competition: optionCompetition })
+    : undefined
+  const optionDecision = optionAwareness
+    ? mapOptionAwarenessToDecision({ awareness: optionAwareness })
+    : undefined
+  const optionUtteranceHints = optionAwareness && optionDecision
+    ? mapOptionAwarenessToUtteranceHints({
+        options: detectedOptions,
+        awareness: optionAwareness,
+        decision: optionDecision,
+      })
+    : undefined
+
+  if (detectedOptions.length > 0) {
+    debug.push(`Option detection (${detectedOptions.length}): ${detectedOptions.map((option) => option.label).join(', ')}`)
+  }
+  if (optionCompetition) {
+    debug.push(`Option competition: ${optionCompetition.optionFields.map((field) => `${field.optionId}(${field.netPull.toFixed(2)})`).join(', ')}`)
+  }
+  if (optionAwareness) {
+    const ratioSummary = Object.entries(optionAwareness.optionRatios).map(([optionId, ratio]) => `${optionId}:${ratio}`).join(', ')
+    debug.push(`Option awareness: ${optionAwareness.summaryLabel} [${ratioSummary}] confidence=${optionAwareness.confidence.toFixed(2)}`)
+  }
+  if (optionDecision) {
+    debug.push(`Option decision shaping: stance=${optionDecision.stance}, preferred=${optionDecision.preferredOptionId ?? 'none'}`)
+  }
+
   // ── 14b. Somatic Marker Layer (ISR v2.5) ──────────────────────────────────
   let somaticSignature: SomaticSignature | undefined
   let relevantSomaticMarkers: SomaticMarker[] | undefined
@@ -358,6 +438,7 @@ export const runChunkedNodePipeline = (
     ...lateralPathwayKeys,
     ...surprisePathwayKeys,
     ...collectProtoMeaningPathwayKeys(protoMeaningHierarchy.all),
+    ...collectOptionPathwayKeys(detectedOptions, optionAwareness, optionDecision),
     loopPathwayKey,
     thresholdPathwayKey,
   ]
@@ -391,6 +472,11 @@ export const runChunkedNodePipeline = (
     sensoryProtoMeanings,
     narrativeProtoMeanings,
     protoMeaningHierarchy,
+    detectedOptions,
+    optionCompetition,
+    optionAwareness,
+    optionDecision,
+    optionUtteranceHints,
     somaticSignature,
     relevantSomaticMarkers,
     somaticInfluence,

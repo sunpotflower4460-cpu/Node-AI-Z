@@ -129,5 +129,9 @@ export const detectOptions = ({
   return detected
     .sort((left, right) => right.score - left.score)
     .slice(0, 4)
-    .map(({ score: _score, ...node }) => node)
+    .map((candidate) => ({
+      id: candidate.id,
+      label: candidate.label,
+      sourceChunkIds: candidate.sourceChunkIds,
+    }))
 }

@@ -84,7 +84,6 @@ export const createSignalObservation = (
   const { text, learning, infoLayer, useInfoLayer = false } = input
 
   // ── Signal Runtime ─────────────────────────────────────────────
-  const runtimeResult = runSignalRuntime(text)
   const chunkedResult = runChunkedNodePipeline(
     text,
     undefined,
@@ -96,6 +95,12 @@ export const createSignalObservation = (
     undefined,
     learning.personal.somaticMarkers,
   )
+  const runtimeResult = runSignalRuntime(text, {
+    optionAwareness: chunkedResult.optionAwareness,
+    optionDecision: chunkedResult.optionDecision,
+    optionUtteranceHints: chunkedResult.optionUtteranceHints,
+    somaticInfluence: chunkedResult.somaticInfluence,
+  })
   const firedKeys = runtimeResult.pathwayKeys
 
   // ── Session Update ─────────────────────────────────────────────

@@ -191,6 +191,40 @@ describe('decideSignalUtterance', () => {
     const result = runSignalRuntime('疲れた')
     expect(result.decision.decisionTrace.length).toBeGreaterThan(0)
   })
+
+  it('uses option-aware utterance shaping when provided', () => {
+    const result = runSignalRuntime('転職するか、このまま続けるかで迷っている', {
+      optionAwareness: {
+        optionRatios: { 'option:change': 51, 'option:stay': 49 },
+        dominantOptionId: 'option:change',
+        differenceMagnitude: 0.02,
+        hesitationStrength: 0.68,
+        bridgeOptionPossible: true,
+        confidence: 0.54,
+        summaryLabel: '中間案がありそう',
+      },
+      optionDecision: {
+        preferredOptionId: 'option:change',
+        stance: 'bridge',
+        shouldDefer: false,
+        shouldOfferBridge: true,
+        confidence: 0.54,
+        notes: ['中間案がありそう'],
+      },
+      optionUtteranceHints: {
+        favoredOptionLabel: '変える',
+        secondaryOptionLabel: '続ける',
+        bridgeOptionSuggested: true,
+        hesitationTone: 'balanced',
+        ratioText: '変える 51 / 続ける 49',
+        suggestedClose: 'どちらか一方に急がず、間に置ける形から触れていってもよさそうです。',
+        notes: ['bridge option をにじませる'],
+      },
+    })
+
+    expect(result.decision.optionDecision?.stance).toBe('bridge')
+    expect(result.utterance).toContain('間に置ける形')
+  })
 })
 
 describe('buildSignalRevisionEntry', () => {
