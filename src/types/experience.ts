@@ -2,6 +2,12 @@ import type { NodePipelineResult, RevisionEntry, StudioViewModel } from './nodeS
 import type { SignalRuntimeResult } from '../signal/types'
 import type { ChunkedNodePipelineResult } from '../runtime/runChunkedNodePipeline'
 import type { DualStreamRuntimeResult } from '../runtime/runDualStreamRuntime'
+import type {
+  UtteranceIntent,
+  UtteranceShape,
+  LexicalPulls,
+  CrystallizedSentencePlan,
+} from '../utterance/types'
 
 /**
  * UI mode: observe (research) vs experience (conversation)
@@ -39,6 +45,13 @@ export type ObservationRecord = {
   somaticSignature?: import('../somatic/types').SomaticSignature
   somaticInfluence?: import('../somatic/types').SomaticInfluence
   relevantSomaticMarkers?: import('../somatic/types').SomaticMarker[]
+  // Utterance layer (Pass 2) - crystallized_thinking only
+  utteranceIntent?: UtteranceIntent
+  utteranceShape?: UtteranceShape
+  lexicalPulls?: LexicalPulls
+  crystallizedSentencePlan?: CrystallizedSentencePlan
+  finalCrystallizedReply?: string
+  previousUtterance?: string  // For comparison
 }
 
 export type ExperienceMessage = {
@@ -58,4 +71,11 @@ export type ExperienceMessage = {
   somaticSignature?: import('../somatic/types').SomaticSignature
   somaticInfluence?: import('../somatic/types').SomaticInfluence
   relevantSomaticMarkers?: import('../somatic/types').SomaticMarker[]
+  // Utterance layer (Pass 2) - crystallized_thinking only
+  utteranceIntent?: UtteranceIntent
+  utteranceShape?: UtteranceShape
+  lexicalPulls?: LexicalPulls
+  crystallizedSentencePlan?: CrystallizedSentencePlan
+  finalCrystallizedReply?: string
+  previousUtterance?: string
 }
