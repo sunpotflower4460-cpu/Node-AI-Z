@@ -1,6 +1,7 @@
 import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
+import { getModeStorageKey } from './modeScopedStorage'
 
-export const API_SELECTION_STORAGE_KEY = 'node-ai-z:api-selection'
+const API_SELECTION_KEY = 'api-selection'
 
 const DEFAULT_PROVIDER: ApiProviderId = 'internal_mock'
 
@@ -13,13 +14,18 @@ const createDefaultApiSelection = (): ApiSelectionState => ({
   lastUpdatedAt: new Date().toISOString(),
 })
 
+/**
+ * Load API selection state for jibun_kaigi_api mode
+ * (Crystallized thinking mode does not use provider selection)
+ */
 export const loadApiSelection = (): ApiSelectionState => {
   if (typeof localStorage === 'undefined') {
     return createDefaultApiSelection()
   }
 
   try {
-    const stored = localStorage.getItem(API_SELECTION_STORAGE_KEY)
+    const storageKey = getModeStorageKey('jibun_kaigi_api', API_SELECTION_KEY)
+    const stored = localStorage.getItem(storageKey)
     if (!stored) {
       return createDefaultApiSelection()
     }
@@ -39,14 +45,19 @@ export const loadApiSelection = (): ApiSelectionState => {
   }
 }
 
+/**
+ * Save API selection state for jibun_kaigi_api mode
+ */
 export const saveApiSelection = (state: ApiSelectionState): void => {
   if (typeof localStorage === 'undefined') {
     return
   }
 
   try {
-    localStorage.setItem(API_SELECTION_STORAGE_KEY, JSON.stringify(state))
+    const storageKey = getModeStorageKey('jibun_kaigi_api', API_SELECTION_KEY)
+    localStorage.setItem(storageKey, JSON.stringify(state))
   } catch (error) {
     console.error('Failed to save API selection to localStorage.', error)
   }
 }
+

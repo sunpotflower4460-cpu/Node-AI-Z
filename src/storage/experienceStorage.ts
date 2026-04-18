@@ -1,14 +1,19 @@
-import type { ExperienceMessage } from '../types/experience'
+import type { ExperienceMessage, ImplementationMode } from '../types/experience'
+import { getModeStorageKey } from './modeScopedStorage'
 
-const STORAGE_KEY = 'node-ai-z:experience-messages'
+const EXPERIENCE_MESSAGES_KEY = 'experience-messages'
 
-export const loadExperienceMessages = (): ExperienceMessage[] => {
+/**
+ * Load experience messages for a specific implementation mode
+ */
+export const loadExperienceMessages = (mode: ImplementationMode): ExperienceMessage[] => {
   if (typeof localStorage === 'undefined') {
     return []
   }
 
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const storageKey = getModeStorageKey(mode, EXPERIENCE_MESSAGES_KEY)
+    const stored = localStorage.getItem(storageKey)
     if (!stored) {
       return []
     }
@@ -21,14 +26,19 @@ export const loadExperienceMessages = (): ExperienceMessage[] => {
   }
 }
 
-export const saveExperienceMessages = (messages: ExperienceMessage[]): void => {
+/**
+ * Save experience messages for a specific implementation mode
+ */
+export const saveExperienceMessages = (mode: ImplementationMode, messages: ExperienceMessage[]): void => {
   if (typeof localStorage === 'undefined') {
     return
   }
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(messages))
+    const storageKey = getModeStorageKey(mode, EXPERIENCE_MESSAGES_KEY)
+    localStorage.setItem(storageKey, JSON.stringify(messages))
   } catch (error) {
     console.error('Failed to save experience messages to localStorage.', error)
   }
 }
+
