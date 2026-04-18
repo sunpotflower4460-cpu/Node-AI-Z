@@ -36,7 +36,7 @@ describe('decideSignalUtterance with somatic influence', () => {
         level: 'sensory' as const,
         glossJa: '閉じている',
         strength: 0.9,
-        sourceFeatureIds: [],
+        sourceCueIds: [],
         sourceNodeIds: [],
       },
       {
@@ -44,7 +44,7 @@ describe('decideSignalUtterance with somatic influence', () => {
         level: 'narrative' as const,
         glossJa: 'まだ押さない方がよい',
         strength: 0.9,
-        sourceFeatureIds: [],
+        sourceCueIds: [],
         sourceNodeIds: [],
         childIds: ['sensory:閉じている'],
       },

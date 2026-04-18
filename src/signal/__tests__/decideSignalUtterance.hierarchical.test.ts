@@ -5,8 +5,8 @@ describe('decideSignalUtterance — hierarchical proto meanings', () => {
   it('uses narrative as the main decision input', () => {
     const decision = decideSignalUtterance({
       sensory: [
-        { id: 'sensory:heavy', level: 'sensory', glossJa: '重い', strength: 0.82, sourceFeatureIds: [], sourceNodeIds: [] },
-        { id: 'sensory:pressed', level: 'sensory', glossJa: '押されている', strength: 0.76, sourceFeatureIds: [], sourceNodeIds: [] },
+        { id: 'sensory:heavy', level: 'sensory', glossJa: '重い', strength: 0.82, sourceCueIds: [], sourceNodeIds: [] },
+        { id: 'sensory:pressed', level: 'sensory', glossJa: '押されている', strength: 0.76, sourceCueIds: [], sourceNodeIds: [] },
       ],
       narrative: [
         {
@@ -14,7 +14,7 @@ describe('decideSignalUtterance — hierarchical proto meanings', () => {
           level: 'narrative',
           glossJa: 'まだ押さない方がよい',
           strength: 0.88,
-          sourceFeatureIds: [],
+          sourceCueIds: [],
           sourceNodeIds: [],
           childIds: ['sensory:heavy', 'sensory:pressed'],
         },
@@ -31,7 +31,7 @@ describe('decideSignalUtterance — hierarchical proto meanings', () => {
   it('raises step-offer bias for new-direction narratives', () => {
     const decision = decideSignalUtterance({
       sensory: [
-        { id: 'sensory:open', level: 'sensory', glossJa: '開いている', strength: 0.74, sourceFeatureIds: [], sourceNodeIds: [] },
+        { id: 'sensory:open', level: 'sensory', glossJa: '開いている', strength: 0.74, sourceCueIds: [], sourceNodeIds: [] },
       ],
       narrative: [
         {
@@ -39,7 +39,7 @@ describe('decideSignalUtterance — hierarchical proto meanings', () => {
           level: 'narrative',
           glossJa: '新しい方向を探し始めている',
           strength: 0.86,
-          sourceFeatureIds: [],
+          sourceCueIds: [],
           sourceNodeIds: [],
           childIds: ['sensory:open'],
         },

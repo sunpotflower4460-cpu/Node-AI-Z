@@ -31,10 +31,10 @@ const nodes: CoreNode[] = [
 ]
 
 const sensoryProtoMeanings: ProtoMeaning[] = [
-  { id: 'sensory:open', level: 'sensory', glossJa: '開いている', strength: 0.76, sourceFeatureIds: [], sourceNodeIds: [] },
-  { id: 'sensory:bright_hint', level: 'sensory', glossJa: 'かすかに明るい', strength: 0.63, sourceFeatureIds: [], sourceNodeIds: [] },
-  { id: 'sensory:heavy', level: 'sensory', glossJa: '重い', strength: 0.59, sourceFeatureIds: [], sourceNodeIds: [] },
-  { id: 'sensory:closed', level: 'sensory', glossJa: '閉じている', strength: 0.52, sourceFeatureIds: [], sourceNodeIds: [] },
+  { id: 'sensory:open', level: 'sensory', glossJa: '開いている', strength: 0.76, sourceCueIds: [], sourceNodeIds: [] },
+  { id: 'sensory:bright_hint', level: 'sensory', glossJa: 'かすかに明るい', strength: 0.63, sourceCueIds: [], sourceNodeIds: [] },
+  { id: 'sensory:heavy', level: 'sensory', glossJa: '重い', strength: 0.59, sourceCueIds: [], sourceNodeIds: [] },
+  { id: 'sensory:closed', level: 'sensory', glossJa: '閉じている', strength: 0.52, sourceCueIds: [], sourceNodeIds: [] },
 ]
 
 const narrativeProtoMeanings: ProtoMeaning[] = [
@@ -43,7 +43,7 @@ const narrativeProtoMeanings: ProtoMeaning[] = [
     level: 'narrative',
     glossJa: '新しい方向を探し始めている',
     strength: 0.81,
-    sourceFeatureIds: [],
+    sourceCueIds: [],
     sourceNodeIds: ['wanting_change'],
     childIds: ['sensory:open', 'sensory:bright_hint'],
   },
@@ -52,7 +52,7 @@ const narrativeProtoMeanings: ProtoMeaning[] = [
     level: 'narrative',
     glossJa: 'まだ押さない方がよい',
     strength: 0.62,
-    sourceFeatureIds: [],
+    sourceCueIds: [],
     sourceNodeIds: ['safety'],
     childIds: ['sensory:closed'],
   },

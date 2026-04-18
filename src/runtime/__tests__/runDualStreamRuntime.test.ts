@@ -19,5 +19,8 @@ describe('runDualStreamRuntime', () => {
     expect(result.microCues.length).toBeGreaterThan(0)
     expect(result.microSignalState.fieldTone).toBeDefined()
     expect(result.fusedState.integratedTensions.length).toBeGreaterThan(0)
+    expect(result.dynamicThreshold.current).toBeGreaterThan(0)
+    expect(result.sensoryProtoMeanings.length).toBeGreaterThan(0)
+    expect(result.narrativeProtoMeanings.length).toBeGreaterThan(0)
   })
 })

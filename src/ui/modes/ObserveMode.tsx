@@ -540,17 +540,62 @@ export const ObserveMode = ({
                   </div>
 
                   <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Micro Cues</h4>
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Micro Cues (raw)</h4>
                     <div className="mt-2 space-y-2">
                       {dualStreamResult.microCues.length > 0 ? dualStreamResult.microCues.map((cue) => (
                         <div key={cue.id} className="rounded-lg border border-violet-50 bg-violet-50/30 p-2">
                           <div className="flex items-center justify-between gap-2">
                             <span className="text-[10px] font-bold text-slate-800">{cue.id}</span>
-                            <span className="text-[10px] font-bold text-violet-700">{cue.strength.toFixed(2)}</span>
+                            <span className="text-[10px] font-bold text-violet-700">{(cue.rawStrength ?? cue.strength).toFixed(2)}</span>
                           </div>
                           <p className="mt-1 text-[9px] text-slate-500">{cue.reasons.join(' / ')}</p>
                         </div>
                       )) : <p className="text-xs text-slate-400">micro cue なし</p>}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Temporal / Refractory</h4>
+                    <div className="mt-2 space-y-1 text-[10px] text-slate-600">
+                      {dualStreamResult.observe.temporalDecay.map((note) => <p key={note} className="leading-snug">{note}</p>)}
+                      <div className="mt-2 h-px bg-violet-100" />
+                      {dualStreamResult.observe.refractory.map((note) => <p key={note} className="leading-snug">{note}</p>)}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Inhibition & Threshold</h4>
+                    <div className="mt-2 space-y-1 text-[10px] text-slate-600">
+                      {dualStreamResult.observe.inhibition.map((note) => <p key={note} className="leading-snug">{note}</p>)}
+                      <p className="mt-2 font-semibold text-slate-800">{dualStreamResult.observe.threshold}</p>
+                      <p className="text-[10px] text-slate-500">
+                        loop: {dualStreamResult.recurrentResult.iterations} step(s), converged {dualStreamResult.recurrentResult.converged ? 'yes' : 'no'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Prediction Error</h4>
+                    <div className="mt-2 space-y-1 text-[10px] text-slate-600">
+                      <p className="font-semibold text-slate-800">surprise: {dualStreamResult.prediction.modulation.overallSurprise.toFixed(3)}</p>
+                      <p>surprise cues: {dualStreamResult.prediction.modulation.surpriseCues.join(', ') || 'none'}</p>
+                      <p>missing cues: {dualStreamResult.prediction.modulation.missingCues.join(', ') || 'none'}</p>
+                      {dualStreamResult.observe.prediction.map((note) => <p key={note} className="leading-snug">{note}</p>)}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Active Cues</h4>
+                    <div className="mt-2 space-y-2">
+                      {dualStreamResult.activeCues.length > 0 ? dualStreamResult.activeCues.map((cue) => (
+                        <div key={cue.id} className="rounded-lg border border-violet-50 bg-violet-50/30 p-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[10px] font-bold text-slate-800">{cue.id}</span>
+                            <span className="text-[10px] font-bold text-violet-700">{cue.strength.toFixed(2)}</span>
+                          </div>
+                          <p className="mt-1 text-[9px] text-slate-500">last fired: {cue.lastFiredTurn ?? 0} / refractory: {cue.refractoryUntilTurn ?? 0}</p>
+                        </div>
+                      )) : <p className="text-xs text-slate-400">active cue なし</p>}
                     </div>
                   </div>
 
@@ -571,6 +616,42 @@ export const ObserveMode = ({
                     <div className="mt-3 flex items-center justify-between gap-3">
                       <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-bold text-violet-700">{dualStreamResult.microSignalState.fieldTone}</span>
                       <span className="text-[10px] text-slate-500">{dualStreamResult.fusedState.dominantTextures.join(' / ') || 'texture なし'}</span>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Sensory Proto Meanings</h4>
+                    <div className="mt-2 space-y-1">
+                      {dualStreamResult.sensoryProtoMeanings.length > 0 ? dualStreamResult.sensoryProtoMeanings.map((meaning) => (
+                        <div key={meaning.id} className="flex items-center justify-between gap-2 text-[10px] text-slate-700">
+                          <span className="font-bold text-slate-800">{meaning.glossJa}</span>
+                          <span className="text-violet-700">{meaning.strength.toFixed(2)}</span>
+                        </div>
+                      )) : <p className="text-xs text-slate-400">sensory なし</p>}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Narrative Proto Meanings</h4>
+                    <div className="mt-2 space-y-1">
+                      {dualStreamResult.narrativeProtoMeanings.length > 0 ? dualStreamResult.narrativeProtoMeanings.map((meaning) => (
+                        <div key={meaning.id} className="space-y-0.5 text-[10px] text-slate-700">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-bold text-slate-800">{meaning.glossJa}</span>
+                            <span className="text-violet-700">{meaning.strength.toFixed(2)}</span>
+                          </div>
+                          <p className="text-[9px] text-slate-500">childIds: {meaning.childIds?.join(', ') ?? 'none'}</p>
+                        </div>
+                      )) : <p className="text-xs text-slate-400">narrative なし</p>}
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-violet-100 bg-white p-3 shadow-sm">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Hierarchy View</h4>
+                    <div className="mt-2 space-y-1 text-[10px] text-slate-700">
+                      {dualStreamResult.observe.hierarchy.map((note) => (
+                        <p key={note} className="leading-snug">{note}</p>
+                      ))}
                     </div>
                   </div>
 
@@ -690,7 +771,7 @@ export const ObserveMode = ({
                               <span className="text-xs font-bold text-slate-800">{meaning.glossJa}</span>
                               <span className="text-[10px] font-bold text-amber-700">{meaning.strength.toFixed(2)}</span>
                             </div>
-                            <p className="mt-1 text-[9px] text-slate-500">{meaning.sourceFeatureIds.join(', ') || 'feature なし'}</p>
+                            <p className="mt-1 text-[9px] text-slate-500">{meaning.sourceCueIds.join(', ') || 'cue なし'}</p>
                           </div>
                         ))
                       ) : (

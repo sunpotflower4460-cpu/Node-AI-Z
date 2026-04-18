@@ -3,7 +3,7 @@ import type { ProtoMeaning } from './types'
 
 type PredictionErrorSummary = {
   overallSurprise?: number
-  featureIds?: string[]
+  cueIds?: string[]
 }
 
 type NarrativeProtoMeaningInput = {
@@ -178,7 +178,7 @@ export const deriveNarrativeProtoMeanings = (
     predictionErrorSummary: input.predictionErrorSummary,
   }
 
-  return NARRATIVE_RULES
+  const ranked = NARRATIVE_RULES
     .map((rule) => {
       const childIds = unique(rule.childGlosses
         .map((glossJa) => getSensoryId(sensoryMap, glossJa))
@@ -192,8 +192,8 @@ export const deriveNarrativeProtoMeanings = (
         level: 'narrative' as const,
         glossJa: rule.glossJa,
         strength: rule.score(context),
-        sourceFeatureIds: unique(childMeanings.flatMap((meaning) => meaning.sourceFeatureIds)),
-        sourceNodeIds: unique([...rule.sourceNodeIds(context), ...childMeanings.flatMap((meaning) => meaning.sourceNodeIds)]),
+        sourceCueIds: unique(childMeanings.flatMap((meaning) => meaning.sourceCueIds)),
+        sourceNodeIds: unique([...rule.sourceNodeIds(context), ...childMeanings.flatMap((meaning) => meaning.sourceNodeIds ?? [])]),
         sourceBindingIds: unique(childMeanings.flatMap((meaning) => meaning.sourceBindingIds ?? [])),
         childIds,
         toneTags: rule.toneTags,
@@ -202,4 +202,21 @@ export const deriveNarrativeProtoMeanings = (
     .filter((meaning) => meaning.strength >= MIN_STRENGTH && (meaning.childIds?.length ?? 0) > 0)
     .sort((left, right) => right.strength - left.strength)
     .slice(0, MAX_RESULTS)
+
+  if (ranked.length === 0 && input.sensoryProtoMeanings.length > 0) {
+    const strongest = [...input.sensoryProtoMeanings].sort((a, b) => b.strength - a.strength).slice(0, 2)
+    ranked.push({
+      id: 'narrative:fallback',
+      level: 'narrative',
+      glossJa: '揺れを眺めている',
+      strength: strongest[0]?.strength ?? 0.4,
+      sourceCueIds: unique(strongest.flatMap((meaning) => meaning.sourceCueIds)),
+      sourceNodeIds: unique(strongest.flatMap((meaning) => meaning.sourceNodeIds ?? [])),
+      sourceBindingIds: unique(strongest.flatMap((meaning) => meaning.sourceBindingIds ?? [])),
+      childIds: strongest.map((meaning) => meaning.id),
+      toneTags: ['searching', 'soft'],
+    })
+  }
+
+  return ranked
 }

@@ -5,8 +5,8 @@ describe('lexicalizeProtoMeanings — hierarchical proto meanings', () => {
   it('splits narrative core and sensory tone candidates', () => {
     const candidates = lexicalizeProtoMeanings({
       sensory: [
-        { id: 'sensory:heavy', level: 'sensory', glossJa: '重い', strength: 0.72, sourceFeatureIds: [], sourceNodeIds: [] },
-        { id: 'sensory:swaying', level: 'sensory', glossJa: '揺れる', strength: 0.68, sourceFeatureIds: [], sourceNodeIds: [] },
+        { id: 'sensory:heavy', level: 'sensory', glossJa: '重い', strength: 0.72, sourceCueIds: [], sourceNodeIds: [] },
+        { id: 'sensory:swaying', level: 'sensory', glossJa: '揺れる', strength: 0.68, sourceCueIds: [], sourceNodeIds: [] },
       ],
       narrative: [
         {
@@ -14,7 +14,7 @@ describe('lexicalizeProtoMeanings — hierarchical proto meanings', () => {
           level: 'narrative',
           glossJa: '意味を見失いかけている',
           strength: 0.84,
-          sourceFeatureIds: [],
+          sourceCueIds: [],
           sourceNodeIds: [],
           childIds: ['sensory:heavy', 'sensory:swaying'],
         },

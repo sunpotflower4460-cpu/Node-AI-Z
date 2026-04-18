@@ -10,7 +10,7 @@ describe('deriveNarrativeProtoMeanings', () => {
           level: 'sensory',
           glossJa: '重い',
           strength: 0.84,
-          sourceFeatureIds: ['motivation_drop'],
+          sourceCueIds: ['motivation_drop'],
           sourceNodeIds: ['fatigue'],
         },
         {
@@ -18,7 +18,7 @@ describe('deriveNarrativeProtoMeanings', () => {
           level: 'sensory',
           glossJa: '揺れる',
           strength: 0.78,
-          sourceFeatureIds: ['purpose_confusion'],
+          sourceCueIds: ['purpose_confusion'],
           sourceNodeIds: ['ambiguity'],
         },
         {
@@ -26,7 +26,7 @@ describe('deriveNarrativeProtoMeanings', () => {
           level: 'sensory',
           glossJa: '押されている',
           strength: 0.74,
-          sourceFeatureIds: ['explicit_guidance_request'],
+          sourceCueIds: ['explicit_guidance_request'],
           sourceNodeIds: ['anxiety'],
         },
       ],

@@ -10,6 +10,14 @@ export type SignalPacket = {
 export type MicroCue = {
   id: string
   strength: number
+  /** Optional raw strength before modulation */
+  rawStrength?: number
+  /** Turn when this cue last fired; used for temporal decay */
+  lastFiredTurn?: number
+  /** Exponential decay rate applied each turn */
+  decayRate?: number
+  /** Turn until which the cue stays refractory */
+  refractoryUntilTurn?: number
   reasons: string[]
 }
 

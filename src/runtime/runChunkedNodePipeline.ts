@@ -78,7 +78,7 @@ const collectProtoMeaningPathwayKeys = (meanings: ProtoMeaning[]) => {
 
   for (const meaning of meanings) {
     if (meaning.level === 'sensory') {
-      keys.push(...meaning.sourceFeatureIds.map((featureId) => `feature:${featureId}->sensory:${meaning.glossJa}`))
+      keys.push(...(meaning.sourceCueIds ?? []).map((cueId) => `feature:${cueId}->sensory:${meaning.glossJa}`))
       continue
     }
 
@@ -353,7 +353,7 @@ export const runChunkedNodePipeline = (
     field: analyzed.stateVector,
     predictionErrorSummary: {
       overallSurprise: predictionModulation.overallSurprise,
-      featureIds: predictionModulation.surpriseSignals.map((signal) => signal.featureId),
+      cueIds: predictionModulation.surpriseSignals.map((signal) => signal.featureId),
     },
   })
   debug.push(
@@ -374,6 +374,8 @@ export const runChunkedNodePipeline = (
     chunks,
     detectedOptions,
     field: analyzed.stateVector,
+    currentTurn,
+    recentActivityScore,
   })
   const optionFields = detectedOptions.length > 0
     ? buildOptionFields({
@@ -417,7 +419,7 @@ export const runChunkedNodePipeline = (
     debug.push(`Option decision shaping: stance=${optionDecision.stance}, preferred=${optionDecision.preferredOptionId ?? 'none'}`)
   }
   debug.push(
-    `Dual stream: lexical=${dualStream.lexicalState.requestType ?? 'none'}, cues=${dualStream.microCues.map((cue) => cue.id).join(', ') || 'none'}, fieldTone=${dualStream.microSignalState.fieldTone}, fused=${dualStream.fusedState.fusedConfidence.toFixed(2)}`,
+    `Dual stream: lexical=${dualStream.lexicalState.requestType ?? 'none'}, activeCues=${dualStream.activeCues.map((cue) => cue.id).join(', ') || 'none'}, fieldTone=${dualStream.microSignalState.fieldTone}, fused=${dualStream.fusedState.fusedConfidence.toFixed(2)}`,
   )
 
   // ── 14b. Somatic Marker Layer (ISR v2.5) ──────────────────────────────────
