@@ -24,7 +24,7 @@ const makeProtoMeaning = (id: string, strength: number): ProtoMeaning => ({
   level: 'sensory',
   glossJa: id,
   strength,
-  sourceFeatureIds: [],
+  sourceCueIds: [],
   sourceNodeIds: [],
 })
 

@@ -1,4 +1,3 @@
-import type { ChunkFeature } from './ingest/chunkTypes'
 import type { RecurrentLoopResult } from './temporalTypes'
 import { applyLateralInhibition } from './applyLateralInhibition'
 
@@ -40,6 +39,11 @@ const MAX_LOOP_STRENGTH = 0.99
 const clamp = (v: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, v))
 
+type LoopEntity = {
+  id: string
+  strength: number
+}
+
 /**
  * Run a recurrent convergence loop over self / belief / field features.
  *
@@ -58,16 +62,17 @@ const clamp = (v: number, lo: number, hi: number) =>
  * @param maxLoops        Upper bound on iterations (default 8)
  * @param convergenceThreshold  Sum-of-abs-delta below which loop stops (default 0.01)
  */
-export const runRecurrentSelfLoop = (
-  features: ChunkFeature[],
+export const runRecurrentSelfLoop = <T extends LoopEntity>(
+  features: T[],
   personalBias?: Record<string, number>,
   maxLoops = 8,
   convergenceThreshold = 0.01,
-): RecurrentLoopResult<ChunkFeature[]> => {
-  const states: ChunkFeature[][] = [[...features]]
+  targetIds: Set<string> = SELF_BELIEF_FEATURE_IDS,
+): RecurrentLoopResult<T[]> => {
+  const states: T[][] = [[...features]]
   const debugNotes: string[] = []
 
-  let current = features.map((f): ChunkFeature => {
+  let current = features.map((f): T => {
     const bias = personalBias?.[f.id] ?? 0
     return bias !== 0 ? { ...f, strength: clamp(f.strength + bias, 0, MAX_LOOP_STRENGTH) } : f
   })
@@ -78,8 +83,8 @@ export const runRecurrentSelfLoop = (
   for (let loop = 0; loop < maxLoops; loop++) {
     iterations = loop + 1
 
-    const selfFeatures = current.filter((f) => SELF_BELIEF_FEATURE_IDS.has(f.id))
-    const nonSelfFeatures = current.filter((f) => !SELF_BELIEF_FEATURE_IDS.has(f.id))
+    const selfFeatures = current.filter((f) => targetIds.has(f.id))
+    const nonSelfFeatures = current.filter((f) => !targetIds.has(f.id))
 
     if (selfFeatures.length === 0) {
       debugNotes.push(`Loop ${iterations}: no self/belief features — early exit`)
@@ -88,7 +93,7 @@ export const runRecurrentSelfLoop = (
     }
 
     // Step 1: mutual reinforcement among self/belief features
-    const reinforced = selfFeatures.map((f): ChunkFeature => {
+    const reinforced = selfFeatures.map((f): T => {
       const coActivatedSum = selfFeatures
         .filter((s) => s.id !== f.id)
         .reduce((sum, s) => sum + s.strength, 0)
@@ -100,7 +105,7 @@ export const runRecurrentSelfLoop = (
     const { features: inhibited } = applyLateralInhibition(reinforced)
 
     // Reassemble full feature list
-    const next: ChunkFeature[] = [
+    const next: T[] = [
       ...nonSelfFeatures,
       ...inhibited,
     ]

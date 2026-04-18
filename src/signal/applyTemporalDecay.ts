@@ -1,5 +1,11 @@
-import type { ChunkFeature } from './ingest/chunkTypes'
-import type { TemporalFeatureState } from './temporalTypes'
+import type { TemporalCueState, TemporalFeatureState } from './temporalTypes'
+
+type TemporalEntity = {
+  id: string
+  strength: number
+  lastFiredTurn?: number
+  decayRate?: number
+}
 
 const DEFAULT_DECAY_RATE = 0.1
 const DECAY_FLOOR = 0.01 // values below this are zeroed out
@@ -21,14 +27,14 @@ const DECAY_FLOOR = 0.01 // values below this are zeroed out
  * the same logic can later be applied to node-level states by passing a
  * compatible array.
  */
-export const applyTemporalDecay = (
-  features: ChunkFeature[],
+export const applyTemporalDecay = <T extends TemporalEntity>(
+  features: T[],
   currentTurn: number,
-  previousStates?: Map<string, TemporalFeatureState>,
-): { features: ChunkFeature[]; debugNotes: string[] } => {
+  previousStates?: Map<string, TemporalFeatureState | TemporalCueState>,
+): { features: T[]; debugNotes: string[] } => {
   const notes: string[] = []
 
-  const decayed = features.map((f): ChunkFeature => {
+  const decayed = features.map((f): T => {
     const prevState = previousStates?.get(f.id)
 
     // Resolve lastFiredTurn (feature field > previous state > treat as current)

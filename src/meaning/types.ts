@@ -5,9 +5,13 @@ export type ProtoMeaning = {
   level: ProtoMeaningLevel
   glossJa: string
   strength: number
-  sourceFeatureIds: string[]
-  sourceNodeIds: string[]
+  /** Micro-cues (or analogous feature ids) that seeded this meaning */
+  sourceCueIds: string[]
+  /** Optional higher-level node ids that also supported the meaning */
+  sourceNodeIds?: string[]
+  /** Optional binding ids when derived from node relations */
   sourceBindingIds?: string[]
+  /** Child proto-meaning ids (narrative meanings should reference sensory ids) */
   childIds?: string[]
   toneTags?: string[]
 }

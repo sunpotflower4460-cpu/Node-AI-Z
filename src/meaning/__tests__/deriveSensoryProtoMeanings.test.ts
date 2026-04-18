@@ -40,7 +40,7 @@ describe('deriveSensoryProtoMeanings', () => {
     expect(protoMeanings.some((meaning) => meaning.glossJa === '押されている')).toBe(true)
 
     const heavy = protoMeanings.find((meaning) => meaning.glossJa === '重い')
-    expect(heavy?.sourceFeatureIds).toContain('motivation_drop')
+    expect(heavy?.sourceCueIds).toContain('motivation_drop')
     expect(heavy?.sourceNodeIds).toContain('fatigue')
   })
 })

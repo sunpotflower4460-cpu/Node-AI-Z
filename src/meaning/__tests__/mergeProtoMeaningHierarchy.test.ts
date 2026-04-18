@@ -5,10 +5,10 @@ describe('mergeProtoMeaningHierarchy', () => {
   it('returns sensory, narrative, and combined hierarchy views', () => {
     const hierarchy = mergeProtoMeaningHierarchy(
       [
-        { id: 'sensory:heavy', level: 'sensory', glossJa: '重い', strength: 0.7, sourceFeatureIds: [], sourceNodeIds: [] },
+        { id: 'sensory:heavy', level: 'sensory', glossJa: '重い', strength: 0.7, sourceCueIds: [], sourceNodeIds: [] },
       ],
       [
-        { id: 'narrative:meaning_loss', level: 'narrative', glossJa: '意味を見失いかけている', strength: 0.8, sourceFeatureIds: [], sourceNodeIds: [], childIds: ['sensory:heavy'] },
+        { id: 'narrative:meaning_loss', level: 'narrative', glossJa: '意味を見失いかけている', strength: 0.8, sourceCueIds: [], sourceNodeIds: [], childIds: ['sensory:heavy'] },
       ],
     )
 

@@ -1,4 +1,7 @@
-import type { ChunkFeature } from './ingest/chunkTypes'
+type Inhibitable = {
+  id: string
+  strength: number
+}
 
 /**
  * Fraction of the winner's strength used as an inhibitory push-down.
@@ -19,9 +22,9 @@ const INHIBITION_FACTOR = 0.05
  * Intent: winner-take-more, not winner-take-all.  The strongest signal
  * slightly foregrounds itself without erasing the rest.
  */
-export const applyLateralInhibition = (
-  features: ChunkFeature[],
-): { features: ChunkFeature[]; debugNotes: string[] } => {
+export const applyLateralInhibition = <T extends Inhibitable>(
+  features: T[],
+): { features: T[]; debugNotes: string[] } => {
   if (features.length <= 1) {
     return {
       features,
@@ -36,7 +39,7 @@ export const applyLateralInhibition = (
     `Lateral inhibition: winner=${winner.id}(${winner.strength.toFixed(3)}), reduction=${reduction.toFixed(4)}`,
   ]
 
-  const inhibited = features.map((f): ChunkFeature => {
+  const inhibited = features.map((f): T => {
     if (f.id === winner.id) return f
     const before = f.strength
     const after = Math.max(0, before - reduction)

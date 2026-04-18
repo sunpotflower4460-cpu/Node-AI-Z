@@ -96,6 +96,10 @@ src/
 - **Proto Meaning** — `meaning` 層が作る sensory / narrative の意味候補。
 - **Node Activation** — feature を受けて既存 Node Pipeline へ橋渡しされる活性化結果です。
 
+- Micro-Signal Stream は時間減衰・抑制・再帰ループ・予測誤差を持ちます。
+- Proto-Meaning は sensory と narrative の二層で立ちます。
+- 最終理解は signal dynamics を経た上で形成されます。
+
 ## runtime 順序の現在地
 
 現在の実行順は次の整理です。
