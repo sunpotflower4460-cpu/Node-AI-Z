@@ -1,51 +1,53 @@
 import type { PersonalLearningState } from '../learning/types'
-import { generateSurfaceReply } from '../surface/generateSurfaceReply'
 import type { ApiProviderId } from '../types/apiProvider'
-import type { RuntimeMode } from '../types/experience'
+import type { ImplementationMode } from '../types/experience'
 import type { PlasticityState } from '../types/nodeStudio'
-import { runLegacyNodePipeline } from './runLegacyNodePipeline'
-import { runSignalIntelligenceRuntime, type SignalIntelligenceRuntimeResult } from './runSignalIntelligenceRuntime'
+import type { RuntimeResult } from './runtimeTypes'
+import { runJibunKaigiApiRuntime } from './runJibunKaigiApiRuntime'
+import { runCrystallizedThinkingRuntime } from './runCrystallizedThinkingRuntime'
 
 /**
- * Top-level runtime entry used by Observe / Experience.
- * UI callers pass mode + input, and this function chooses which internal route
- * owns the run: the legacy node backbone or the signal-intelligence route.
+ * Main runtime dispatcher.
+ * Routes to the appropriate implementation based on mode selection.
+ *
+ * IMPORTANT: This function dispatches to ONE mode only - no fallback between modes.
  */
-export type RuntimeSource = 'legacy-node-pipeline' | 'signal-intelligence'
 
 export type MainRuntimeInput = {
   text: string
   plasticity?: PlasticityState
   provider: ApiProviderId
-  runtimeMode: RuntimeMode
+  implementationMode: ImplementationMode
   personalLearning: PersonalLearningState
-  source?: RuntimeSource
 }
 
-const runLegacyMainRoute = async ({
+/**
+ * Run the main runtime based on implementation mode.
+ *
+ * - jibun_kaigi_api: API-driven with provider selection
+ * - crystallized_thinking: API-independent with Dual Stream/Signal/ProtoMeaning
+ */
+export const runMainRuntime = async ({
   text,
   plasticity,
   provider,
-}: Pick<MainRuntimeInput, 'text' | 'plasticity' | 'provider'>): Promise<SignalIntelligenceRuntimeResult> => {
-  const legacyResult = runLegacyNodePipeline(text, plasticity)
-  const assistantReply = await generateSurfaceReply({ provider, studioView: legacyResult.studioView })
-
-  return {
-    runtimeMode: 'node',
-    pipelineResult: legacyResult.pipelineResult,
-    studioView: legacyResult.studioView,
-    revisionEntry: legacyResult.revisionEntry,
-    assistantReply,
-  }
-}
-
-export const runMainRuntime = async ({
-  source = 'signal-intelligence',
-  ...input
-}: MainRuntimeInput): Promise<SignalIntelligenceRuntimeResult> => {
-  if (source === 'legacy-node-pipeline') {
-    return runLegacyMainRoute(input)
+  implementationMode,
+  personalLearning,
+}: MainRuntimeInput): Promise<RuntimeResult> => {
+  if (implementationMode === 'jibun_kaigi_api') {
+    return runJibunKaigiApiRuntime({
+      text,
+      plasticity,
+      provider,
+      personalLearning,
+    })
   }
 
-  return runSignalIntelligenceRuntime(input)
+  // crystallized_thinking mode
+  return runCrystallizedThinkingRuntime({
+    text,
+    plasticity,
+    personalLearning,
+  })
 }
+

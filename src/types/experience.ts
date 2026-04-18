@@ -3,14 +3,29 @@ import type { SignalRuntimeResult } from '../signal/types'
 import type { ChunkedNodePipelineResult } from '../runtime/runChunkedNodePipeline'
 import type { DualStreamRuntimeResult } from '../runtime/runDualStreamRuntime'
 
+/**
+ * UI mode: observe (research) vs experience (conversation)
+ */
 export type AppMode = 'observe' | 'experience'
 export type ObservationSource = AppMode
+
+/**
+ * Implementation mode: which architectural approach to use
+ * - jibun_kaigi_api: API-driven, provider-based, character/dialogue focused
+ * - crystallized_thinking: API-independent, Dual Stream/Signal/ProtoMeaning core
+ */
+export type ImplementationMode = 'jibun_kaigi_api' | 'crystallized_thinking'
+
+/**
+ * Legacy runtime mode (to be deprecated in favor of ImplementationMode)
+ */
 export type RuntimeMode = 'node' | 'signal'
 
 export type ObservationRecord = {
   id: string
   type: ObservationSource
   runtimeMode: RuntimeMode
+  implementationMode?: ImplementationMode
   text: string
   timestamp: string
   time: string
@@ -33,6 +48,7 @@ export type ExperienceMessage = {
   text: string
   timestamp: string
   runtimeMode?: RuntimeMode
+  implementationMode?: ImplementationMode
   pipelineResult?: NodePipelineResult
   studioView?: StudioViewModel
   revisionEntry?: RevisionEntry

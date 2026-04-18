@@ -1,8 +1,10 @@
 import type { PersonalLearningState } from '../learning/types'
 import type { ApiProviderId } from '../types/apiProvider'
-import type { ExperienceMessage, ObservationRecord, RuntimeMode } from '../types/experience'
+import type { ExperienceMessage, ObservationRecord, RuntimeMode, ImplementationMode } from '../types/experience'
 import type { PlasticityState } from '../types/nodeStudio'
-import { runMainRuntime, type RuntimeSource } from './runMainRuntime'
+import { runMainRuntime } from './runMainRuntime'
+import { runLegacyNodePipeline } from './runLegacyNodePipeline'
+import { buildRevisionEntry } from '../revision/buildRevisionEntry'
 
 /**
  * Observation builder for UI flows.
@@ -15,8 +17,8 @@ export type CreateObservationRecordInput = {
   plasticity?: PlasticityState
   provider: ApiProviderId
   runtimeMode: RuntimeMode
+  implementationMode: ImplementationMode
   personalLearning: PersonalLearningState
-  source?: RuntimeSource
 }
 
 export const createObservationId = (prefix: string) => {
@@ -38,26 +40,58 @@ export const createObservationRecord = async ({
   plasticity,
   provider,
   runtimeMode,
+  implementationMode,
   personalLearning,
-  source,
 }: CreateObservationRecordInput): Promise<ObservationRecord> => {
   const timestamp = new Date().toISOString()
   const runtimeResult = await runMainRuntime({
     text,
     plasticity,
     provider,
-    runtimeMode,
+    implementationMode,
     personalLearning,
-    source,
   })
+
+  // Convert RuntimeResult to ObservationRecord format
+  if (runtimeResult.implementationMode === 'jibun_kaigi_api') {
+    return {
+      id: createObservationId(type),
+      type,
+      runtimeMode,
+      implementationMode: 'jibun_kaigi_api',
+      text,
+      timestamp,
+      time: formatObservationTime(timestamp),
+      pipelineResult: runtimeResult.pipelineResult,
+      studioView: runtimeResult.studioView,
+      revisionEntry: runtimeResult.revisionEntry,
+      assistantReply: runtimeResult.assistantReply,
+    }
+  }
+
+  // Crystallized thinking mode
+  // Need to provide backward-compatible fields for UI
+  const legacySnapshot = runLegacyNodePipeline(text, plasticity)
+  const revisionEntry = buildRevisionEntry(legacySnapshot.pipelineResult, legacySnapshot.studioView)
 
   return {
     id: createObservationId(type),
     type,
+    runtimeMode,
+    implementationMode: 'crystallized_thinking',
     text,
     timestamp,
     time: formatObservationTime(timestamp),
-    ...runtimeResult,
+    pipelineResult: legacySnapshot.pipelineResult,
+    studioView: legacySnapshot.studioView,
+    revisionEntry,
+    assistantReply: runtimeResult.utterance,
+    signalResult: runtimeResult.signalResult,
+    chunkedResult: runtimeResult.chunkedResult,
+    dualStreamResult: runtimeResult.dualStreamResult,
+    somaticSignature: runtimeResult.chunkedResult.somaticSignature,
+    somaticInfluence: runtimeResult.somaticInfluence,
+    relevantSomaticMarkers: runtimeResult.chunkedResult.relevantSomaticMarkers,
   }
 }
 
@@ -72,6 +106,7 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       text: record.text,
       timestamp: turnTimestamp,
       runtimeMode: record.runtimeMode,
+      implementationMode: record.implementationMode,
       pipelineResult: record.pipelineResult,
       studioView: record.studioView,
       revisionEntry: record.revisionEntry,
@@ -89,6 +124,7 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       text: record.assistantReply,
       timestamp: turnTimestamp,
       runtimeMode: record.runtimeMode,
+      implementationMode: record.implementationMode,
       pipelineResult: record.pipelineResult,
       studioView: record.studioView,
       revisionEntry: record.revisionEntry,
@@ -101,3 +137,4 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
     },
   ]
 }
+
