@@ -12,7 +12,7 @@ import { DEFAULT_OBSERVATION_DECISION_SHAPE, updatePersonalLearningFromObservati
 import { createPersonalLearningState } from '../learning/personalLearning'
 import type { PersonalLearningState } from '../learning/types'
 import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
-import type { ExperienceMessage, AppMode, ObservationRecord, RuntimeMode } from '../types/experience'
+import type { ExperienceMessage, AppMode, ObservationRecord, RuntimeMode, ImplementationMode } from '../types/experience'
 import type { RevisionEntry, RevisionState, UserTuningAction } from '../types/nodeStudio'
 import { mapExperienceMessagesToObservationHistory, mergeObservationHistories } from '../studio/mapExperienceMessagesToObservationHistory'
 import { ModeSwitch } from '../ui/components/ModeSwitch'
@@ -22,9 +22,10 @@ import { ObserveMode } from '../ui/modes/ObserveMode'
 export default function NodeStudioPage() {
   const [mode, setMode] = useState<AppMode>('observe')
   const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>('node')
+  const [implementationMode, setImplementationMode] = useState<ImplementationMode>('jibun_kaigi_api')
   const [currentObservation, setCurrentObservation] = useState<ObservationRecord | null>(null)
   const [observeHistory, setObserveHistory] = useState<ObservationRecord[]>([])
-  const [experienceMessages, setExperienceMessages] = useState<ExperienceMessage[]>(() => loadExperienceMessages())
+  const [experienceMessages, setExperienceMessages] = useState<ExperienceMessage[]>(() => loadExperienceMessages(implementationMode))
   const [apiSelection, setApiSelection] = useState<ApiSelectionState>(() => loadApiSelection())
   const [revisionState, setRevisionState] = useState<RevisionState>(() => loadRevisionState())
   const [isApiPanelOpen, setIsApiPanelOpen] = useState(false)
@@ -37,8 +38,8 @@ export default function NodeStudioPage() {
   }, [revisionState])
 
   useEffect(() => {
-    saveExperienceMessages(experienceMessages)
-  }, [experienceMessages])
+    saveExperienceMessages(implementationMode, experienceMessages)
+  }, [implementationMode, experienceMessages])
 
   useEffect(() => {
     saveApiSelection(apiSelection)
@@ -57,6 +58,7 @@ export default function NodeStudioPage() {
     type: ObservationRecord['type'],
     provider: ApiProviderId,
     runtimeMode: RuntimeMode,
+    currentImplementationMode: ImplementationMode,
     currentPersonalLearning: PersonalLearningState,
   ): Promise<ObservationRecord> => {
     return createObservationRecord({
@@ -64,6 +66,7 @@ export default function NodeStudioPage() {
       text,
       provider,
       runtimeMode,
+      implementationMode: currentImplementationMode,
       personalLearning: currentPersonalLearning,
       plasticity: revisionState.plasticity,
     })
@@ -91,9 +94,9 @@ export default function NodeStudioPage() {
   }, [addRevisionEntryToMemory, applyObservationLearning])
 
   const handleObservationSubmit = useCallback(async (text: string, type: ObservationRecord['type']) => {
-    const record = await createObservation(text, type, apiSelection.baseProvider, runtimeMode, personalLearning)
+    const record = await createObservation(text, type, apiSelection.baseProvider, runtimeMode, implementationMode, personalLearning)
     commitObservationRecord(record, type)
-  }, [apiSelection.baseProvider, commitObservationRecord, createObservation, personalLearning, runtimeMode])
+  }, [apiSelection.baseProvider, commitObservationRecord, createObservation, personalLearning, runtimeMode, implementationMode])
 
   const handleObserveAnalyze = useCallback(async (text: string) => {
     await handleObservationSubmit(text, 'observe')
@@ -173,9 +176,28 @@ export default function NodeStudioPage() {
             </p>
           </div>
           <div className="flex flex-col gap-3 lg:items-end">
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">実装方式</span>
+              <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1">
+                <button
+                  type="button"
+                  onClick={() => setImplementationMode('jibun_kaigi_api')}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${implementationMode === 'jibun_kaigi_api' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  じぶん会議(API方式)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImplementationMode('crystallized_thinking')}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${implementationMode === 'crystallized_thinking' ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  結晶思考(API非依存)
+                </button>
+              </div>
+            </div>
             <div className="relative flex flex-wrap items-center gap-2">
               <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
-                Surface Provider: {currentProviderConfig.label}
+                Surface Provider: {implementationMode === 'jibun_kaigi_api' ? currentProviderConfig.label : '未使用 (将来AI sensei用)'}
               </span>
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
                 Internal reasoning: shared
@@ -183,13 +205,14 @@ export default function NodeStudioPage() {
               <button
                 type="button"
                 onClick={() => setIsApiPanelOpen((previous) => !previous)}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-900"
+                disabled={implementationMode !== 'jibun_kaigi_api'}
+                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Settings2 className="h-3.5 w-3.5" />
                 基準APIを選ぶ
               </button>
 
-              {isApiPanelOpen ? (
+              {isApiPanelOpen && implementationMode === 'jibun_kaigi_api' ? (
                 <div className="absolute right-0 top-full z-40 mt-2 w-[320px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
                   <div className="mb-3">
                     <h2 className="text-sm font-bold text-slate-900">基準API選択 v0</h2>
