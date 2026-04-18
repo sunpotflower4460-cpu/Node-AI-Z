@@ -58,7 +58,7 @@ export const renderCrystallizedReply = ({
   }
 
   // Assemble into natural text
-  let reply = assembleParts(parts, utteranceIntent, lexicalPulls)
+  let reply = assembleParts(parts, utteranceIntent)
 
   // Apply final polish
   reply = applyFinalPolish(reply, lexicalPulls)
@@ -72,7 +72,6 @@ export const renderCrystallizedReply = ({
 function assembleParts(
   parts: string[],
   intent: UtteranceIntent,
-  pulls: LexicalPulls,
 ): string {
   if (parts.length === 0) {
     return ''
@@ -89,7 +88,7 @@ function assembleParts(
 
   // For option compare/bridge, connect with option language
   if (intent.primaryMove === 'option_compare' || intent.primaryMove === 'bridge_suggest') {
-    return connectWithOptionLanguage(parts, pulls)
+    return connectWithOptionLanguage(parts)
   }
 
   // For hold/reflect, keep it minimal
@@ -101,7 +100,7 @@ function assembleParts(
   return connectGently(parts, intent)
 }
 
-function connectWithOptionLanguage(parts: string[], pulls: LexicalPulls): string {
+function connectWithOptionLanguage(parts: string[]): string {
   const connectors = ['、そして', '。一方で', '。でも']
 
   if (parts.length === 2) {

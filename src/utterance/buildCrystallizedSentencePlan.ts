@@ -38,7 +38,7 @@ export const buildCrystallizedSentencePlan = ({
 
     case 'meaning':
       if (lexicalPulls.preferredMeaningPhrases.length > 0) {
-        plan.opening = buildMeaningOpening(lexicalPulls.preferredMeaningPhrases, narrativeProtoMeanings)
+        plan.opening = buildMeaningOpening(lexicalPulls.preferredMeaningPhrases)
       }
       break
 
@@ -74,7 +74,7 @@ export const buildCrystallizedSentencePlan = ({
 
   // Build bridge if needed
   if (utteranceShape.includeBridge && optionAwareness?.bridgeOptionPossible) {
-    plan.bridge = buildBridge(optionAwareness, lexicalPulls.preferredOptionPhrases)
+    plan.bridge = buildBridge(lexicalPulls.preferredOptionPhrases)
   }
 
   // Build close
@@ -100,7 +100,7 @@ function buildTextureOpening(textures: string[], sensoryPM: ProtoMeaning[]): str
   return `${primaryTexture}という感じが`
 }
 
-function buildMeaningOpening(phrases: string[], narrativePM: ProtoMeaning[]): string {
+function buildMeaningOpening(phrases: string[]): string {
   const primaryPhrase = phrases[0]
   return primaryPhrase || '何か'
 }
@@ -163,7 +163,7 @@ function buildAnswer(
   return ''
 }
 
-function buildBridge(awareness: OptionAwareness, optionPhrases: string[]): string {
+function buildBridge(optionPhrases: string[]): string {
   const bridgePhrase = optionPhrases.find((p) => p.includes('橋') || p.includes('間') || p.includes('両方'))
   return bridgePhrase ? `${bridgePhrase}の道` : '間を探る'
 }

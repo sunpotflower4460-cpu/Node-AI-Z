@@ -17,7 +17,6 @@ export type DeriveUtteranceShapeInput = {
 export const deriveUtteranceShape = ({
   utteranceIntent,
   optionAwareness,
-  narrativeProtoMeanings,
   sensoryProtoMeanings,
 }: DeriveUtteranceShapeInput): UtteranceShape => {
   const { primaryMove, structureNeed, ambiguityTolerance } = utteranceIntent

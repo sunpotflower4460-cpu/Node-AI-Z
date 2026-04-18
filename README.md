@@ -18,7 +18,13 @@ Node-AI-Z には二つの独立した実装方式があります。
 * **API非依存**: provider に依存しない独立した推論システム
 * **Dual Stream Architecture**: Lexical Stream と Micro-Signal Stream の融合
 * **Signal / ProtoMeaning / Option / Somatic**: 内部表現を本体とする
+* **Utterance Layer (Pass 2)**: 内部状態から直接発話意図・発話形・語彙を立て、返答を生成する
 * **将来 AI sensei**: LLM は外側のガイドとして関わる（本PRでは未実装）
+
+**発話層の深化**:
+- 結晶思考方式は、内部で結晶化した状態（FusedState / ProtoMeaning / OptionAwareness / Somatic）から発話を段階的に生成します
+- `UtteranceIntent` → `UtteranceShape` → `LexicalPulls` → `SentencePlan` → `FinalCrystallizedReply` という流れで、内部の質感・意味・選択肢が直接表面返答へ反映されます
+- preview 的な整形ではなく、内部結晶化からの返答を主にする方向へ移行しました
 
 **重要な分離ポイント**:
 - runtime / state / storage / observe / UI が完全に分離されている
@@ -102,6 +108,7 @@ src/
   persona/
   learning/
   knowledge/
+  utterance/
 ```
 
 各層の意味は次のとおりです。
@@ -113,6 +120,7 @@ src/
 - `src/persona/` — 全層重みフィルタの正式置き場。現時点では拡張ポイントを確保している段階です。
 - `src/learning/` — session / personal / global candidate learning。
 - `src/knowledge/` — 長期構造・情報層。
+- `src/utterance/` — 結晶思考方式の発話層。内部状態から UtteranceIntent / UtteranceShape / LexicalPulls / SentencePlan を経て FinalCrystallizedReply を生成します。
 
 ### 用語の基準
 

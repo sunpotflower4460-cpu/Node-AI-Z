@@ -21,7 +21,6 @@ export type DeriveUtteranceIntentInput = {
  */
 export const deriveUtteranceIntent = ({
   fusedState,
-  sensoryProtoMeanings,
   narrativeProtoMeanings,
   optionAwareness,
   somaticInfluence,
