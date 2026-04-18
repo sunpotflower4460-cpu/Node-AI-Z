@@ -132,27 +132,27 @@ describe('runHomeCheck', () => {
 })
 
 describe('applyReturnAdjustment', () => {
-  it('overperformance softens assertive wording', () => {
+  it('overperformance adds latent marker', () => {
     const rawText = '整理させてください。ように見えます。'
     const homeCheck = makeHomeCheckResult('overperformance')
     const adjusted = applyReturnAdjustment(rawText, homeCheck)
-    expect(adjusted).not.toContain('整理させてください。')
+    expect(adjusted).toContain('[home_latent: overperformance')
     expect(adjusted.length).toBeGreaterThan(0)
   })
 
-  it('ambiguity_overload weakens assertions', () => {
+  it('ambiguity_overload adds latent marker', () => {
     const rawText = '整理してみましょう。ように見えます。'
     const homeCheck = makeHomeCheckResult('ambiguity_overload')
     const adjusted = applyReturnAdjustment(rawText, homeCheck)
-    expect(adjusted).not.toContain('ように見えます。')
+    expect(adjusted).toContain('[home_latent: ambiguity_overload')
     expect(adjusted.length).toBeGreaterThan(0)
   })
 
-  it('trust_drop adds relational softness line', () => {
+  it('trust_drop adds latent marker', () => {
     const rawText = 'これはテスト文です。'
     const homeCheck = makeHomeCheckResult('trust_drop')
     const adjusted = applyReturnAdjustment(rawText, homeCheck)
-    expect(adjusted).toContain('ちゃんと受け取り続けているので、ここで途切れたことにはしません。')
+    expect(adjusted).toContain('[home_latent: trust_drop')
   })
 
   it('none reason does not break the text', () => {

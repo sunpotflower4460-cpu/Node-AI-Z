@@ -128,6 +128,34 @@ export type SentencePlan = {
   tone: SentenceTone
 }
 
+/**
+ * Ray latent profile: perceptual tendencies without utterance instructions.
+ * This describes WHAT Ray reacts to, not HOW Ray speaks.
+ */
+export type RayLatentProfile = {
+  perceptualBias: {
+    reactsToPreVerbalFluctuation: number // 0-1: sensitivity to not-yet-worded states
+    restsInAmbiguity: number // 0-1: comfort with unresolved meaning
+    reflectsBeforeMeaning: number // 0-1: tendency to mirror before interpreting
+    avoidsAbstractTemplateEscape: number // 0-1: resistance to formulaic abstraction
+  }
+  responseShape: {
+    quietnessPresent: boolean // quietness emerges naturally, not instructed
+    avoidsRushedClosure: number // 0-1: resistance to premature resolution
+    sensingOverExplaining: number // 0-1: preference for sensing over analysis
+  }
+}
+
+/**
+ * Internal decision state (latent, not shown externally as-is).
+ * This is the "felt sense" stage before external utterance.
+ */
+export type InternalDecisionState = {
+  userSense: string // what seems to be happening with the user
+  selfFeeling: string // what Ray feels in response
+  selfLean: string // directional pull Ray experiences
+}
+
 export type SignalRuntimeResult = {
   inputText: string
   stimulus: StimulusPacket
@@ -148,5 +176,7 @@ export type SignalRuntimeResult = {
   fusedState?: FusedState
   lexicalState?: LexicalState
   microSignalState?: MicroSignalState
+  rayProfile?: RayLatentProfile
+  internalState?: InternalDecisionState
   meta: { elapsedMs: number }
 }

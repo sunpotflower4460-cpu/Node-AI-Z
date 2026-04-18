@@ -42,82 +42,24 @@ export function runHomeCheck(result: NodePipelineResult, home: HomeState, plasti
   return { needsReturn: false, returnMode: 'none', reason: 'none', homePhrase: HOME_PHRASES.stable[0], released: [], preserved: ['自然な流れ'] }
 }
 
-const replaceTone = (text: string, replacements: Array<[RegExp, string]>) => replacements.reduce((current, [pattern, replacement]) => current.replace(pattern, replacement), text)
-
-export function softenAssertions(text: string): string {
-  return replaceTone(text, [
-    [/ように見えます。/g, '気がします。'],
-    [/見えます。/g, '見える気もします。'],
-    [/感じがします。/g, '感じもあります。'],
-    [/と言えそうです。/g, 'かもしれません。'],
-    [/そのままです。/g, 'そのままかもしれません。'],
-  ])
-}
-
-export function softenDirectiveTone(text: string): string {
-  return replaceTone(text, [
-    [/整理させてください。/g, '急いでまとめなくてもよさそうです。'],
-    [/整理してみましょう。/g, 'そのまま置いてもよさそうです。'],
-    [/見てみましょう。/g, '少しそこにいてもよさそうです。'],
-    [/考えてみましょう。/g, 'まだ決めなくてもよさそうです。'],
-    [/見てみませんか。/g, '少しそのままでいてもよさそうです。'],
-    [/まずは/g, 'いまは'],
-  ])
-}
-
-export function addRelationalSoftness(text: string, reason: HomeCheckResult['reason']): string {
-  const relationalLine = {
-    overperformance: 'ここでは、うまく返そうとしなくても大丈夫です。',
-    ambiguity_overload: 'まだ言い切れないままでも、ここにいて大丈夫です。',
-    fragility: '無理に立て直さなくても、ここではそのままで大丈夫です。',
-    trust_drop: 'ちゃんと受け取り続けているので、ここで途切れたことにはしません。',
-    hostile_input: '境界を保ったままでも、ここには戻ってこられます。',
-    none: '',
-  }[reason]
-  const lines = text.split('\n')
-
-  if (!relationalLine || lines[lines.length - 1] === relationalLine) {
-    return text
-  }
-
-  return `${text}\n${relationalLine}`
-}
-
 /** Trim line-end whitespace, cap blank gaps to a single empty line, and remove outer whitespace. */
 const normalizeWhitespace = (text: string) => text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
 
+/**
+ * Apply return adjustment based on latent home state (not template replacement).
+ * In production, this latent state would inform LLM generation rather than doing regex replacements.
+ * For now, we return the input with minimal adjustment to maintain system functionality.
+ */
 export function applyReturnAdjustment(rawReply: string, homeCheck: HomeCheckResult, plasticity?: PlasticityState): string {
-  let adjusted = softenDirectiveTone(rawReply)
-  switch (homeCheck.reason) {
-    case 'overperformance':
-      adjusted = softenAssertions(adjusted)
-      adjusted = replaceTone(adjusted, [
-        [/急いで答えを出さなくてもよさそうです。/g, '急いで答えをまとめなくてもよさそうです。'],
-        [/動き方を決めなくてもよさそうです。/g, 'すぐに動き方を決めなくてもよさそうです。'],
-      ])
-      adjusted = addRelationalSoftness(adjusted, homeCheck.reason)
-      break
-    case 'ambiguity_overload':
-      adjusted = softenAssertions(adjusted)
-      adjusted = replaceTone(adjusted, [
-        [/意味を急いで決めるより、まだ言い切れなさごと受け取る方が近そうです。/g, '意味を急いで決めるより、まだ言い切れないまま近くにいる方が合いそうです。'],
-        [/いまは答えを出さなくても大丈夫です。/g, 'いまは答えを出さないままでも大丈夫です。'],
-      ])
-      adjusted = addRelationalSoftness(adjusted, homeCheck.reason)
-      break
-    case 'fragility':
-      adjusted = softenAssertions(adjusted)
-      adjusted = replaceTone(adjusted, [
-        [/無理に明るくしなくていいです。/g, '無理に明るくしなくて大丈夫です。'],
-        [/いまは急いで立て直さなくてもよさそうです。/g, 'いまは立て直すことを急がなくてもよさそうです。'],
-      ])
-      adjusted = addRelationalSoftness(adjusted, homeCheck.reason)
-      break
-    case 'trust_drop':
-      adjusted = softenAssertions(adjusted)
-      adjusted = addRelationalSoftness(adjusted, homeCheck.reason)
-      break
-  }
+  // In de-templated version, we pass latent markers instead of replacing text
+  // The actual utterance adjustment should happen at LLM generation time
+  let adjusted = rawReply
+
+  // Minimal placeholder adjustment - preserves original text with latent marker
+  const latentMarker = `[home_latent: ${homeCheck.reason}, returnMode=${homeCheck.returnMode}]`
+
+  // Apply tone biases if plasticity is available
   adjusted = applyToneBiases(adjusted, homeCheck.reason, plasticity)
-  return normalizeWhitespace(adjusted)
+
+  return normalizeWhitespace(adjusted + '\n' + latentMarker)
 }

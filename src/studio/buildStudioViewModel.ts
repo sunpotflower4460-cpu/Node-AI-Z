@@ -6,82 +6,55 @@ import type { PlasticityState } from '../revision/types'
 
 const CONFLICT_TYPES = ['conflicts_with', 'tension'] as const
 const MAX_GUIDE_TAGS = 3
-const AMBIGUITY_KEEP_STILL_THRESHOLD = 0.82
 type ConflictType = (typeof CONFLICT_TYPES)[number]
 
 const isConflictType = (type: string): type is ConflictType => CONFLICT_TYPES.some((conflictType) => conflictType === type)
 
 const hasConflict = (mainConflict: Binding | null) => Boolean(mainConflict && isConflictType(mainConflict.type))
 
-function cleanReplyParts(replyParts: Array<string | null | undefined>) {
-  return replyParts.map((part) => part?.trim()).filter((part): part is string => Boolean(part))
-}
-
-const shouldOmitMeaningFollow = (result: NodePipelineResult) => result.stateVector.ambiguity > AMBIGUITY_KEEP_STILL_THRESHOLD && result.activatedNodes[0]?.id !== 'processing'
-
-export const getReactionLead = (result: NodePipelineResult, mainPattern: StudioPattern | null, mainConflict: Binding | null) => {
+/**
+ * Latent state marker: what is present in the field (not a template response)
+ */
+export const deriveFieldPresence = (result: NodePipelineResult, mainPattern: StudioPattern | null, mainConflict: Binding | null) => {
   const vector = result.stateVector
 
-  if (result.activatedNodes.length === 0) return 'うまく言葉にならないまま来てくれた感じがあります。'
-  if (result.activatedNodes[0].id === 'processing') return 'まだはっきりしないまま、ここにある感じがします。'
-  if (mainPattern?.id === 'motivation_drift') return 'なんだか、かなりしんどそうです。'
-  if (mainPattern?.id === 'career_anxiety') return '変わりたい気持ちと、怖さが同時に出ています。'
-  if (mainPattern?.id === 'core_insecurity') return 'ずっと気を張ったまま、自分を信じにくくなっていそうです。'
-  if (mainPattern?.id === 'unarticulated_feeling') return 'まだ言葉になる手前で、引っかかりだけが残っている感じがあります。'
-  if (mainPattern?.id === 'quiet_plea') return 'ただ分かってほしい気持ちが、静かににじんでいます。'
-  if (mainPattern?.id === 'fragile_optimism') return '少しだけ、前を向きたい感じも残っています。'
-  if (hasConflict(mainConflict) && vector.fragility > 0.7) return '揺れたまま、かなり持ちこたえている感じがします。'
-  if (hasConflict(mainConflict)) return '気持ちが両方に引っぱられている感じがあります。'
-  if (vector.ambiguity > 0.75) return 'まだうまく言葉にならないままの感じがあります。'
-  if (vector.fragility > 0.72) return '少し触れるだけでも揺れそうな感じがあります。'
-  if (mainPattern) return `ふっと、${mainPattern.titleJa}に近い重さが出ています。`
-
-  return 'いろんな感情が、まだひとつにまとまらないままある感じがします。'
+  return {
+    inputQuality: result.activatedNodes.length === 0 ? 'pre-verbal' : result.activatedNodes[0].id === 'processing' ? 'unclear' : 'articulated',
+    dominantPattern: mainPattern?.id ?? null,
+    conflictPresent: hasConflict(mainConflict),
+    ambiguityLevel: vector.ambiguity,
+    fragilityLevel: vector.fragility,
+    heavinessLevel: vector.heaviness,
+    primaryTexture: vector.ambiguity > 0.75 ? 'ambiguous' : vector.fragility > 0.72 ? 'fragile' : hasConflict(mainConflict) ? 'conflicted' : 'mixed',
+  }
 }
 
-export const getMeaningFollow = (result: NodePipelineResult, mainPattern: StudioPattern | null, mainConflict: Binding | null) => {
+/**
+ * Latent stance marker: response tendency based on field state (not a template)
+ */
+export const deriveStanceTendency = (result: NodePipelineResult, mainPattern: StudioPattern | null, mainConflict: Binding | null) => {
   const vector = result.stateVector
 
-  if (result.activatedNodes.length === 0) return '意味を急いでつけるより、そのままの感じに付き添う方が近そうです。'
-  if (result.activatedNodes[0].id === 'processing') return vector.ambiguity > 0.7 ? 'いまは説明より、まだ分からなさが残っていること自体が大事そうです。' : '先に意味を決めるより、そのまま受け取る方が自然そうです。'
-  if (mainPattern?.id === 'motivation_drift') return 'ただ迷っているというより、疲れたまま動こうとしている感じがします。'
-  if (mainPattern?.id === 'career_anxiety') return '進みたい気持ちも止まりたい気持ちも、どちらも本音に見えます。'
-  if (mainPattern?.id === 'core_insecurity') return '一時的な不安というより、深いところで自分に寄りかかれなくなっているのかもしれません。'
-  if (mainPattern?.id === 'quiet_plea') return '解決より、ちゃんと受け取られることの方が近そうです。'
-  if (mainPattern?.id === 'fragile_optimism') return 'まだ強い確信ではないけれど、その小さな明るさはちゃんとあります。'
-  if (hasConflict(mainConflict)) return 'どちらかを選べないというより、どちらにも本音があるように見えます。'
-  if (vector.ambiguity > 0.75) return '意味を急いで決めるより、まだ言い切れなさごと受け取る方が近そうです。'
-  if (vector.fragility > 0.72) return '整えるより先に、揺れやすさそのものをそのまま持っていた方が合いそうです。'
-  if (mainPattern) return `${mainPattern.simpleDescJa}に近い空気があります。`
-
-  return 'いまは理解を急ぐより、混ざったままの感じに触れている方が自然そうです。'
+  return {
+    shouldWithholdMeaning: vector.ambiguity > 0.7 || result.activatedNodes.length === 0 || result.activatedNodes[0].id === 'processing',
+    shouldAvoidResolution: hasConflict(mainConflict) || vector.fragility > 0.6,
+    shouldPrioritizePresence: mainPattern?.id === 'quiet_plea' || vector.fragility > 0.72,
+    relationshipRepairNeeded: false, // determined by home layer
+    meaningInterpretationBias: vector.ambiguity > 0.75 ? 'avoid' : mainPattern ? 'light-touch' : 'moderate',
+  }
 }
 
-export const getClosingLine = (result: NodePipelineResult, mainPattern: StudioPattern | null, mainConflict: Binding | null) => {
-  const vector = result.stateVector
-
-  if (result.activatedNodes.length === 0) return 'まだ分からないままでも、そのままで大丈夫です。'
-  if (result.activatedNodes[0].id === 'processing') return 'いまは無理に言葉を探さなくても大丈夫です。'
-  if (vector.ambiguity > 0.75) return 'いまは答えを出さなくても大丈夫です。'
-  if (vector.fragility > 0.72) return 'いまは急いで立て直さなくてもよさそうです。'
-  if (mainPattern?.id === 'quiet_plea') return 'ここで無理にうまく話し切らなくても大丈夫です。'
-  if (mainPattern?.id === 'fragile_optimism') return '大きく決めなくても、その小さな明るさは消さなくてよさそうです。'
-  if (hasConflict(mainConflict)) return 'いまは片方に寄せず、この揺れのままでいてよさそうです。'
-  if (mainPattern?.id === 'motivation_drift') return 'いまは急いで動き方を決めなくてもよさそうです。'
-  if (mainPattern?.id === 'core_insecurity') return 'ここで無理に立て直さなくてもよさそうです。'
-
-  return '急いでうまく言い切らなくてもよさそうです。'
-}
-
+/**
+ * Placeholder minimal reply using only latent state (no templates).
+ * In production, this would be generated by an LLM given the latent state.
+ * For now, we return a minimal neutral response to maintain system functionality.
+ */
 export const composeNaturalReply = (result: NodePipelineResult, mainPattern: StudioPattern | null, mainConflict: Binding | null) => {
-  const meaningFollow = getMeaningFollow(result, mainPattern, mainConflict)
-  const closingLine = getClosingLine(result, mainPattern, mainConflict)
+  const fieldPresence = deriveFieldPresence(result, mainPattern, mainConflict)
+  const stanceTendency = deriveStanceTendency(result, mainPattern, mainConflict)
 
-  return cleanReplyParts([
-    getReactionLead(result, mainPattern, mainConflict),
-    shouldOmitMeaningFollow(result) ? null : meaningFollow,
-    closingLine === meaningFollow ? null : closingLine,
-  ]).join('\n')
+  // Minimal placeholder - in production this would be LLM-generated from latent state
+  return `[Ray responds based on: ${fieldPresence.primaryTexture} texture, ${stanceTendency.meaningInterpretationBias} interpretation bias]`
 }
 
 export const generateRawReplyPreview = (result: NodePipelineResult, mainPattern: StudioPattern | null, mainConflict: Binding | null) => {
@@ -153,65 +126,58 @@ export const getInternalProcess = (
   return processes
 }
 
+/**
+ * Observer latent state (not guidance templates).
+ * Describes the observed state without telling how to respond.
+ */
 export const generateGuideObserves = (
   result: NodePipelineResult,
   mainPattern: StudioPattern | null,
   mainConflict: Binding | null,
   homeCheck: HomeCheckResult,
 ) => {
+  const fieldPresence = deriveFieldPresence(result, mainPattern, mainConflict)
+  const stanceTendency = deriveStanceTendency(result, mainPattern, mainConflict)
+
   if (result.activatedNodes.length === 0) {
     return {
       summary: '入力がないため観測待機中です。',
       uncertainty: 'データがありません。',
-      naturalnessAdvice: '意味づけは足さず、まず来てくれた感じへの反応だけを短く置いてください。',
-      tags: ['反応先行', '未言語保持'],
+      naturalnessAdvice: '[Latent state: pre-verbal input, avoid meaning assignment]',
+      tags: ['pre-verbal', 'awaiting-input'],
     }
   }
   if (result.activatedNodes[0].id === 'processing') {
     return {
-      summary: '特定の強いノードが見当たらず、まずは全体を受け止めようとしています。一言でいうと、「静かに聞いている感じ」です。',
+      summary: '特定の強いノードが見当たらず、まずは全体を受け止めようとしています。',
       uncertainty: '要素が少なすぎるため、背後の意味はまだ保留されています。',
-      naturalnessAdvice: '説明を足すより、「まだはっきりしないね」のような反応で止めると自然です。',
-      tags: ['反応先行', '未言語保持'],
+      naturalnessAdvice: '[Latent state: unclear input, withhold interpretation]',
+      tags: ['unclear', 'meaning-withheld'],
     }
   }
 
   let summary = '結晶AIは、'
-  if (mainPattern) summary += `${mainPattern.label}（${mainPattern.titleJa}）のパターンを中心に状況を見ています。一言でいうと、「${mainPattern.simpleDescJa}」という感じです。`
+  if (mainPattern) summary += `${mainPattern.label}（${mainPattern.titleJa}）のパターンを中心に状況を見ています。`
   else summary += '複数のノードの発火を同時に捉えようとしています。'
 
-  if (mainConflict) summary += `特に ${mainConflict.source} と ${mainConflict.target} の間に見られる「${RELATION_DICT[mainConflict.type]?.ja || mainConflict.type}」の構造が、そのまま返答の姿勢に反映されています。`
+  if (mainConflict) summary += `特に ${mainConflict.source} と ${mainConflict.target} の間に見られる構造が検出されています。`
 
   let uncertainty = ''
-  if (result.stateVector.ambiguity > 0.7) uncertainty = 'ambiguity（曖昧さ）が非常に高いため、現時点では「何が本当の問題か」の特定を意図的に保留しています。一言でいうと、まだ言葉が追いついていない感じです。'
+  if (result.stateVector.ambiguity > 0.7) uncertainty = `ambiguity=${result.stateVector.ambiguity.toFixed(2)}: meaning assignment currently withheld`
   else if (!mainPattern) uncertainty = 'relation がまだ少なく構造が薄いため、意味の断定を避けています。'
   else uncertainty = '他にも抑制されている感情がある可能性がありますが、まずは表面化した状態の扱いに集中しています。'
 
-  let naturalnessAdvice = '説明が先に立っています。最初の1文を“意味”ではなく“反応”にしてください。'
-  const tags = ['反応先行']
-  if (homeCheck.reason === 'overperformance') {
-    naturalnessAdvice = '説明しすぎです。1文目は感じた反応だけにして、解決方向の言い回しを1段引いてください。'
-    tags.push('導き弱め')
-  } else if (homeCheck.reason === 'ambiguity_overload') {
-    naturalnessAdvice = 'まだ断定が強いです。“〜かもしれない” を1段増やして、分からないまま近くにいる形にしてください。'
-    tags.push('断定弱め', '未言語保持')
-  } else if (homeCheck.reason === 'fragility') {
-    naturalnessAdvice = 'この入力では励ましより同席感が合います。明るくまとめる着地を外して、重さをそのまま残してください。'
-    tags.push('同席感', '圧を下げる')
-  } else if (homeCheck.reason === 'trust_drop') {
-    naturalnessAdvice = '硬さより関係の途切れていなさが必要です。最後に短く、受け取り続けている感じを足してください。'
-    tags.push('関係維持')
-  } else if (result.stateVector.ambiguity > 0.5) {
-    naturalnessAdvice = '意味づけが少し早いです。2文目を短くして、“まだ言い切れない”余白を残してください。'
-    tags.push('未言語保持')
-  } else if (hasConflict(mainConflict)) {
-    naturalnessAdvice = '解説が先に出ています。揺れている感じを1文目に置き、整理や結論は後ろへ下げてください。'
-    tags.push('揺れを先に')
-  } else {
-    tags.push('断定弱め')
-  }
+  const tags = ['latent-state-based']
+  if (stanceTendency.shouldWithholdMeaning) tags.push('meaning-withheld')
+  if (stanceTendency.shouldAvoidResolution) tags.push('avoid-resolution')
+  if (homeCheck.needsReturn) tags.push(homeCheck.reason)
 
-  return { summary, uncertainty, naturalnessAdvice, tags: tags.slice(0, MAX_GUIDE_TAGS) }
+  return {
+    summary,
+    uncertainty,
+    naturalnessAdvice: `[Latent: ${fieldPresence.primaryTexture}, interpretation=${stanceTendency.meaningInterpretationBias}, homeCheck=${homeCheck.reason}]`,
+    tags: tags.slice(0, MAX_GUIDE_TAGS),
+  }
 }
 
 export const buildStudioViewModel = (result: NodePipelineResult, plasticity?: PlasticityState): StudioViewModel => {

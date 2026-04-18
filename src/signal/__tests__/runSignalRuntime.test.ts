@@ -223,7 +223,8 @@ describe('decideSignalUtterance', () => {
     })
 
     expect(result.decision.optionDecision?.stance).toBe('bridge')
-    expect(result.utterance).toContain('間に置ける形')
+    // De-templated version: check for latent marker instead of specific phrase
+    expect(result.utterance).toContain('[latent:')
   })
 })
 
