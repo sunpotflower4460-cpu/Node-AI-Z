@@ -20,6 +20,7 @@ Node-AI-Z には二つの独立した実装方式があります。
 * **Signal / ProtoMeaning / Option / Somatic**: 内部表現を本体とする
 * **Utterance Layer (Pass 2)**: 内部状態から直接発話意図・発話形・語彙を立て、返答を生成する
 * **Session Continuity (Phase 1)**: ターン間で内部状態を保持し、残響・予測・内受容・作業場が次ターンへ持ち越される
+* **Precision / Uncertainty Control (Phase M2)**: prediction error を一律に扱わず、内部状態・不確実性・interoception に応じて重みづけが変化する。同じズレでも、今日の状態によって「重く学ぶ」「少し流す」「新規性を重視」「防御的に鈍くなる」を切り替える生き物っぽい受け取り方を持つ
 * **将来 AI sensei**: LLM は外側のガイドとして関わる（本PRでは未実装）
 
 **発話層の深化**:

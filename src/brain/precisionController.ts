@@ -237,8 +237,8 @@ export const derivePrecisionControl = ({
     bottomUpWeight: clamp(bottomUpWeight, 0.0, 1.0),
     topDownWeight: clamp(topDownWeight, 0.0, 1.0),
     noveltyBoost: clamp(noveltyBoost, 0.0, 1.0),
-    learningRate: clamp(learningRate, 0.0, 1.0),
-    inhibitionGain: clamp(inhibitionGain, 0.0, 1.0),
+    learningRate: clamp(learningRate, 0.0, 2.0), // Can exceed 1.0 for boosted learning
+    inhibitionGain: clamp(inhibitionGain, 0.5, 2.0), // Multiplier, can exceed 1.0
     uncertaintyBias: clamp(uncertaintyBias, 0.0, 1.0),
     safetyBias: clamp(safetyBias, 0.0, 1.0),
   }
