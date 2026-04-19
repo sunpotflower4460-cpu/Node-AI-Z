@@ -4,6 +4,12 @@ import type { NodePipelineResult, RevisionEntry, StudioViewModel } from '../type
 import type { SignalRuntimeResult } from '../signal/types'
 import type { ChunkedNodePipelineResult } from './runChunkedNodePipeline'
 import type { DualStreamRuntimeResult } from './runDualStreamRuntime'
+import type {
+  UtteranceIntent,
+  UtteranceShape,
+  LexicalPulls,
+  CrystallizedSentencePlan,
+} from '../utterance/types'
 
 /**
  * Base runtime result shared by both modes
@@ -48,6 +54,12 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   dualStreamResult: DualStreamRuntimeResult
   chunkedResult: ChunkedNodePipelineResult
   signalResult?: SignalRuntimeResult
+  // Utterance layer (Pass 2)
+  utteranceIntent?: UtteranceIntent
+  utteranceShape?: UtteranceShape
+  lexicalPulls?: LexicalPulls
+  crystallizedSentencePlan?: CrystallizedSentencePlan
+  finalCrystallizedReply?: string
 }
 
 /**

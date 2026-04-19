@@ -85,13 +85,20 @@ export const createObservationRecord = async ({
     pipelineResult: legacySnapshot.pipelineResult,
     studioView: legacySnapshot.studioView,
     revisionEntry,
-    assistantReply: runtimeResult.utterance,
+    assistantReply: runtimeResult.finalCrystallizedReply || runtimeResult.utterance,
     signalResult: runtimeResult.signalResult,
     chunkedResult: runtimeResult.chunkedResult,
     dualStreamResult: runtimeResult.dualStreamResult,
     somaticSignature: runtimeResult.chunkedResult.somaticSignature,
     somaticInfluence: runtimeResult.somaticInfluence,
     relevantSomaticMarkers: runtimeResult.chunkedResult.relevantSomaticMarkers,
+    // Utterance layer (Pass 2)
+    utteranceIntent: runtimeResult.utteranceIntent,
+    utteranceShape: runtimeResult.utteranceShape,
+    lexicalPulls: runtimeResult.lexicalPulls,
+    crystallizedSentencePlan: runtimeResult.crystallizedSentencePlan,
+    finalCrystallizedReply: runtimeResult.finalCrystallizedReply,
+    previousUtterance: runtimeResult.utterance,  // Keep for comparison
   }
 }
 
@@ -116,6 +123,12 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       somaticSignature: record.somaticSignature,
       somaticInfluence: record.somaticInfluence,
       relevantSomaticMarkers: record.relevantSomaticMarkers,
+      utteranceIntent: record.utteranceIntent,
+      utteranceShape: record.utteranceShape,
+      lexicalPulls: record.lexicalPulls,
+      crystallizedSentencePlan: record.crystallizedSentencePlan,
+      finalCrystallizedReply: record.finalCrystallizedReply,
+      previousUtterance: record.previousUtterance,
     },
     {
       id: createObservationId('exp_assistant'),
@@ -134,6 +147,12 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       somaticSignature: record.somaticSignature,
       somaticInfluence: record.somaticInfluence,
       relevantSomaticMarkers: record.relevantSomaticMarkers,
+      utteranceIntent: record.utteranceIntent,
+      utteranceShape: record.utteranceShape,
+      lexicalPulls: record.lexicalPulls,
+      crystallizedSentencePlan: record.crystallizedSentencePlan,
+      finalCrystallizedReply: record.finalCrystallizedReply,
+      previousUtterance: record.previousUtterance,
     },
   ]
 }
