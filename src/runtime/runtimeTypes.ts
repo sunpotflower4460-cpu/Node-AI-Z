@@ -13,6 +13,10 @@ import type {
 import type { PreconditionFilter } from '../precondition/types'
 import type { PersonaWeightVector } from '../persona/types'
 import type { SessionBrainState } from '../brain/sessionBrainState'
+import type { EventBoundary } from '../boundary/boundaryTypes'
+import type { ConfidenceState } from '../meta/computeInterpretationConfidence'
+import type { UncertaintyState } from '../predictive/uncertaintyTypes'
+import type { ReplaySummary } from '../replay/runIdleReplay'
 
 /**
  * Base runtime result shared by both modes
@@ -68,6 +72,11 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   personaWeightVector?: PersonaWeightVector
   // Session continuity (Phase 1)
   nextBrainState?: SessionBrainState
+  // Phase 2: Boundary / Confidence / Uncertainty / Replay
+  eventBoundary?: EventBoundary
+  confidenceState?: ConfidenceState
+  uncertaintyState?: UncertaintyState
+  replaySummary?: ReplaySummary
 }
 
 /**
