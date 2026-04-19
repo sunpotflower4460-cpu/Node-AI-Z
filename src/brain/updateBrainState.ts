@@ -1,11 +1,14 @@
 /**
  * Update Brain State
  * Derives the next turn's brain state from the current runtime result.
+ *
+ * Phase M2: Now includes precision control state persistence.
  */
 
 import type { SessionBrainState } from './sessionBrainState'
 import type { ChunkedNodePipelineResult } from '../runtime/runChunkedNodePipeline'
 import type { TemporalFeatureState } from '../signal/temporalTypes'
+import type { PrecisionControl, UncertaintyState, PrecisionInfluenceNote } from './precisionTypes'
 
 /**
  * Builds the next temporal states map from active features.
@@ -82,13 +85,21 @@ const calculateFieldIntensity = (chunkedResult: ChunkedNodePipelineResult): numb
 /**
  * Updates brain state for the next turn based on the current runtime result.
  *
+ * Phase M2: Accepts optional precision state that will be persisted for next turn.
+ *
  * @param previousState The brain state from the previous turn
  * @param chunkedResult The runtime result from the current turn
+ * @param precisionState Optional precision state from current turn
  * @returns Updated brain state for the next turn
  */
 export const updateBrainState = (
   previousState: SessionBrainState,
   chunkedResult: ChunkedNodePipelineResult,
+  precisionState?: {
+    precisionControl: PrecisionControl
+    uncertaintyState: UncertaintyState
+    precisionNotes: PrecisionInfluenceNote[]
+  },
 ): SessionBrainState => {
   const nextTurnCount = previousState.turnCount + 1
 
@@ -111,6 +122,32 @@ export const updateBrainState = (
     fusedConfidence: chunkedResult.dualStream.fusedState.fusedConfidence,
   }
 
+  // Phase M2: Blend precision control with previous (70% new, 30% old)
+  let nextPrecisionControl: PrecisionControl | undefined
+  let nextUncertaintyState: UncertaintyState | undefined
+  let nextPrecisionNotes: PrecisionInfluenceNote[] | undefined
+
+  if (precisionState) {
+    // Precision control is blended (already done in derivePrecisionControl)
+    nextPrecisionControl = precisionState.precisionControl
+
+    // Uncertainty state is partially retained (30% old, 70% new)
+    if (previousState.uncertaintyState) {
+      nextUncertaintyState = {
+        expectedness: (precisionState.uncertaintyState.expectedness * 0.7) + (previousState.uncertaintyState.expectedness * 0.3),
+        novelty: (precisionState.uncertaintyState.novelty * 0.7) + (previousState.uncertaintyState.novelty * 0.3),
+        ambiguity: (precisionState.uncertaintyState.ambiguity * 0.7) + (previousState.uncertaintyState.ambiguity * 0.3),
+        volatilityEstimate: (precisionState.uncertaintyState.volatilityEstimate * 0.7) + (previousState.uncertaintyState.volatilityEstimate * 0.3),
+        confidenceDrift: (precisionState.uncertaintyState.confidenceDrift * 0.7) + (previousState.uncertaintyState.confidenceDrift * 0.3),
+      }
+    } else {
+      nextUncertaintyState = precisionState.uncertaintyState
+    }
+
+    // Precision notes are kept for Observe (only current turn)
+    nextPrecisionNotes = precisionState.precisionNotes
+  }
+
   return {
     ...previousState,
     turnCount: nextTurnCount,
@@ -120,6 +157,10 @@ export const updateBrainState = (
     recentFieldIntensity: nextFieldIntensity,
     recentActivityAverage: nextRecentActivity,
     microSignalDimensions: nextMicroSignalDimensions,
+    // Phase M2: Precision state
+    precisionControl: nextPrecisionControl,
+    uncertaintyState: nextUncertaintyState,
+    precisionNotes: nextPrecisionNotes,
     // Episodic buffer, workspace, and interoception remain unchanged for Phase 1
     // These will be enhanced in future phases
   }

@@ -8,6 +8,7 @@ import type { TemporalFeatureState } from '../signal/temporalTypes'
 import type { PredictionState } from '../predictive/types'
 import type { InteroceptiveState } from '../interoception/interoceptiveState'
 import type { WorkspaceState } from '../workspace/workspacePhaseMachine'
+import type { PrecisionControl, UncertaintyState, PrecisionInfluenceNote } from './precisionTypes'
 
 /**
  * Episodic buffer entry
@@ -69,4 +70,13 @@ export type SessionBrainState = {
 
   /** Interoceptive state (Phase 3: full regulation state) */
   interoception: InteroceptiveState
+
+  /** Precision control state (Phase M2: precision/uncertainty control) */
+  precisionControl?: PrecisionControl
+
+  /** Uncertainty state (Phase M2: precision/uncertainty control) */
+  uncertaintyState?: UncertaintyState
+
+  /** Precision influence notes (Phase M2: for Observe visualization) */
+  precisionNotes?: PrecisionInfluenceNote[]
 }
