@@ -45,6 +45,16 @@ import { selectInternalAction } from '../action/selectInternalAction'
 import { applyWorkspaceGate } from '../brain/workspaceGate'
 import { updateWorkspaceState as applyGateToWorkspaceState } from '../brain/updateWorkspaceState'
 import type { WorkspaceGateResult } from '../brain/workspaceTypes'
+import {
+  createEpisodicTrace,
+  pruneEpisodicBuffer,
+  deriveReplayCandidates,
+  runReplayConsolidation,
+  applySchemaInfluence,
+  shouldRunReplay,
+  createEmptySchemaMemory,
+} from '../memory'
+import type { EpisodicTrace, SchemaInfluenceNote, ReplayConsolidationResult } from '../memory/types'
 
 /**
  * Crystallized Thinking Runtime
@@ -174,27 +184,113 @@ export const runCrystallizedThinkingRuntime = ({
     preconditionFilter,
   )
 
-  // Run signal-centered runtime with modulated state
-  const signalResult = runSignalRuntime(text, {
+  // ===== Phase M4: Memory System — Create Episodic Trace =====
+  // Create episodic trace from current turn BEFORE applying schema influence
+  const currentEpisodicTrace = createEpisodicTrace({
+    inputText: text,
+    sensoryProtoMeanings: personaModulatedSensory,
+    narrativeProtoMeanings: personaModulatedNarrative,
+    optionAwareness: personaModulatedOptions,
+    somaticInfluence: chunkedResult.somaticInfluence,
+    surprise: chunkedResult.predictionModulationResult?.overallSurprise,
+    currentTurn: brainState.turnCount,
+    microSignalDimensions: {
+      fieldTone: chunkedResult.dualStream.microSignalState.fieldTone,
+      fusedConfidence: chunkedResult.dualStream.fusedState.fusedConfidence,
+    },
+  })
+
+  // Add trace to buffer temporarily (will be pruned and persisted later)
+  const currentEpisodicTraces = [...(brainState.episodicTraces ?? []), currentEpisodicTrace]
+
+  // ===== Phase M4: Replay Consolidation =====
+  let replayConsolidationResult: ReplayConsolidationResult | undefined
+  let updatedSchemaMemory = brainState.schemaMemory ?? createEmptySchemaMemory()
+  let consolidatedEpisodicTraces = currentEpisodicTraces
+
+  // Check if replay should run this turn
+  if (
+    shouldRunReplay(
+      consolidatedEpisodicTraces,
+      brainState.turnCount,
+      brainState.afterglow,
+      updatedSchemaMemory.lastReplayTurn,
+    )
+  ) {
+    // Derive replay candidates
+    const replayCandidates = deriveReplayCandidates({
+      episodicBuffer: consolidatedEpisodicTraces,
+      workspace: brainState.workspace,
+      afterglow: brainState.afterglow,
+      recentFieldIntensity: brainState.recentFieldIntensity,
+      currentTurn: brainState.turnCount,
+    })
+
+    // Run consolidation if we have candidates
+    if (replayCandidates.length > 0) {
+      const consolidationOutput = runReplayConsolidation({
+        episodicBuffer: consolidatedEpisodicTraces,
+        schemaMemory: updatedSchemaMemory,
+        replayCandidates,
+        currentTurn: brainState.turnCount,
+      })
+
+      replayConsolidationResult = consolidationOutput.result
+      updatedSchemaMemory = {
+        ...consolidationOutput.updatedSchemaMemory,
+        lastReplayTurn: brainState.turnCount,
+      }
+      consolidatedEpisodicTraces = consolidationOutput.updatedEpisodicBuffer
+    }
+  }
+
+  // Prune episodic buffer to keep it manageable
+  consolidatedEpisodicTraces = pruneEpisodicBuffer({
+    buffer: consolidatedEpisodicTraces,
+    maxSize: 15,
+    currentTurn: brainState.turnCount,
+  })
+
+  // ===== Phase M4: Apply Schema Influence =====
+  // Schema patterns subtly influence current processing
+  const schemaInfluenceResult = applySchemaInfluence({
+    fusedState: preconditionModulatedFusedState,
+    sensoryProtoMeanings: personaModulatedSensory,
+    narrativeProtoMeanings: personaModulatedNarrative,
     optionAwareness: personaModulatedOptions,
     optionDecision: chunkedResult.optionDecision,
+    schemaMemory: updatedSchemaMemory,
+    currentTurn: brainState.turnCount,
+  })
+
+  // Use schema-influenced states for the rest of processing
+  const schemaInfluencedFusedState = schemaInfluenceResult.fusedState
+  const schemaInfluencedSensory = schemaInfluenceResult.sensoryProtoMeanings
+  const schemaInfluencedNarrative = schemaInfluenceResult.narrativeProtoMeanings
+  const schemaInfluencedOptions = schemaInfluenceResult.optionAwareness ?? personaModulatedOptions
+  const schemaInfluencedDecision = schemaInfluenceResult.optionDecision ?? chunkedResult.optionDecision
+
+  // Run signal-centered runtime with schema-influenced state
+  const signalResult = runSignalRuntime(text, {
+    optionAwareness: schemaInfluencedOptions,
+    optionDecision: schemaInfluencedDecision,
     optionUtteranceHints: chunkedResult.optionUtteranceHints,
     somaticInfluence: chunkedResult.somaticInfluence,
-    fusedState: preconditionModulatedFusedState,
+    fusedState: schemaInfluencedFusedState,
     lexicalState: chunkedResult.dualStream.lexicalState,
     microSignalState: chunkedResult.dualStream.microSignalState,
   })
 
   // ===== Utterance Layer Generation (Pass 2) =====
 
-  // 1. Derive utterance intent from internal state (with persona-modulated meanings)
+  // 1. Derive utterance intent from internal state (with schema-influenced meanings)
   const baseUtteranceIntent = deriveUtteranceIntent({
-    fusedState: preconditionModulatedFusedState,
-    sensoryProtoMeanings: personaModulatedSensory,
-    narrativeProtoMeanings: personaModulatedNarrative,
-    optionAwareness: personaModulatedOptions,
+    fusedState: schemaInfluencedFusedState,
+    sensoryProtoMeanings: schemaInfluencedSensory,
+    narrativeProtoMeanings: schemaInfluencedNarrative,
+    optionAwareness: schemaInfluencedOptions,
     somaticInfluence: chunkedResult.somaticInfluence,
-    currentDecision: chunkedResult.optionDecision,
+    currentDecision: schemaInfluencedDecision,
   })
 
   // ===== Pass 3: Apply Precondition and Persona to utterance intent =====
@@ -208,31 +304,31 @@ export const runCrystallizedThinkingRuntime = ({
     personaWeightVector,
   )
 
-  // 2. Derive utterance shape (with modulated meanings)
+  // 2. Derive utterance shape (with schema-influenced meanings)
   const utteranceShape = deriveUtteranceShape({
     utteranceIntent,
-    optionAwareness: personaModulatedOptions,
-    narrativeProtoMeanings: personaModulatedNarrative,
-    sensoryProtoMeanings: personaModulatedSensory,
+    optionAwareness: schemaInfluencedOptions,
+    narrativeProtoMeanings: schemaInfluencedNarrative,
+    sensoryProtoMeanings: schemaInfluencedSensory,
   })
 
-  // 3. Derive lexical pulls (with modulated state)
+  // 3. Derive lexical pulls (with schema-influenced state)
   const lexicalPulls = deriveLexicalPulls({
-    fusedState: preconditionModulatedFusedState,
-    sensoryProtoMeanings: personaModulatedSensory,
-    narrativeProtoMeanings: personaModulatedNarrative,
-    optionAwareness: personaModulatedOptions,
+    fusedState: schemaInfluencedFusedState,
+    sensoryProtoMeanings: schemaInfluencedSensory,
+    narrativeProtoMeanings: schemaInfluencedNarrative,
+    optionAwareness: schemaInfluencedOptions,
   })
 
-  // 4. Build sentence plan (with modulated meanings)
+  // 4. Build sentence plan (with schema-influenced meanings)
   const crystallizedSentencePlan = buildCrystallizedSentencePlan({
     utteranceIntent,
     utteranceShape,
     lexicalPulls,
-    sensoryProtoMeanings: personaModulatedSensory,
-    narrativeProtoMeanings: personaModulatedNarrative,
-    optionAwareness: personaModulatedOptions,
-    currentDecision: chunkedResult.optionDecision,
+    sensoryProtoMeanings: schemaInfluencedSensory,
+    narrativeProtoMeanings: schemaInfluencedNarrative,
+    optionAwareness: schemaInfluencedOptions,
+    currentDecision: schemaInfluencedDecision,
   })
 
   // 5. Render final crystallized reply
@@ -479,6 +575,7 @@ export const runCrystallizedThinkingRuntime = ({
 
   // ===== Phase 1: Update brain state for next turn =====
   // Phase M2: Pass precision state to updateBrainState
+  // Phase M4: Pass memory state to updateBrainState
   let nextBrainState = updateBrainState(
     brainState,
     chunkedResult,
@@ -486,6 +583,11 @@ export const runCrystallizedThinkingRuntime = ({
       precisionControl: precisionControlResult.precisionControl,
       uncertaintyState: m2UncertaintyState,
       precisionNotes: allPrecisionNotes,
+    },
+    {
+      episodicTraces: consolidatedEpisodicTraces,
+      schemaMemory: updatedSchemaMemory,
+      schemaInfluenceNotes: schemaInfluenceResult.influenceNotes,
     }
   )
 
@@ -523,14 +625,14 @@ export const runCrystallizedThinkingRuntime = ({
     implementationMode: 'crystallized_thinking',
     lexicalState: chunkedResult.dualStream.lexicalState,
     microSignalState: chunkedResult.dualStream.microSignalState,
-    fusedState: preconditionModulatedFusedState, // Pass 3: Use modulated fused state
+    fusedState: schemaInfluencedFusedState, // Phase M4: Use schema-influenced fused state
     signalPackets: chunkedResult.dualStream.signalPackets,
     protoMeanings: {
-      sensory: personaModulatedSensory, // Pass 3: Use persona-modulated meanings
-      narrative: personaModulatedNarrative, // Pass 3: Use persona-modulated meanings
+      sensory: schemaInfluencedSensory, // Phase M4: Use schema-influenced meanings
+      narrative: schemaInfluencedNarrative, // Phase M4: Use schema-influenced meanings
     },
-    optionAwareness: personaModulatedOptions, // Pass 3: Use persona-modulated options
-    optionDecision: chunkedResult.optionDecision,
+    optionAwareness: schemaInfluencedOptions, // Phase M4: Use schema-influenced options
+    optionDecision: schemaInfluencedDecision, // Phase M4: Use schema-influenced decision
     somaticInfluence: chunkedResult.somaticInfluence,
     utterance: signalResult.utterance,
     dualStreamResult: chunkedResult.dualStream,
@@ -565,5 +667,9 @@ export const runCrystallizedThinkingRuntime = ({
     internalActionPolicy,
     // Phase M3: Workspace Gate
     workspaceGateResult,
+    // Phase M4: Episodic / Schema / Replay
+    currentEpisodicTrace,
+    replayConsolidationResult,
+    schemaInfluenceNotes: schemaInfluenceResult.influenceNotes,
   }
 }
