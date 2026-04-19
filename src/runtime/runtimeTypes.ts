@@ -24,6 +24,7 @@ import type { InteroceptiveState } from '../interoception/interoceptiveState'
 import type { CoalitionState } from '../coalition/mergeCoalitionState'
 import type { WorkspaceState } from '../workspace/workspacePhaseMachine'
 import type { InternalActionPolicy } from '../action/buildActiveSensingPolicy'
+import type { WorkspaceGateResult } from '../brain/workspaceTypes'
 
 /**
  * Base runtime result shared by both modes
@@ -95,6 +96,8 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   coalitionState?: CoalitionState
   workspaceState?: WorkspaceState
   internalActionPolicy?: InternalActionPolicy
+  // Phase M3: Workspace Gate
+  workspaceGateResult?: WorkspaceGateResult
 }
 
 /**

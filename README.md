@@ -21,6 +21,7 @@ Node-AI-Z には二つの独立した実装方式があります。
 * **Utterance Layer (Pass 2)**: 内部状態から直接発話意図・発話形・語彙を立て、返答を生成する
 * **Session Continuity (Phase 1)**: ターン間で内部状態を保持し、残響・予測・内受容・作業場が次ターンへ持ち越される
 * **Precision / Uncertainty Control (Phase M2)**: prediction error を一律に扱わず、内部状態・不確実性・interoception に応じて重みづけが変化する。同じズレでも、今日の状態によって「重く学ぶ」「少し流す」「新規性を重視」「防御的に鈍くなる」を切り替える生き物っぽい受け取り方を持つ
+* **Workspace Gate (Phase M3)**: 入力をすべて同じ重みで流すのではなく、何を保持し、何を更新し、何を遮断し、何を流すかを決める作業場ゲートを持つ。hold / update / shield / flush により、大事な糸を残しながら過負荷を防ぐ
 * **将来 AI sensei**: LLM は外側のガイドとして関わる（本PRでは未実装）
 
 **発話層の深化**:
@@ -199,6 +200,58 @@ src/
 - Episodic buffer（境界で区切られた短期記憶）
 
 この可視化により、「この知性は前から続いている」ことが実感できます。
+
+## Phase M3 — Workspace Gate
+
+結晶思考方式は、Phase M3 で **Workspace Gate** を獲得しました。
+
+### 何が変わったか
+
+Phase M3 以前は、入力が来るたびに lexical / signal / proto / option の候補がすべて同じ重みで workspace へ流れ込んでいました。これは：
+
+* 強い一言にすぐ全体を持っていかれる
+* 前の大事な流れを保持できない
+* 過負荷時に適切に遮断できない
+
+という問題を抱えていました。
+
+Phase M3 では、**Workspace Gate** が lexical / signal / proto / option の候補を受け取り、現在の脳状態・作業場フェーズ・過負荷状態・安全感・未解決糸を踏まえて、以下の gate action を決定します：
+
+* **hold**: 既存アイテムを保護し、強度を維持する
+* **update**: 新しいアイテムを受け入れる、または既存アイテムを更新する
+* **shield**: 新しいアイテムの侵入を遮断する
+* **flush**: 古い・弱い・解決済みアイテムを流し出す
+
+### 実装の詳細
+
+Phase M3 の主要コンポーネント：
+
+1. **deriveWorkspaceCandidates**: lexical / signal / proto / option から候補アイテムを抽出
+2. **scoreWorkspaceSalience**: アイテムの salience を文脈に応じて更新（時間減衰・未解決ブースト・過負荷ペナルティなど）
+3. **mergeWorkspaceItems**: 新しい候補と既存の held items をマージ
+4. **applyWorkspaceGate**: workspace phase に応じて hold / update / shield / flush を決定
+5. **updateWorkspaceState**: gate 結果を workspace state へ反映
+
+### Workspace Phase との連携
+
+Workspace Gate は workspace phase（encode / hold / block / release）と密接に連携します：
+
+* **encode** フェーズ: 新しいアイテムを積極的に admit（update）
+* **hold** フェーズ: 既存アイテムを保護し、新規を resist（shield）
+* **block** フェーズ: 過負荷を防ぐため積極的にフィルタ（flush）
+* **release** フェーズ: 古いアイテムをクリアし、リセット準備（flush）
+
+### Salience の動的更新
+
+各 workspace item は以下の要素で salience が動的に変化します：
+
+* **時間減衰**: 最後に touch されてからの経過ターンに応じて減衰
+* **未解決ブースト**: unresolved score が高く、過負荷圧が低い場合にブースト
+* **過負荷ペナルティ**: 過負荷圧が高い場合に salience を削減
+* **安定性ブースト**: stable かつ safe な状態でブースト
+* **afterglow ブースト**: 最近 touch されたアイテムを残響でブースト
+
+これにより、「今の話の大事な糸」を残しながら、過負荷を防ぎ、文脈に応じた adaptive な workspace 管理が実現されます。
 
 ## 今後の実装ロードマップ
 

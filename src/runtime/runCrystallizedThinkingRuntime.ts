@@ -42,6 +42,9 @@ import { advanceWorkspacePhase } from '../workspace/advanceWorkspacePhase'
 import { applyWorkspacePhaseControl } from '../workspace/applyWorkspacePhaseControl'
 import { buildActiveSensingPolicy } from '../action/buildActiveSensingPolicy'
 import { selectInternalAction } from '../action/selectInternalAction'
+import { applyWorkspaceGate } from '../brain/workspaceGate'
+import { updateWorkspaceState as applyGateToWorkspaceState } from '../brain/updateWorkspaceState'
+import type { WorkspaceGateResult } from '../brain/workspaceTypes'
 
 /**
  * Crystallized Thinking Runtime
@@ -344,6 +347,7 @@ export const runCrystallizedThinkingRuntime = ({
   // ===== Phase 3: Workspace Phase Control =====
   let workspaceState
   let workspacePhaseControlResult
+  let workspaceGateResult: WorkspaceGateResult | undefined
   if (phase3Flags.workspacePhaseEnabled) {
     // Determine next workspace phase
     const nextPhase = advanceWorkspacePhase({
@@ -369,7 +373,41 @@ export const runCrystallizedThinkingRuntime = ({
       sensoryProtoMeanings: personaModulatedSensory,
     })
 
-    workspaceState = workspacePhaseControlResult.updatedState
+    // ===== Phase M3: Workspace Gate =====
+    // Apply workspace gate to control what gets admitted, held, shielded, or flushed
+    workspaceGateResult = applyWorkspaceGate({
+      currentWorkspace: workspacePhaseControlResult.updatedState,
+      candidateInput: {
+        lexicalState: chunkedResult.dualStream.lexicalState,
+        microSignalState: chunkedResult.dualStream.microSignalState,
+        sensoryProtoMeanings: personaModulatedSensory,
+        narrativeProtoMeanings: personaModulatedNarrative,
+        optionAwareness: chunkedResult.detectedOptions ? {
+          detectedOptions: chunkedResult.detectedOptions.map((opt) => ({
+            id: opt.id,
+            label: opt.label,
+            salience: 0.6, // Default salience for detected options
+          })),
+        } : undefined,
+        turnCount: brainState.turnCount,
+      },
+      salienceFactors: {
+        afterglow: brainState.afterglow,
+        recentFieldIntensity: brainState.recentFieldIntensity,
+        overloadPressure: workspacePhaseControlResult.updatedState.distractorPressure,
+        safetySense: interoceptiveState?.socialSafety ?? 0.5,
+        unresolvedThreadCount: workspacePhaseControlResult.updatedState.heldItems.filter(
+          (item) => item.strength > 0.5,
+        ).length,
+      },
+    })
+
+    // Update workspace state with gate results
+    workspaceState = applyGateToWorkspaceState(
+      workspacePhaseControlResult.updatedState,
+      workspaceGateResult,
+      brainState.turnCount,
+    )
   }
 
   // ===== Phase 3: Coalition Formation =====
@@ -525,5 +563,7 @@ export const runCrystallizedThinkingRuntime = ({
     coalitionState,
     workspaceState,
     internalActionPolicy,
+    // Phase M3: Workspace Gate
+    workspaceGateResult,
   }
 }
