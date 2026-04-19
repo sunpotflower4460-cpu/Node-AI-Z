@@ -2,6 +2,7 @@ import type { PersonalLearningState } from '../learning/types'
 import type { PlasticityState } from '../types/nodeStudio'
 import type { CrystallizedThinkingResult } from './runtimeTypes'
 import type { SessionBrainState } from '../brain/sessionBrainState'
+import type { Phase2AblationFlags } from '../config/phase2Flags'
 import { runChunkedNodePipeline } from './runChunkedNodePipeline'
 import { runSignalRuntime } from '../signal/runSignalRuntime'
 import { deriveUtteranceIntent } from '../utterance/deriveUtteranceIntent'
@@ -18,6 +19,13 @@ import { applyPersonaToOptionAwareness } from '../persona/applyPersonaToOptionAw
 import { applyPersonaToUtterance } from '../persona/applyPersonaToUtterance'
 import { createInitialBrainState } from '../brain/createInitialBrainState'
 import { updateBrainState } from '../brain/updateBrainState'
+import { DEFAULT_PHASE2_FLAGS } from '../config/phase2Flags'
+import { detectEventBoundary, computeBoundaryEffects } from '../boundary/detectEventBoundary'
+import { computeDecisionStrength } from '../meta/computeDecisionConfidence'
+import { computeInterpretationConfidence, deriveConfidenceBehavior } from '../meta/computeInterpretationConfidence'
+import { computeSensoryUncertainty, computeModelUncertainty, buildUncertaintyState } from '../predictive/precisionController'
+import { buildReplayQueue } from '../replay/buildReplayQueue'
+import { runIdleReplay } from '../replay/runIdleReplay'
 
 /**
  * Crystallized Thinking Runtime
@@ -31,6 +39,7 @@ export type CrystallizedThinkingRuntimeInput = {
   personalLearning: PersonalLearningState
   personaId?: string // Pass 3: Optional persona selection
   brainState?: SessionBrainState // Phase 1: Session continuity
+  phase2Flags?: Phase2AblationFlags // Phase 2: Ablation flags
 }
 
 /**
@@ -41,6 +50,7 @@ export type CrystallizedThinkingRuntimeInput = {
  * Pass 2: Adds utterance layer generation from internal state.
  * Pass 3: Adds precondition filter (Home/Existence/Belief) and persona weighting.
  * Phase 1: Adds session brain state continuity across turns.
+ * Phase 2: Adds event boundary, confidence meta-layer, uncertainty precision, and idle replay.
  */
 export const runCrystallizedThinkingRuntime = ({
   text,
@@ -48,6 +58,7 @@ export const runCrystallizedThinkingRuntime = ({
   personalLearning,
   personaId,
   brainState: inputBrainState,
+  phase2Flags = DEFAULT_PHASE2_FLAGS,
 }: CrystallizedThinkingRuntimeInput): CrystallizedThinkingResult => {
   // ===== Phase 1: Initialize or use existing brain state =====
   const brainState = inputBrainState ?? createInitialBrainState()
@@ -167,8 +178,124 @@ export const runCrystallizedThinkingRuntime = ({
     lexicalPulls,
   })
 
+  // ===== Phase 2: Event Boundary Detection =====
+  let eventBoundary
+  let boundaryEffects
+  if (phase2Flags.boundaryEnabled) {
+    // Detect goal shift from option decision changes
+    const goalShift = chunkedResult.optionDecision?.preferredOptionId ? 0.3 : 0.0
+
+    // Detect stance shift from option decision stance
+    const stanceShift = chunkedResult.optionDecision?.stance === 'ask' ? 0.4 : 0.0
+
+    // Detect relation shift (simplified - could be enhanced)
+    const relationShift = 0.0
+
+    // Detect somatic shift from somatic influence
+    const somaticShift = chunkedResult.somaticInfluence?.influenceStrength ?? 0.0
+
+    // Detect field intensity jump
+    const currentFieldIntensity = chunkedResult.predictionModulationResult?.fieldIntensityBoost ?? 0.0
+    const fieldIntensityJump = Math.abs(currentFieldIntensity - brainState.recentFieldIntensity)
+
+    eventBoundary = detectEventBoundary({
+      predictionErrorMagnitude: chunkedResult.predictionModulationResult?.overallSurprise ?? 0.0,
+      goalShift,
+      stanceShift,
+      relationShift,
+      somaticShift,
+      fieldIntensityJump,
+    })
+
+    boundaryEffects = computeBoundaryEffects(eventBoundary)
+  }
+
+  // ===== Phase 2: Confidence Meta-Layer =====
+  let confidenceState
+  if (phase2Flags.confidenceEnabled) {
+    // Compute decision strength
+    const fieldCoherence = 1.0 - (chunkedResult.stateVector.entropy ?? 0.5)
+    const decisionResult = computeDecisionStrength(
+      personaModulatedOptions,
+      preconditionModulatedFusedState,
+      fieldCoherence,
+    )
+
+    // Compute interpretation confidence
+    const interpretationResult = computeInterpretationConfidence(
+      chunkedResult.predictionModulationResult,
+      personaModulatedSensory,
+      personaModulatedNarrative,
+      personaModulatedOptions,
+    )
+
+    // Derive behavioral flags
+    confidenceState = deriveConfidenceBehavior(
+      decisionResult.strength,
+      interpretationResult.confidence,
+    )
+  }
+
+  // ===== Phase 2: Uncertainty Precision System =====
+  let uncertaintyState
+  if (phase2Flags.uncertaintyEnabled) {
+    // Compute sensory uncertainty
+    const sensoryResult = computeSensoryUncertainty(
+      personaModulatedSensory,
+      personaModulatedNarrative,
+      chunkedResult.stateVector,
+      text.length,
+    )
+
+    // Compute model uncertainty
+    const isNovelInput = (chunkedResult.predictionModulationResult?.overallSurprise ?? 0.0) > 0.5
+    const modelResult = computeModelUncertainty(
+      brainState.predictionState,
+      isNovelInput,
+    )
+
+    // Build complete uncertainty state
+    uncertaintyState = buildUncertaintyState(
+      sensoryResult.uncertainty,
+      modelResult.uncertainty,
+    )
+  }
+
+  // ===== Phase 2: Idle Replay System =====
+  let replaySummary
+  let updatedPersonalLearning = personalLearning
+  if (phase2Flags.replayEnabled) {
+    // Build replay queue
+    const replayQueue = buildReplayQueue(
+      brainState,
+      eventBoundary,
+      chunkedResult.predictionModulationResult?.overallSurprise ?? 0.0,
+    )
+
+    // Run idle replay (consolidation)
+    const replayResult = runIdleReplay(replayQueue, personalLearning)
+    replaySummary = replayResult.summary
+    updatedPersonalLearning = replayResult.updatedLearning
+  }
+
   // ===== Phase 1: Update brain state for next turn =====
-  const nextBrainState = updateBrainState(brainState, chunkedResult)
+  let nextBrainState = updateBrainState(brainState, chunkedResult)
+
+  // Phase 2: Update episodic buffer if boundary was triggered
+  if (phase2Flags.boundaryEnabled && eventBoundary?.triggered && boundaryEffects?.shouldCreateSegment) {
+    nextBrainState = {
+      ...nextBrainState,
+      episodicBuffer: [
+        ...nextBrainState.episodicBuffer,
+        {
+          turn: brainState.turnCount,
+          timestamp: Date.now(),
+          boundaryScore: eventBoundary.score,
+          surpriseMagnitude: chunkedResult.predictionModulationResult?.overallSurprise,
+        },
+      ],
+    }
+  }
 
   return {
     implementationMode: 'crystallized_thinking',
@@ -198,5 +325,10 @@ export const runCrystallizedThinkingRuntime = ({
     personaWeightVector,
     // Session continuity (Phase 1)
     nextBrainState,
+    // Phase 2: Boundary / Confidence / Uncertainty / Replay
+    eventBoundary,
+    confidenceState,
+    uncertaintyState,
+    replaySummary,
   }
 }

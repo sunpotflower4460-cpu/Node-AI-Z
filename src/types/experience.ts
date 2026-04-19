@@ -9,6 +9,10 @@ import type {
   CrystallizedSentencePlan,
 } from '../utterance/types'
 import type { SessionBrainState } from '../brain/sessionBrainState'
+import type { EventBoundary } from '../boundary/boundaryTypes'
+import type { ConfidenceState } from '../meta/computeInterpretationConfidence'
+import type { UncertaintyState } from '../predictive/uncertaintyTypes'
+import type { ReplaySummary } from '../replay/runIdleReplay'
 
 /**
  * UI mode: observe (research) vs experience (conversation)
@@ -55,6 +59,11 @@ export type ObservationRecord = {
   previousUtterance?: string  // For comparison
   // Session continuity (Phase 1) - crystallized_thinking only
   nextBrainState?: SessionBrainState
+  // Phase 2: Boundary / Confidence / Uncertainty / Replay - crystallized_thinking only
+  eventBoundary?: EventBoundary
+  confidenceState?: ConfidenceState
+  uncertaintyState?: UncertaintyState
+  replaySummary?: ReplaySummary
 }
 
 export type ExperienceMessage = {
@@ -81,4 +90,9 @@ export type ExperienceMessage = {
   crystallizedSentencePlan?: CrystallizedSentencePlan
   finalCrystallizedReply?: string
   previousUtterance?: string
+  // Phase 2 - crystallized_thinking only
+  eventBoundary?: EventBoundary
+  confidenceState?: ConfidenceState
+  uncertaintyState?: UncertaintyState
+  replaySummary?: ReplaySummary
 }
