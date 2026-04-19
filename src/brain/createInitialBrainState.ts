@@ -7,6 +7,7 @@ import type { SessionBrainState } from './sessionBrainState'
 import { buildEmptyPredictionState } from '../predictive/buildPredictionState'
 import { createDefaultInteroceptiveState } from '../interoception/interoceptiveState'
 import { createDefaultWorkspaceState } from '../workspace/workspacePhaseMachine'
+import { createEmptySchemaMemory } from '../memory/schemaMemory'
 
 /**
  * Creates an initial brain state for a new session.
@@ -32,6 +33,8 @@ export const createInitialBrainState = (sessionId?: string): SessionBrainState =
       fusedConfidence: 0.5,
     },
     episodicBuffer: [],
+    episodicTraces: [], // Phase M4: Start with empty episodic traces
+    schemaMemory: createEmptySchemaMemory(), // Phase M4: Initialize empty schema memory
     workspace: createDefaultWorkspaceState(),
     interoception: createDefaultInteroceptiveState(),
   }
