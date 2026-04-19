@@ -14,6 +14,7 @@ import type { PersonalLearningState } from '../learning/types'
 import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
 import type { ExperienceMessage, AppMode, ObservationRecord, RuntimeMode, ImplementationMode } from '../types/experience'
 import type { RevisionEntry, RevisionState, UserTuningAction } from '../types/nodeStudio'
+import type { SessionBrainState } from '../brain/sessionBrainState'
 import { mapExperienceMessagesToObservationHistory, mergeObservationHistories } from '../studio/mapExperienceMessagesToObservationHistory'
 import { ModeSwitch } from '../ui/components/ModeSwitch'
 import { ExperienceMode } from '../ui/modes/ExperienceMode'
@@ -30,6 +31,8 @@ export default function NodeStudioPage() {
   const [revisionState, setRevisionState] = useState<RevisionState>(() => loadRevisionState())
   const [isApiPanelOpen, setIsApiPanelOpen] = useState(false)
   const [personalLearning, setPersonalLearning] = useState<PersonalLearningState>(() => createPersonalLearningState())
+  // Phase 1: Session brain state for crystallized_thinking mode
+  const [brainState, setBrainState] = useState<SessionBrainState | undefined>(undefined)
 
   const currentProviderConfig = useMemo(() => getApiProviderConfig(apiSelection.baseProvider), [apiSelection.baseProvider])
 
@@ -60,6 +63,7 @@ export default function NodeStudioPage() {
     runtimeMode: RuntimeMode,
     currentImplementationMode: ImplementationMode,
     currentPersonalLearning: PersonalLearningState,
+    currentBrainState?: SessionBrainState,
   ): Promise<ObservationRecord> => {
     return createObservationRecord({
       type,
@@ -69,6 +73,7 @@ export default function NodeStudioPage() {
       implementationMode: currentImplementationMode,
       personalLearning: currentPersonalLearning,
       plasticity: revisionState.plasticity,
+      brainState: currentImplementationMode === 'crystallized_thinking' ? currentBrainState : undefined,
     })
   }, [revisionState.plasticity])
 
@@ -85,6 +90,11 @@ export default function NodeStudioPage() {
     setCurrentObservation(record)
     applyObservationLearning(record)
 
+    // Phase 1: Update brain state after observation (crystallized_thinking only)
+    if (record.implementationMode === 'crystallized_thinking' && record.nextBrainState) {
+      setBrainState(record.nextBrainState)
+    }
+
     if (type === 'observe') {
       setObserveHistory((previous) => [record, ...previous])
       return
@@ -94,9 +104,9 @@ export default function NodeStudioPage() {
   }, [addRevisionEntryToMemory, applyObservationLearning])
 
   const handleObservationSubmit = useCallback(async (text: string, type: ObservationRecord['type']) => {
-    const record = await createObservation(text, type, apiSelection.baseProvider, runtimeMode, implementationMode, personalLearning)
+    const record = await createObservation(text, type, apiSelection.baseProvider, runtimeMode, implementationMode, personalLearning, brainState)
     commitObservationRecord(record, type)
-  }, [apiSelection.baseProvider, commitObservationRecord, createObservation, personalLearning, runtimeMode, implementationMode])
+  }, [apiSelection.baseProvider, commitObservationRecord, createObservation, personalLearning, runtimeMode, implementationMode, brainState])
 
   const handleObserveAnalyze = useCallback(async (text: string) => {
     await handleObservationSubmit(text, 'observe')
