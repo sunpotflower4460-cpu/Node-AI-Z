@@ -3,6 +3,7 @@ import type { PlasticityState } from '../types/nodeStudio'
 import type { CrystallizedThinkingResult } from './runtimeTypes'
 import type { SessionBrainState } from '../brain/sessionBrainState'
 import type { Phase2AblationFlags } from '../config/phase2Flags'
+import type { Phase3AblationFlags } from '../config/phase3Flags'
 import { runChunkedNodePipeline } from './runChunkedNodePipeline'
 import { runSignalRuntime } from '../signal/runSignalRuntime'
 import { deriveUtteranceIntent } from '../utterance/deriveUtteranceIntent'
@@ -20,12 +21,22 @@ import { applyPersonaToUtterance } from '../persona/applyPersonaToUtterance'
 import { createInitialBrainState } from '../brain/createInitialBrainState'
 import { updateBrainState } from '../brain/updateBrainState'
 import { DEFAULT_PHASE2_FLAGS } from '../config/phase2Flags'
+import { DEFAULT_PHASE3_FLAGS } from '../config/phase3Flags'
 import { detectEventBoundary, computeBoundaryEffects } from '../boundary/detectEventBoundary'
 import { computeDecisionStrength } from '../meta/computeDecisionConfidence'
 import { computeInterpretationConfidence, deriveConfidenceBehavior } from '../meta/computeInterpretationConfidence'
 import { computeSensoryUncertainty, computeModelUncertainty, buildUncertaintyState } from '../predictive/precisionController'
 import { buildReplayQueue } from '../replay/buildReplayQueue'
 import { runIdleReplay } from '../replay/runIdleReplay'
+import { updateInteroceptiveState } from '../interoception/updateInteroceptiveState'
+import { applyInteroceptiveControl } from '../interoception/applyInteroceptiveControl'
+import { buildCoalitionFields } from '../coalition/buildCoalitionFields'
+import { mergeCoalitionState } from '../coalition/mergeCoalitionState'
+import { selectCoalitionAction } from '../coalition/selectCoalitionAction'
+import { advanceWorkspacePhase } from '../workspace/advanceWorkspacePhase'
+import { applyWorkspacePhaseControl } from '../workspace/applyWorkspacePhaseControl'
+import { buildActiveSensingPolicy } from '../action/buildActiveSensingPolicy'
+import { selectInternalAction } from '../action/selectInternalAction'
 
 /**
  * Crystallized Thinking Runtime
@@ -40,6 +51,7 @@ export type CrystallizedThinkingRuntimeInput = {
   personaId?: string // Pass 3: Optional persona selection
   brainState?: SessionBrainState // Phase 1: Session continuity
   phase2Flags?: Phase2AblationFlags // Phase 2: Ablation flags
+  phase3Flags?: Phase3AblationFlags // Phase 3: Ablation flags
 }
 
 /**
@@ -51,6 +63,7 @@ export type CrystallizedThinkingRuntimeInput = {
  * Pass 3: Adds precondition filter (Home/Existence/Belief) and persona weighting.
  * Phase 1: Adds session brain state continuity across turns.
  * Phase 2: Adds event boundary, confidence meta-layer, uncertainty precision, and idle replay.
+ * Phase 3: Adds interoceptive core, coalition formation, workspace phases, and active sensing.
  */
 export const runCrystallizedThinkingRuntime = ({
   text,
@@ -59,6 +72,7 @@ export const runCrystallizedThinkingRuntime = ({
   personaId,
   brainState: inputBrainState,
   phase2Flags = DEFAULT_PHASE2_FLAGS,
+  phase3Flags = DEFAULT_PHASE3_FLAGS,
 }: CrystallizedThinkingRuntimeInput): CrystallizedThinkingResult => {
   // ===== Phase 1: Initialize or use existing brain state =====
   const brainState = inputBrainState ?? createInitialBrainState()
@@ -261,6 +275,106 @@ export const runCrystallizedThinkingRuntime = ({
     )
   }
 
+  // ===== Phase 3: Interoceptive Core =====
+  let interoceptiveState
+  let interoceptiveControl
+  if (phase3Flags.interoceptionEnabled) {
+    // Update interoceptive state from current turn
+    interoceptiveState = updateInteroceptiveState({
+      previousState: brainState.interoception,
+      somaticInfluence: chunkedResult.somaticInfluence,
+      uncertaintyState,
+      confidenceState,
+      surpriseMagnitude: chunkedResult.predictionModulationResult?.overallSurprise ?? 0.0,
+      currentTurn: brainState.turnCount,
+      recentActivityScore: brainState.recentActivityAverage,
+    })
+
+    // Derive interoceptive control parameters
+    interoceptiveControl = applyInteroceptiveControl(interoceptiveState)
+  }
+
+  // ===== Phase 3: Workspace Phase Control =====
+  let workspaceState
+  let workspacePhaseControlResult
+  if (phase3Flags.workspacePhaseEnabled) {
+    // Determine next workspace phase
+    const nextPhase = advanceWorkspacePhase({
+      currentState: brainState.workspace,
+      eventBoundary,
+      coalitionState: { activeCoalitions: [], unresolvedTension: 0 }, // Temporary - will be updated after coalition formation
+      interoceptiveControl: interoceptiveControl ?? {
+        thresholdMultiplier: 1.0,
+        inhibitionMultiplier: 1.0,
+        precisionWeight: 1.0,
+        coalitionStabilityBias: 0.0,
+        replayEligibilityMultiplier: 1.0,
+        workspaceTransitionSpeed: 1.0,
+      },
+      surpriseMagnitude: chunkedResult.predictionModulationResult?.overallSurprise ?? 0.0,
+    })
+
+    // Apply workspace phase control
+    workspacePhaseControlResult = applyWorkspacePhaseControl({
+      currentState: brainState.workspace,
+      newPhase: nextPhase,
+      narrativeProtoMeanings: personaModulatedNarrative,
+      sensoryProtoMeanings: personaModulatedSensory,
+    })
+
+    workspaceState = workspacePhaseControlResult.updatedState
+  }
+
+  // ===== Phase 3: Coalition Formation =====
+  let coalitionState
+  let coalitionAction
+  if (phase3Flags.coalitionEnabled) {
+    // Build coalition fields from multiple sources
+    const coalitionFields = buildCoalitionFields({
+      nodes: chunkedResult.activatedNodes,
+      sensoryProtoMeanings: personaModulatedSensory,
+      narrativeProtoMeanings: personaModulatedNarrative,
+      optionFields: chunkedResult.optionCompetition?.optionFields ?? [],
+      interoceptiveState: interoceptiveState ?? brainState.interoception,
+    })
+
+    // Merge into coalition state
+    coalitionState = mergeCoalitionState({
+      coalitionFields,
+      interoceptiveControl: interoceptiveControl ?? {
+        thresholdMultiplier: 1.0,
+        inhibitionMultiplier: 1.0,
+        precisionWeight: 1.0,
+        coalitionStabilityBias: 0.0,
+        replayEligibilityMultiplier: 1.0,
+        workspaceTransitionSpeed: 1.0,
+      },
+    })
+
+    // Select coalition action
+    coalitionAction = selectCoalitionAction(coalitionState)
+  }
+
+  // ===== Phase 3: Active Sensing Policy =====
+  let internalActionPolicy
+  if (phase3Flags.activeSensingEnabled) {
+    // Build active sensing policy
+    internalActionPolicy = buildActiveSensingPolicy({
+      coalitionAction: coalitionAction ?? {
+        preferredAction: 'answer',
+        confidence: 0.5,
+        reasons: ['Coalition disabled, using default'],
+      },
+      confidenceState,
+      uncertaintyState,
+      workspaceState: workspaceState ?? brainState.workspace,
+      interoceptiveState: interoceptiveState ?? brainState.interoception,
+    })
+
+    // Select final internal action (currently just returns preferred action)
+    selectInternalAction(internalActionPolicy)
+  }
+
   // ===== Phase 2: Idle Replay System =====
   let replaySummary
   let updatedPersonalLearning = personalLearning
@@ -297,6 +411,20 @@ export const runCrystallizedThinkingRuntime = ({
     }
   }
 
+  // Phase 3: Update workspace and interoception states
+  if (phase3Flags.workspacePhaseEnabled && workspaceState) {
+    nextBrainState = {
+      ...nextBrainState,
+      workspace: workspaceState,
+    }
+  }
+  if (phase3Flags.interoceptionEnabled && interoceptiveState) {
+    nextBrainState = {
+      ...nextBrainState,
+      interoception: interoceptiveState,
+    }
+  }
+
   return {
     implementationMode: 'crystallized_thinking',
     lexicalState: chunkedResult.dualStream.lexicalState,
@@ -330,5 +458,10 @@ export const runCrystallizedThinkingRuntime = ({
     confidenceState,
     uncertaintyState,
     replaySummary,
+    // Phase 3: Interoception / Coalition / Workspace / Action
+    interoceptiveState,
+    coalitionState,
+    workspaceState,
+    internalActionPolicy,
   }
 }

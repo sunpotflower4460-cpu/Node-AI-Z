@@ -5,6 +5,8 @@
 
 import type { SessionBrainState } from './sessionBrainState'
 import { buildEmptyPredictionState } from '../predictive/buildPredictionState'
+import { createDefaultInteroceptiveState } from '../interoception/interoceptiveState'
+import { createDefaultWorkspaceState } from '../workspace/workspacePhaseMachine'
 
 /**
  * Creates an initial brain state for a new session.
@@ -30,13 +32,7 @@ export const createInitialBrainState = (sessionId?: string): SessionBrainState =
       fusedConfidence: 0.5,
     },
     episodicBuffer: [],
-    workspace: {
-      activeItems: [],
-      capacity: 7, // Miller's law: 7±2
-    },
-    interoception: {
-      arousal: 0.5,
-      valence: 0,
-    },
+    workspace: createDefaultWorkspaceState(),
+    interoception: createDefaultInteroceptiveState(),
   }
 }
