@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Sparkles, Terminal, TrendingUp, Zap } from 'lucide-react'
+import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Sparkles, Terminal, TrendingUp, Zap, Brain } from 'lucide-react'
 import type { ObservationRecord } from '../../types/experience'
 import type { AppliedBoostEntry, RevisionState, UserTuningAction } from '../../types/nodeStudio'
 import { describeProposedChange, formatRevisionDelta, getRevisionStatusMeta } from '../../revision/statusMeta'
@@ -11,6 +11,7 @@ import { RelationsTab } from '../tabs/RelationsTab'
 import { ReplyTab } from '../tabs/ReplyTab'
 import { StatesTab } from '../tabs/StatesTab'
 import { RevisionTab } from '../tabs/RevisionTab'
+import { SessionBrainTab } from '../tabs/SessionBrainTab'
 import { Badge } from '../components/CommonUI'
 
 const SAMPLE_INPUTS = [
@@ -21,7 +22,7 @@ const SAMPLE_INPUTS = [
   '少しだけ希望はある気がする',
 ]
 
-type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision'
+type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision' | 'SessionBrain'
 type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal' | 'dual'
 const MIN_PLASTICITY_DISPLAY_VALUE = 0.009
 
@@ -1108,7 +1109,7 @@ export const ObserveMode = ({
               </section>
             ) : null}
             <div className="scrollbar-hide sticky top-[92px] z-10 flex gap-2 overflow-x-auto border-b-2 border-slate-100 bg-[#F8FAFC] pb-1 pt-1">
-              {(['Reply', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
+              {(['Reply', 'SessionBrain', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
                 <button
                   key={tab}
                   type="button"
@@ -1116,6 +1117,7 @@ export const ObserveMode = ({
                   className={`-mb-[2px] flex items-center gap-2 whitespace-nowrap border-b-2 px-5 py-3 text-[15px] font-bold transition-colors ${activeTab === tab ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'}`}
                 >
                   {tab === 'Reply' ? <MessageSquareText className="h-4.5 w-4.5" /> : null}
+                  {tab === 'SessionBrain' ? <Brain className="h-4.5 w-4.5" /> : null}
                   {tab === 'Home' ? <Home className="h-4.5 w-4.5" /> : null}
                   {tab === 'Relations' ? <GitPullRequest className="h-4.5 w-4.5" /> : null}
                   {tab === 'Revision' ? <RefreshCw className="h-4.5 w-4.5" /> : null}
@@ -1126,6 +1128,7 @@ export const ObserveMode = ({
 
             <div className="flex flex-col">
               {activeTab === 'Reply' ? <ReplyTab studioView={studioView} surfaceReply={currentObservation.assistantReply} surfaceProviderLabel={surfaceProviderLabel} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} tuning={revisionState.tuning} onTuningAction={onTuningAction} /> : null}
+              {activeTab === 'SessionBrain' ? <SessionBrainTab observation={currentObservation} /> : null}
               {activeTab === 'Home' ? <HomeTab studioView={studioView} /> : null}
               {activeTab === 'States' ? <StatesTab pipelineResult={pipelineResult} /> : null}
               {activeTab === 'Relations' ? <RelationsTab pipelineResult={pipelineResult} /> : null}
