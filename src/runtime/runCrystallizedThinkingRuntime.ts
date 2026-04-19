@@ -8,6 +8,14 @@ import { deriveUtteranceShape } from '../utterance/deriveUtteranceShape'
 import { deriveLexicalPulls } from '../utterance/deriveLexicalPulls'
 import { buildCrystallizedSentencePlan } from '../utterance/buildCrystallizedSentencePlan'
 import { renderCrystallizedReply } from '../utterance/renderCrystallizedReply'
+import { buildPreconditionFilter } from '../precondition/buildPreconditionFilter'
+import { applyPreconditionToFusedState } from '../precondition/applyPreconditionToFusedState'
+import { applyPreconditionToUtterance } from '../precondition/applyPreconditionToUtterance'
+import { getPersonaWeightVector } from '../persona/getPersonaWeightVector'
+import { applyPersonaToSignals } from '../persona/applyPersonaToSignals'
+import { applyPersonaToProtoMeanings } from '../persona/applyPersonaToProtoMeanings'
+import { applyPersonaToOptionAwareness } from '../persona/applyPersonaToOptionAwareness'
+import { applyPersonaToUtterance } from '../persona/applyPersonaToUtterance'
 
 /**
  * Crystallized Thinking Runtime
@@ -19,6 +27,7 @@ export type CrystallizedThinkingRuntimeInput = {
   text: string
   plasticity?: PlasticityState
   personalLearning: PersonalLearningState
+  personaId?: string // Pass 3: Optional persona selection
 }
 
 /**
@@ -27,12 +36,22 @@ export type CrystallizedThinkingRuntimeInput = {
  * Provider selection does NOT affect the core runtime logic.
  *
  * Pass 2: Adds utterance layer generation from internal state.
+ * Pass 3: Adds precondition filter (Home/Existence/Belief) and persona weighting.
  */
 export const runCrystallizedThinkingRuntime = ({
   text,
   plasticity,
   personalLearning,
+  personaId,
 }: CrystallizedThinkingRuntimeInput): CrystallizedThinkingResult => {
+  // ===== Pass 3: Precondition & Persona Layers =====
+
+  // 1. Build precondition filter (Home/Existence/Belief)
+  const preconditionFilter = buildPreconditionFilter()
+
+  // 2. Get persona weight vector
+  const personaWeightVector = getPersonaWeightVector(personaId)
+
   // Run chunked pipeline with dual stream and signal processing
   const chunkedResult = runChunkedNodePipeline(
     text,
@@ -46,53 +65,95 @@ export const runCrystallizedThinkingRuntime = ({
     personalLearning.somaticMarkers,
   )
 
-  // Run signal-centered runtime
+  // ===== Pass 3: Apply Persona to signals and meanings =====
+
+  // Apply persona weighting to active cues (from dual stream)
+  const personaModulatedCues = applyPersonaToSignals(
+    chunkedResult.dualStream.activeCues,
+    personaWeightVector,
+  )
+
+  // Apply persona to proto meanings
+  const personaModulatedSensory = applyPersonaToProtoMeanings(
+    chunkedResult.sensoryProtoMeanings,
+    personaWeightVector,
+  )
+  const personaModulatedNarrative = applyPersonaToProtoMeanings(
+    chunkedResult.narrativeProtoMeanings,
+    personaWeightVector,
+  )
+
+  // Apply persona to option awareness
+  const personaModulatedOptions = applyPersonaToOptionAwareness(
+    chunkedResult.optionAwareness,
+    personaWeightVector,
+  )
+
+  // ===== Pass 3: Apply Precondition to fused state =====
+
+  const preconditionModulatedFusedState = applyPreconditionToFusedState(
+    chunkedResult.dualStream.fusedState,
+    preconditionFilter,
+  )
+
+  // Run signal-centered runtime with modulated state
   const signalResult = runSignalRuntime(text, {
-    optionAwareness: chunkedResult.optionAwareness,
+    optionAwareness: personaModulatedOptions,
     optionDecision: chunkedResult.optionDecision,
     optionUtteranceHints: chunkedResult.optionUtteranceHints,
     somaticInfluence: chunkedResult.somaticInfluence,
-    fusedState: chunkedResult.dualStream.fusedState,
+    fusedState: preconditionModulatedFusedState,
     lexicalState: chunkedResult.dualStream.lexicalState,
     microSignalState: chunkedResult.dualStream.microSignalState,
   })
 
   // ===== Utterance Layer Generation (Pass 2) =====
 
-  // 1. Derive utterance intent from internal state
-  const utteranceIntent = deriveUtteranceIntent({
-    fusedState: chunkedResult.dualStream.fusedState,
-    sensoryProtoMeanings: chunkedResult.sensoryProtoMeanings,
-    narrativeProtoMeanings: chunkedResult.narrativeProtoMeanings,
-    optionAwareness: chunkedResult.optionAwareness,
+  // 1. Derive utterance intent from internal state (with persona-modulated meanings)
+  const baseUtteranceIntent = deriveUtteranceIntent({
+    fusedState: preconditionModulatedFusedState,
+    sensoryProtoMeanings: personaModulatedSensory,
+    narrativeProtoMeanings: personaModulatedNarrative,
+    optionAwareness: personaModulatedOptions,
     somaticInfluence: chunkedResult.somaticInfluence,
     currentDecision: chunkedResult.optionDecision,
   })
 
-  // 2. Derive utterance shape
+  // ===== Pass 3: Apply Precondition and Persona to utterance intent =====
+
+  const preconditionModulatedIntent = applyPreconditionToUtterance(
+    baseUtteranceIntent,
+    preconditionFilter,
+  )
+  const utteranceIntent = applyPersonaToUtterance(
+    preconditionModulatedIntent,
+    personaWeightVector,
+  )
+
+  // 2. Derive utterance shape (with modulated meanings)
   const utteranceShape = deriveUtteranceShape({
     utteranceIntent,
-    optionAwareness: chunkedResult.optionAwareness,
-    narrativeProtoMeanings: chunkedResult.narrativeProtoMeanings,
-    sensoryProtoMeanings: chunkedResult.sensoryProtoMeanings,
+    optionAwareness: personaModulatedOptions,
+    narrativeProtoMeanings: personaModulatedNarrative,
+    sensoryProtoMeanings: personaModulatedSensory,
   })
 
-  // 3. Derive lexical pulls
+  // 3. Derive lexical pulls (with modulated state)
   const lexicalPulls = deriveLexicalPulls({
-    fusedState: chunkedResult.dualStream.fusedState,
-    sensoryProtoMeanings: chunkedResult.sensoryProtoMeanings,
-    narrativeProtoMeanings: chunkedResult.narrativeProtoMeanings,
-    optionAwareness: chunkedResult.optionAwareness,
+    fusedState: preconditionModulatedFusedState,
+    sensoryProtoMeanings: personaModulatedSensory,
+    narrativeProtoMeanings: personaModulatedNarrative,
+    optionAwareness: personaModulatedOptions,
   })
 
-  // 4. Build sentence plan
+  // 4. Build sentence plan (with modulated meanings)
   const crystallizedSentencePlan = buildCrystallizedSentencePlan({
     utteranceIntent,
     utteranceShape,
     lexicalPulls,
-    sensoryProtoMeanings: chunkedResult.sensoryProtoMeanings,
-    narrativeProtoMeanings: chunkedResult.narrativeProtoMeanings,
-    optionAwareness: chunkedResult.optionAwareness,
+    sensoryProtoMeanings: personaModulatedSensory,
+    narrativeProtoMeanings: personaModulatedNarrative,
+    optionAwareness: personaModulatedOptions,
     currentDecision: chunkedResult.optionDecision,
   })
 
@@ -107,13 +168,13 @@ export const runCrystallizedThinkingRuntime = ({
     implementationMode: 'crystallized_thinking',
     lexicalState: chunkedResult.dualStream.lexicalState,
     microSignalState: chunkedResult.dualStream.microSignalState,
-    fusedState: chunkedResult.dualStream.fusedState,
+    fusedState: preconditionModulatedFusedState, // Pass 3: Use modulated fused state
     signalPackets: chunkedResult.dualStream.signalPackets,
     protoMeanings: {
-      sensory: chunkedResult.sensoryProtoMeanings,
-      narrative: chunkedResult.narrativeProtoMeanings,
+      sensory: personaModulatedSensory, // Pass 3: Use persona-modulated meanings
+      narrative: personaModulatedNarrative, // Pass 3: Use persona-modulated meanings
     },
-    optionAwareness: chunkedResult.optionAwareness,
+    optionAwareness: personaModulatedOptions, // Pass 3: Use persona-modulated options
     optionDecision: chunkedResult.optionDecision,
     somaticInfluence: chunkedResult.somaticInfluence,
     utterance: signalResult.utterance,
@@ -126,5 +187,8 @@ export const runCrystallizedThinkingRuntime = ({
     lexicalPulls,
     crystallizedSentencePlan,
     finalCrystallizedReply,
+    // Precondition & Persona layers (Pass 3)
+    preconditionFilter,
+    personaWeightVector,
   }
 }
