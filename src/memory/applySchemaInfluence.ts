@@ -128,7 +128,7 @@ const applySchemaToProtoMeanings = (
   sensory: ProtoMeaning[]
   narrative: ProtoMeaning[]
 } => {
-  let updatedSensory = sensoryMeanings
+  const updatedSensory = sensoryMeanings
   let updatedNarrative = narrativeMeanings
 
   for (const { schema, relevance } of relevantSchemas.slice(0, 2)) {

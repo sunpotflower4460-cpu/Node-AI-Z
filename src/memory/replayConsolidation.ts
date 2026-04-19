@@ -120,7 +120,7 @@ const findMatchingSchema = (
 const shouldPromoteToSchema = (
   trace: EpisodicTrace,
   similarTraces: EpisodicTrace[],
-  currentTurn: number,
+  // currentTurn reserved for future time-based criteria
 ): boolean => {
   // Single extreme event? Not yet
   if (similarTraces.length < 2 && trace.surprise !== undefined && trace.surprise > 0.8) {
@@ -229,7 +229,7 @@ export const runReplayConsolidation = (
       // Check if trace should be promoted to new schema
       const similarTraces = findSimilarTraces(trace, episodicBuffer)
 
-      if (shouldPromoteToSchema(trace, similarTraces, currentTurn)) {
+      if (shouldPromoteToSchema(trace, similarTraces)) {
         // Promote to new schema
         const optionTendencies = extractOptionTendencies(trace)
         const somaticKeys = trace.somaticSignatureKey ? [trace.somaticSignatureKey] : []
