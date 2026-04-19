@@ -253,6 +253,69 @@ Workspace Gate は workspace phase（encode / hold / block / release）と密接
 
 これにより、「今の話の大事な糸」を残しながら、過負荷を防ぎ、文脈に応じた adaptive な workspace 管理が実現されます。
 
+## Phase M4 — Episodic / Schema / Replay
+
+結晶思考方式は、Phase M4 で **Episodic Memory と Schema Memory の分離** を獲得しました。
+
+### 何が変わったか
+
+Phase M4 以前は、強い一回の出来事も、反復される傾向も、すべて同じ記憶バッファに混在していました。これは：
+
+* 一回の衝撃をすぐ「性格」として扱ってしまう
+* 何度も戻ってくる本当のパターンを見逃す
+* 短期的な出来事と長期的な傾向が区別されない
+
+という問題を抱えていました。
+
+Phase M4 では、**Episodic Memory** (一回の出来事) と **Schema Memory** (反復された傾向) を分離し、**Replay Consolidation** により両者をつなぎます：
+
+* **Episodic Trace**: 一回の強いターンをそのまま記録する短期記憶
+* **Schema Pattern**: 何度も出現したパターンだけが昇格する長期傾向
+* **Replay**: 候補となる episodic trace を再生し、類似パターンが複数回・分散的に出現したときだけ schema へ昇格する
+* **Schema Influence**: schema が current turn の理解に少し効くが、支配はしない
+
+### 実装の詳細
+
+Phase M4 の主要コンポーネント：
+
+1. **episodicMemory.ts**: ターン結果から episodic trace を生成 (salience / unresolved tensions / surprise に基づく)
+2. **pruneEpisodicBuffer.ts**: episodic buffer を 15 件程度に保つ (低 salience / 古い / consolidated 済みを削除)
+3. **schemaMemory.ts**: schema pattern の管理 (key 生成 / 新規作成 / 強化)
+4. **deriveReplayCandidates.ts**: replay 候補の選択 (salience / unresolved / workspace 共鳴)
+5. **runReplayConsolidation.ts**: trace を replay し、条件を満たせば schema へ昇格
+6. **applySchemaInfluence.ts**: schema が fused / proto / option / decision に薄く効く
+
+### Schema 昇格条件
+
+Schema への昇格は **慎重** に行われます：
+
+* **昇格しやすい**: 同系統 key が 2〜3回以上、分散して出現 / salience 平均が一定以上 / option / somatic / texture の重なりがある
+* **昇格しにくい**: 単発の高 surprise のみ / 1回だけ極端に強かった / 似ているが意味がばらけている
+
+**重要**: 一回の衝撃より、何度も戻ってくるもの を優先します。
+
+### Replay のタイミング
+
+Replay は軽量に走ります：
+
+* `turnCount % 3 === 0` (3ターンごと)
+* `episodicBuffer.length > 10` (バッファが大きい)
+* `afterglow > 0.12` (残響が高い)
+* `unresolvedTensionKeys が多い` (未解決が多い)
+
+これらの条件を満たした時だけ、1〜3件の候補を replay します。
+
+### Schema の効き方
+
+Schema は **支配しない。少し傾けるだけ** です：
+
+* **Fused State**: recurring tension を integratedTensions に追加
+* **Proto Meaning**: 以前もよく立った narrative を少し強化
+* **Option Awareness**: 同型の hesitation が何度もあった場合、hesitationStrength を少し上げる
+* **Option Decision**: 類似パターンでいつも押しすぎていたなら confidence を下げる
+
+これにより、「この知性は出来事をすぐ性格にせず、反復してから傾向にしている」ことが実感できます。
+
 ## 今後の実装ロードマップ
 
 次の機能追加は、原則としてこの順で積みます。
