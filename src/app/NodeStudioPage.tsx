@@ -257,6 +257,96 @@ export default function NodeStudioPage() {
                   </div>
                 </div>
               ) : null}
+
+              {/* Phase 2: Dashboard for Boundary / Confidence / Uncertainty / Replay */}
+              {implementationMode === 'crystallized_thinking' && currentObservation && (
+                <div className="absolute right-0 top-full z-40 mt-2 w-[400px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+                  <div className="mb-3">
+                    <h2 className="text-sm font-bold text-slate-900">Phase 2 Runtime State</h2>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                      Internal state visualization (read-only)
+                    </p>
+                  </div>
+
+                  {currentObservation.eventBoundary && (
+                    <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                      <div className="text-xs font-semibold text-amber-900">Event Boundary</div>
+                      <div className="mt-1 space-y-1">
+                        <div className="text-xs text-amber-700">
+                          Triggered: {currentObservation.eventBoundary.triggered ? 'Yes' : 'No'}
+                        </div>
+                        {currentObservation.eventBoundary.triggered && (
+                          <>
+                            <div className="text-xs text-amber-700">
+                              Score: {currentObservation.eventBoundary.score.toFixed(2)} ({currentObservation.eventBoundary.kind})
+                            </div>
+                            <div className="text-xs text-amber-600">
+                              {currentObservation.eventBoundary.reasons.join(', ')}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {currentObservation.confidenceState && (
+                    <div className="mb-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
+                      <div className="text-xs font-semibold text-blue-900">Confidence State</div>
+                      <div className="mt-1 space-y-1">
+                        <div className="text-xs text-blue-700">
+                          Decision: {(currentObservation.confidenceState.decisionStrength * 100).toFixed(0)}%
+                        </div>
+                        <div className="text-xs text-blue-700">
+                          Interpretation: {(currentObservation.confidenceState.interpretationConfidence * 100).toFixed(0)}%
+                        </div>
+                        {currentObservation.confidenceState.shouldAsk && (
+                          <div className="text-xs font-semibold text-blue-800">→ Should ask for clarification</div>
+                        )}
+                        {currentObservation.confidenceState.shouldHold && (
+                          <div className="text-xs font-semibold text-blue-800">→ Should hold decision</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {currentObservation.uncertaintyState && (
+                    <div className="mb-3 rounded-lg border border-purple-200 bg-purple-50 p-3">
+                      <div className="text-xs font-semibold text-purple-900">Uncertainty State</div>
+                      <div className="mt-1 space-y-1">
+                        <div className="text-xs text-purple-700">
+                          Sensory: {(currentObservation.uncertaintyState.sensoryUncertainty * 100).toFixed(0)}%
+                        </div>
+                        <div className="text-xs text-purple-700">
+                          Model: {(currentObservation.uncertaintyState.modelUncertainty * 100).toFixed(0)}%
+                        </div>
+                        <div className="text-xs text-purple-700">
+                          Precision: {(currentObservation.uncertaintyState.precisionWeight * 100).toFixed(0)}%
+                        </div>
+                        <div className="text-xs text-purple-700">
+                          Learning Rate: {currentObservation.uncertaintyState.learningRate.toFixed(2)}x
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentObservation.replaySummary && (
+                    <div className="rounded-lg border border-green-200 bg-green-50 p-3">
+                      <div className="text-xs font-semibold text-green-900">Replay Summary</div>
+                      <div className="mt-1 space-y-1">
+                        <div className="text-xs text-green-700">
+                          Episodes: {currentObservation.replaySummary.episodesReplayed}
+                        </div>
+                        <div className="text-xs text-green-700">
+                          Updates: {currentObservation.replaySummary.pathwayUpdates.length} pathways
+                        </div>
+                        <div className="text-xs text-green-700">
+                          Consolidation: {(currentObservation.replaySummary.consolidationStrength * 100).toFixed(0)}%
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <ModeSwitch mode={mode} onChange={setMode} />
           </div>
