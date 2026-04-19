@@ -44,7 +44,7 @@ export const derivePrecisionControl = ({
   uncertaintyState,
   afterglow,
   recentActivityAverage,
-  recentFieldIntensity,
+  // recentFieldIntensity, // Reserved for future use
   previousPrecisionControl,
 }: PrecisionControlInput): PrecisionControlResult => {
   const notes: PrecisionInfluenceNote[] = []

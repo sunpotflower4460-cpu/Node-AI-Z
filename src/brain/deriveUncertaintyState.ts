@@ -149,19 +149,20 @@ const computeMeaningStrengthVariance = (meanings: ProtoMeaning[]): number => {
 
 /**
  * Compute option ambivalence.
- * When top options are close in strength → high ambivalence
+ * When options are close in strength → high ambivalence
+ * Uses differenceMagnitude and hesitationStrength from OptionAwareness
  */
 const computeOptionAmbivalence = (optionAwareness: OptionAwareness): number => {
-  const options = optionAwareness.options
-  if (options.length < 2) return 0.0
+  // Low difference magnitude + high hesitation = high ambivalence
+  const lowDifference = 1.0 - optionAwareness.differenceMagnitude
+  const hesitation = optionAwareness.hesitationStrength
 
-  // Sort by strength descending
-  const sorted = [...options].sort((a, b) => b.strength - a.strength)
-  const topStrength = sorted[0]?.strength ?? 0.0
-  const secondStrength = sorted[1]?.strength ?? 0.0
+  // Bridge option possible also indicates ambivalence
+  const bridgeBoost = optionAwareness.bridgeOptionPossible ? 0.3 : 0.0
 
-  // Small gap between top options → high ambivalence
-  const gap = topStrength - secondStrength
-
-  return clamp(1.0 - (gap * 2.0), 0.0, 1.0)
+  return clamp(
+    (lowDifference * 0.5) + (hesitation * 0.3) + bridgeBoost,
+    0.0,
+    1.0
+  )
 }
