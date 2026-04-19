@@ -8,12 +8,17 @@ import type { TemporalFeatureState } from '../signal/temporalTypes'
 import type { PredictionState } from '../predictive/types'
 
 /**
- * Episodic buffer entry (placeholder for future implementation)
+ * Episodic buffer entry
+ * Represents a segment of experience bounded by event boundaries
  */
 export type EpisodicBufferEntry = {
   turn: number
   timestamp: number
   summary?: string
+  /** Boundary score that created this segment */
+  boundaryScore?: number
+  /** Surprise magnitude at this segment */
+  surpriseMagnitude?: number
 }
 
 /**

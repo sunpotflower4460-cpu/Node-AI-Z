@@ -107,6 +107,11 @@ export const createObservationRecord = async ({
     previousUtterance: runtimeResult.utterance,  // Keep for comparison
     // Session continuity (Phase 1)
     nextBrainState: runtimeResult.nextBrainState,
+    // Phase 2: Boundary / Confidence / Uncertainty / Replay
+    eventBoundary: runtimeResult.eventBoundary,
+    confidenceState: runtimeResult.confidenceState,
+    uncertaintyState: runtimeResult.uncertaintyState,
+    replaySummary: runtimeResult.replaySummary,
   }
 }
 
@@ -137,6 +142,11 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       crystallizedSentencePlan: record.crystallizedSentencePlan,
       finalCrystallizedReply: record.finalCrystallizedReply,
       previousUtterance: record.previousUtterance,
+      // Phase 2
+      eventBoundary: record.eventBoundary,
+      confidenceState: record.confidenceState,
+      uncertaintyState: record.uncertaintyState,
+      replaySummary: record.replaySummary,
     },
     {
       id: createObservationId('exp_assistant'),
@@ -161,6 +171,11 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       crystallizedSentencePlan: record.crystallizedSentencePlan,
       finalCrystallizedReply: record.finalCrystallizedReply,
       previousUtterance: record.previousUtterance,
+      // Phase 2
+      eventBoundary: record.eventBoundary,
+      confidenceState: record.confidenceState,
+      uncertaintyState: record.uncertaintyState,
+      replaySummary: record.replaySummary,
     },
   ]
 }
