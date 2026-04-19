@@ -16,6 +16,13 @@
  * - derivePrecisionControl: Compute precision from interoception + uncertainty
  * - applyPrecisionToPredictionError: Weight raw errors
  * - applyPrecisionToSignalDynamics: Adjust signal processing
+ *
+ * Phase M3: Workspace Gate
+ * - WorkspaceGate: Control what gets held, updated, shielded, or flushed
+ * - deriveWorkspaceCandidates: Extract candidates from signals
+ * - scoreWorkspaceSalience: Update item salience scores
+ * - mergeWorkspaceItems: Merge candidates with held items
+ * - updateWorkspaceState: Apply gate results to workspace state
  */
 
 // Core types
@@ -53,3 +60,22 @@ export type { SignalDynamicsAdjustment } from './applyPrecisionToSignalDynamics'
 export type { BrainPersistenceAdapter } from './persistence/types'
 export { localBrainPersistence } from './persistence/localBrainPersistence'
 export { remoteBrainPersistence } from './persistence/remoteBrainPersistence'
+
+// Phase M3: Workspace Gate
+export type {
+  WorkspaceItem,
+  WorkspaceSource,
+  WorkspaceGateAction,
+  WorkspaceGateDecision,
+  WorkspaceGateResult,
+  WorkspaceGateConfig,
+  WorkspaceCandidateInput,
+} from './workspaceTypes'
+export { DEFAULT_WORKSPACE_GATE_CONFIG } from './workspaceTypes'
+export { deriveWorkspaceCandidates } from './deriveWorkspaceCandidates'
+export { scoreWorkspaceSalience, scoreAllWorkspaceItems } from './scoreWorkspaceSalience'
+export type { SalienceUpdateFactors } from './scoreWorkspaceSalience'
+export { mergeWorkspaceItems } from './mergeWorkspaceItems'
+export { applyWorkspaceGate } from './workspaceGate'
+export type { WorkspaceGateInput } from './workspaceGate'
+export { updateWorkspaceState } from './updateWorkspaceState'
