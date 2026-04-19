@@ -11,10 +11,11 @@ import type {
   WorkspaceGateDecision,
   WorkspaceGateConfig,
   WorkspaceGateAction,
+  WorkspaceCandidateInput,
 } from './workspaceTypes';
 import { DEFAULT_WORKSPACE_GATE_CONFIG } from './workspaceTypes';
 import type { WorkspaceState } from '../workspace/workspacePhaseMachine';
-import { deriveWorkspaceCandidates, type WorkspaceCandidateInput } from './deriveWorkspaceCandidates';
+import { deriveWorkspaceCandidates } from './deriveWorkspaceCandidates';
 import { mergeWorkspaceItems } from './mergeWorkspaceItems';
 import { scoreAllWorkspaceItems, type SalienceUpdateFactors } from './scoreWorkspaceSalience';
 

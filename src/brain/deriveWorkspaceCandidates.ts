@@ -23,14 +23,14 @@ export const deriveWorkspaceCandidates = (
     // Add explicit question if present
     if (explicitQuestion) {
       candidates.push({
-        id: `lexical:question:${explicitQuestion.slice(0, 20)}`,
-        label: explicitQuestion.slice(0, 50),
+        id: `lexical:question`,
+        label: 'explicit question detected',
         salience: 0.7, // Questions are high salience
         source: 'lexical',
         stability: 0.6,
         unresolved: 0.8, // Questions are inherently unresolved
         lastTouchedTurn: input.turnCount,
-        metadata: { type: 'question', text: explicitQuestion },
+        metadata: { type: 'question', hasQuestion: true },
       });
     }
 

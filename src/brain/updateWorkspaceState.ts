@@ -5,8 +5,8 @@
  * for persistence in SessionBrainState.
  */
 
-import type { WorkspaceState, WorkspaceItem as LegacyWorkspaceItem } from '../workspace/workspacePhaseMachine';
-import type { WorkspaceItem, WorkspaceGateResult } from './workspaceTypes';
+import type { WorkspaceState, WorkspaceItem } from '../workspace/workspacePhaseMachine';
+import type { WorkspaceGateResult } from './workspaceTypes';
 
 /**
  * Update the workspace state from gate results.
@@ -17,8 +17,8 @@ export const updateWorkspaceState = (
   gateResult: WorkspaceGateResult,
   currentTurn: number,
 ): WorkspaceState => {
-  // Convert WorkspaceItem[] to LegacyWorkspaceItem[]
-  const updatedHeldItems: LegacyWorkspaceItem[] = gateResult.heldItems.map((item) => ({
+  // Convert WorkspaceItem[] to WorkspaceItem[]
+  const updatedHeldItems: WorkspaceItem[] = gateResult.heldItems.map((item) => ({
     id: item.id,
     content: item.label,
     strength: item.salience,

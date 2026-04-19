@@ -47,7 +47,7 @@ export type WorkspaceGateResult = {
  */
 export type WorkspaceCandidateInput = {
   lexicalState?: {
-    explicitQuestion?: string;
+    explicitQuestion?: boolean;
     requestType?: string;
     optionLabels?: string[];
     explicitEntities?: string[];
