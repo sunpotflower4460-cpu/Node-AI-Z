@@ -10,6 +10,8 @@ import type {
   LexicalPulls,
   CrystallizedSentencePlan,
 } from '../utterance/types'
+import type { PreconditionFilter } from '../precondition/types'
+import type { PersonaWeightVector } from '../persona/types'
 
 /**
  * Base runtime result shared by both modes
@@ -60,6 +62,9 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   lexicalPulls?: LexicalPulls
   crystallizedSentencePlan?: CrystallizedSentencePlan
   finalCrystallizedReply?: string
+  // Precondition & Persona layers (Pass 3)
+  preconditionFilter?: PreconditionFilter
+  personaWeightVector?: PersonaWeightVector
 }
 
 /**

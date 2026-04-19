@@ -1,6 +1,12 @@
 /**
  * Persona layer.
- * Reserved for cross-layer weighting filters that bias signal / meaning / somatic / learning outputs.
- * The directory is kept as a formal extension point even before the runtime hook is activated.
+ * Cross-layer weighting filters that bias signal / meaning / somatic / learning outputs.
  */
-export {}
+
+export { PERSONA_PROFILES } from './personaProfiles'
+export { getPersonaWeightVector } from './getPersonaWeightVector'
+export { applyPersonaToSignals } from './applyPersonaToSignals'
+export { applyPersonaToProtoMeanings } from './applyPersonaToProtoMeanings'
+export { applyPersonaToOptionAwareness } from './applyPersonaToOptionAwareness'
+export { applyPersonaToUtterance } from './applyPersonaToUtterance'
+export type { PersonaWeightVector, PersonaProfile } from './types'
