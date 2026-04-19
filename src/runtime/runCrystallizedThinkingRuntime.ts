@@ -20,6 +20,11 @@ import { applyPersonaToOptionAwareness } from '../persona/applyPersonaToOptionAw
 import { applyPersonaToUtterance } from '../persona/applyPersonaToUtterance'
 import { createInitialBrainState } from '../brain/createInitialBrainState'
 import { updateBrainState } from '../brain/updateBrainState'
+import { deriveUncertaintyState } from '../brain/deriveUncertaintyState'
+import { derivePrecisionControl } from '../brain/precisionController'
+import { applyPrecisionToPredictionError } from '../brain/applyPrecisionToPredictionError'
+import { applyPrecisionToSignalDynamics } from '../brain/applyPrecisionToSignalDynamics'
+import type { PrecisionInfluenceNote } from '../brain/precisionTypes'
 import { DEFAULT_PHASE2_FLAGS } from '../config/phase2Flags'
 import { DEFAULT_PHASE3_FLAGS } from '../config/phase3Flags'
 import { detectEventBoundary, computeBoundaryEffects } from '../boundary/detectEventBoundary'
@@ -98,6 +103,48 @@ export const runCrystallizedThinkingRuntime = ({
     brainState.predictionState,        // Use session prediction state instead of undefined
     personalLearning.somaticMarkers,
   )
+
+  // ===== Phase M2: Precision / Uncertainty Control =====
+  // Derive uncertainty state from current turn signals
+  const m2UncertaintyState = deriveUncertaintyState({
+    predictionModulation: chunkedResult.predictionModulationResult,
+    sensoryMeanings: chunkedResult.sensoryProtoMeanings,
+    narrativeMeanings: chunkedResult.narrativeProtoMeanings,
+    optionAwareness: chunkedResult.optionAwareness,
+    previousMicroSignal: brainState.microSignalDimensions,
+    recentFieldIntensity: brainState.recentFieldIntensity,
+    hasExplicitQuestion: text.includes('?'),
+  })
+
+  // Derive precision control from interoception and uncertainty
+  const precisionControlResult = derivePrecisionControl({
+    interoception: brainState.interoception,
+    uncertaintyState: m2UncertaintyState,
+    afterglow: brainState.afterglow,
+    recentActivityAverage: brainState.recentActivityAverage,
+    recentFieldIntensity: brainState.recentFieldIntensity,
+    previousPrecisionControl: brainState.precisionControl,
+  })
+
+  // Apply precision to prediction error
+  const weightedError = applyPrecisionToPredictionError(
+    chunkedResult.predictionModulationResult,
+    precisionControlResult.precisionControl,
+    m2UncertaintyState,
+  )
+
+  // Apply precision to signal dynamics
+  const signalDynamicsAdjustment = applyPrecisionToSignalDynamics(
+    precisionControlResult.precisionControl,
+    weightedError,
+  )
+
+  // Collect all precision notes
+  const allPrecisionNotes: PrecisionInfluenceNote[] = [
+    ...precisionControlResult.notes,
+    ...weightedError.notes,
+    ...signalDynamicsAdjustment.notes,
+  ]
 
   // ===== Pass 3: Apply Persona to proto meanings =====
 
@@ -393,7 +440,16 @@ export const runCrystallizedThinkingRuntime = ({
   }
 
   // ===== Phase 1: Update brain state for next turn =====
-  let nextBrainState = updateBrainState(brainState, chunkedResult)
+  // Phase M2: Pass precision state to updateBrainState
+  let nextBrainState = updateBrainState(
+    brainState,
+    chunkedResult,
+    {
+      precisionControl: precisionControlResult.precisionControl,
+      uncertaintyState: m2UncertaintyState,
+      precisionNotes: allPrecisionNotes,
+    }
+  )
 
   // Phase 2: Update episodic buffer if boundary was triggered
   if (phase2Flags.boundaryEnabled && eventBoundary?.triggered && boundaryEffects?.shouldCreateSegment) {
@@ -458,6 +514,12 @@ export const runCrystallizedThinkingRuntime = ({
     confidenceState,
     uncertaintyState,
     replaySummary,
+    // Phase M2: Precision / Uncertainty Control
+    precisionControl: precisionControlResult.precisionControl,
+    m2UncertaintyState,
+    weightedPredictionError: weightedError,
+    signalDynamicsAdjustment,
+    precisionNotes: allPrecisionNotes,
     // Phase 3: Interoception / Coalition / Workspace / Action
     interoceptiveState,
     coalitionState,

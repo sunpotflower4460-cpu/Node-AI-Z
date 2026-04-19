@@ -16,6 +16,9 @@ import type { SessionBrainState } from '../brain/sessionBrainState'
 import type { EventBoundary } from '../boundary/boundaryTypes'
 import type { ConfidenceState } from '../meta/computeInterpretationConfidence'
 import type { UncertaintyState } from '../predictive/uncertaintyTypes'
+import type { PrecisionControl, PrecisionInfluenceNote } from '../brain/precisionTypes'
+import type { PrecisionWeightedPredictionError } from '../brain/applyPrecisionToPredictionError'
+import type { SignalDynamicsAdjustment } from '../brain/applyPrecisionToSignalDynamics'
 import type { ReplaySummary } from '../replay/runIdleReplay'
 import type { InteroceptiveState } from '../interoception/interoceptiveState'
 import type { CoalitionState } from '../coalition/mergeCoalitionState'
@@ -81,6 +84,12 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   confidenceState?: ConfidenceState
   uncertaintyState?: UncertaintyState
   replaySummary?: ReplaySummary
+  // Phase M2: Precision / Uncertainty Control
+  precisionControl?: PrecisionControl
+  m2UncertaintyState?: import('../brain/precisionTypes').UncertaintyState
+  weightedPredictionError?: PrecisionWeightedPredictionError
+  signalDynamicsAdjustment?: SignalDynamicsAdjustment
+  precisionNotes?: PrecisionInfluenceNote[]
   // Phase 3: Interoception / Coalition / Workspace / Action
   interoceptiveState?: InteroceptiveState
   coalitionState?: CoalitionState
