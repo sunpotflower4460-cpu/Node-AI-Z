@@ -12,6 +12,7 @@ import type {
 } from '../utterance/types'
 import type { PreconditionFilter } from '../precondition/types'
 import type { PersonaWeightVector } from '../persona/types'
+import type { SessionBrainState } from '../brain/sessionBrainState'
 
 /**
  * Base runtime result shared by both modes
@@ -65,6 +66,8 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   // Precondition & Persona layers (Pass 3)
   preconditionFilter?: PreconditionFilter
   personaWeightVector?: PersonaWeightVector
+  // Session continuity (Phase 1)
+  nextBrainState?: SessionBrainState
 }
 
 /**

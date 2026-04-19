@@ -8,6 +8,7 @@ import type {
   LexicalPulls,
   CrystallizedSentencePlan,
 } from '../utterance/types'
+import type { SessionBrainState } from '../brain/sessionBrainState'
 
 /**
  * UI mode: observe (research) vs experience (conversation)
@@ -52,6 +53,8 @@ export type ObservationRecord = {
   crystallizedSentencePlan?: CrystallizedSentencePlan
   finalCrystallizedReply?: string
   previousUtterance?: string  // For comparison
+  // Session continuity (Phase 1) - crystallized_thinking only
+  nextBrainState?: SessionBrainState
 }
 
 export type ExperienceMessage = {

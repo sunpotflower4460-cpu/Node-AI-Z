@@ -1,6 +1,7 @@
 import type { PersonalLearningState } from '../learning/types'
 import type { PlasticityState } from '../types/nodeStudio'
 import type { CrystallizedThinkingResult } from './runtimeTypes'
+import type { SessionBrainState } from '../brain/sessionBrainState'
 import { runChunkedNodePipeline } from './runChunkedNodePipeline'
 import { runSignalRuntime } from '../signal/runSignalRuntime'
 import { deriveUtteranceIntent } from '../utterance/deriveUtteranceIntent'
@@ -15,6 +16,8 @@ import { getPersonaWeightVector } from '../persona/getPersonaWeightVector'
 import { applyPersonaToProtoMeanings } from '../persona/applyPersonaToProtoMeanings'
 import { applyPersonaToOptionAwareness } from '../persona/applyPersonaToOptionAwareness'
 import { applyPersonaToUtterance } from '../persona/applyPersonaToUtterance'
+import { createInitialBrainState } from '../brain/createInitialBrainState'
+import { updateBrainState } from '../brain/updateBrainState'
 
 /**
  * Crystallized Thinking Runtime
@@ -27,6 +30,7 @@ export type CrystallizedThinkingRuntimeInput = {
   plasticity?: PlasticityState
   personalLearning: PersonalLearningState
   personaId?: string // Pass 3: Optional persona selection
+  brainState?: SessionBrainState // Phase 1: Session continuity
 }
 
 /**
@@ -36,13 +40,18 @@ export type CrystallizedThinkingRuntimeInput = {
  *
  * Pass 2: Adds utterance layer generation from internal state.
  * Pass 3: Adds precondition filter (Home/Existence/Belief) and persona weighting.
+ * Phase 1: Adds session brain state continuity across turns.
  */
 export const runCrystallizedThinkingRuntime = ({
   text,
   plasticity,
   personalLearning,
   personaId,
+  brainState: inputBrainState,
 }: CrystallizedThinkingRuntimeInput): CrystallizedThinkingResult => {
+  // ===== Phase 1: Initialize or use existing brain state =====
+  const brainState = inputBrainState ?? createInitialBrainState()
+
   // ===== Pass 3: Precondition & Persona Layers =====
 
   // 1. Build precondition filter (Home/Existence/Belief)
@@ -52,15 +61,16 @@ export const runCrystallizedThinkingRuntime = ({
   const personaWeightVector = getPersonaWeightVector(personaId)
 
   // Run chunked pipeline with dual stream and signal processing
+  // Phase 1: Pass session state instead of fixed values
   const chunkedResult = runChunkedNodePipeline(
     text,
     plasticity,
-    0.5, // threshold base
-    0,   // turn number
-    undefined, // prior
-    undefined, // previous cues
-    0,   // previous turn
-    undefined, // previous micro signal dimensions
+    brainState.recentActivityAverage, // Use session state instead of 0.5
+    brainState.turnCount,              // Use session turn count instead of 0
+    brainState.temporalStates,         // Use session temporal states instead of undefined
+    personalLearning.pathwayStrengths, // Use pathway strengths from personal learning
+    brainState.afterglow,              // Use session afterglow instead of 0
+    brainState.predictionState,        // Use session prediction state instead of undefined
     personalLearning.somaticMarkers,
   )
 
@@ -157,6 +167,9 @@ export const runCrystallizedThinkingRuntime = ({
     lexicalPulls,
   })
 
+  // ===== Phase 1: Update brain state for next turn =====
+  const nextBrainState = updateBrainState(brainState, chunkedResult)
+
   return {
     implementationMode: 'crystallized_thinking',
     lexicalState: chunkedResult.dualStream.lexicalState,
@@ -183,5 +196,7 @@ export const runCrystallizedThinkingRuntime = ({
     // Precondition & Persona layers (Pass 3)
     preconditionFilter,
     personaWeightVector,
+    // Session continuity (Phase 1)
+    nextBrainState,
   }
 }

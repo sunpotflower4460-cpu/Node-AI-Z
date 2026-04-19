@@ -2,6 +2,7 @@ import type { PersonalLearningState } from '../learning/types'
 import type { ApiProviderId } from '../types/apiProvider'
 import type { ExperienceMessage, ObservationRecord, RuntimeMode, ImplementationMode } from '../types/experience'
 import type { PlasticityState } from '../types/nodeStudio'
+import type { SessionBrainState } from '../brain/sessionBrainState'
 import { runMainRuntime } from './runMainRuntime'
 import { runLegacyNodePipeline } from './runLegacyNodePipeline'
 import { buildRevisionEntry } from '../revision/buildRevisionEntry'
@@ -10,6 +11,8 @@ import { buildRevisionEntry } from '../revision/buildRevisionEntry'
  * Observation builder for UI flows.
  * The page supplies observation metadata and input; runtime route selection stays
  * behind `runMainRuntime`, and the result comes back as a single observation record.
+ *
+ * Phase 1: Supports brain state input and returns nextBrainState for session continuity.
  */
 export type CreateObservationRecordInput = {
   type: ObservationRecord['type']
@@ -19,6 +22,7 @@ export type CreateObservationRecordInput = {
   runtimeMode: RuntimeMode
   implementationMode: ImplementationMode
   personalLearning: PersonalLearningState
+  brainState?: SessionBrainState // Phase 1: Session continuity
 }
 
 export const createObservationId = (prefix: string) => {
@@ -42,6 +46,7 @@ export const createObservationRecord = async ({
   runtimeMode,
   implementationMode,
   personalLearning,
+  brainState,
 }: CreateObservationRecordInput): Promise<ObservationRecord> => {
   const timestamp = new Date().toISOString()
   const runtimeResult = await runMainRuntime({
@@ -50,6 +55,7 @@ export const createObservationRecord = async ({
     provider,
     implementationMode,
     personalLearning,
+    brainState,
   })
 
   // Convert RuntimeResult to ObservationRecord format
@@ -99,6 +105,8 @@ export const createObservationRecord = async ({
     crystallizedSentencePlan: runtimeResult.crystallizedSentencePlan,
     finalCrystallizedReply: runtimeResult.finalCrystallizedReply,
     previousUtterance: runtimeResult.utterance,  // Keep for comparison
+    // Session continuity (Phase 1)
+    nextBrainState: runtimeResult.nextBrainState,
   }
 }
 
