@@ -103,9 +103,10 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
           <div>Energy: <span className="font-bold">{(nextBrainState.interoception.energy * 100).toFixed(0)}%</span></div>
           <div>Arousal: <span className="font-bold">{(nextBrainState.interoception.arousal * 100).toFixed(0)}%</span></div>
           <div>Social Safety: <span className="font-bold">{(nextBrainState.interoception.socialSafety * 100).toFixed(0)}%</span></div>
-          <div>Uncertainty Load: <span className="font-bold">{(nextBrainState.interoception.uncertaintyLoad * 100).toFixed(0)}%</span></div>
+          <div>Uncertainty Tolerance: <span className="font-bold">{(nextBrainState.interoception.uncertaintyTolerance * 100).toFixed(0)}%</span></div>
           <div>Novelty Hunger: <span className="font-bold">{(nextBrainState.interoception.noveltyHunger * 100).toFixed(0)}%</span></div>
           <div>Overload: <span className="font-bold">{(nextBrainState.interoception.overload * 100).toFixed(0)}%</span></div>
+          <div>Recovery Pressure: <span className="font-bold">{(nextBrainState.interoception.recoveryPressure * 100).toFixed(0)}%</span></div>
         </div>
       </div>
 
@@ -113,15 +114,17 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
       <div className="rounded-lg border border-pink-200 bg-pink-50 p-4">
         <h3 className="text-sm font-bold text-pink-900 mb-2">Workspace State</h3>
         <div className="space-y-1 text-xs text-pink-700">
-          <div>Phase: <span className="font-bold">{nextBrainState.workspace.currentPhase}</span></div>
+          <div>Phase: <span className="font-bold">{nextBrainState.workspace.phase}</span></div>
           <div>Stability: <span className="font-bold">{(nextBrainState.workspace.stability * 100).toFixed(0)}%</span></div>
           <div>Held Items: <span className="font-bold">{nextBrainState.workspace.heldItems.length}</span></div>
+          <div>Distractor Pressure: <span className="font-bold">{(nextBrainState.workspace.distractorPressure * 100).toFixed(0)}%</span></div>
+          <div>Phase Timer: <span className="font-bold">{nextBrainState.workspace.phaseTimer} turns</span></div>
         </div>
         {nextBrainState.workspace.heldItems.length > 0 && (
           <div className="mt-2 space-y-1">
             {nextBrainState.workspace.heldItems.slice(0, 5).map((item, idx) => (
               <div key={idx} className="text-xs text-pink-600">
-                • {item.label} (salience: {item.salience.toFixed(2)}, source: {item.source})
+                • {item.content} (strength: {item.strength.toFixed(2)}, age: {item.age} turns)
               </div>
             ))}
           </div>
