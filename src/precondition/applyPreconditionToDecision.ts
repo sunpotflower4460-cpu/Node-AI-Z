@@ -9,11 +9,7 @@ export const applyPreconditionToDecision = (
   decision: SignalDecision,
   precondition: PreconditionFilter,
 ): SignalDecision => {
-  const { home, existence, belief } = precondition
-
-  // Home layer: if returnBeforeOutput is high, may add slight hesitation
-  const shouldSpeak = decision.shouldSpeak
-  const homeModulation = home.returnBeforeOutput > 0.7 ? 0.95 : 1.0
+  const { existence, belief } = precondition
 
   // Existence layer: selfPresence affects closeness/distance
   const existenceClosenessBoost = existence.selfPresence * 0.1
@@ -22,7 +18,7 @@ export const applyPreconditionToDecision = (
     (decision.closeness ?? 0.5) + existenceClosenessBoost,
   )
 
-  // Belief layer: if doNotForceTooEarly is high, reduce withheldBias slightly
+  // Belief layer: if doNotForceTooEarly is high, increase withheldBias slightly
   const beliefWithheldModulation = belief.doNotForceTooEarly > 0.8 ? 1.1 : 1.0
   const modulatedWithheldBias = Math.min(
     1,
@@ -31,12 +27,11 @@ export const applyPreconditionToDecision = (
 
   return {
     ...decision,
-    shouldSpeak,
     closeness: modulatedCloseness,
     withheldBias: modulatedWithheldBias,
     decisionTrace: [
       ...decision.decisionTrace,
-      `precondition: home=${home.returnBeforeOutput.toFixed(2)} existence=${existence.selfPresence.toFixed(2)} belief=${belief.preserveAliveness.toFixed(2)}`,
+      `precondition: existence=${existence.selfPresence.toFixed(2)} belief=${belief.preserveAliveness.toFixed(2)}`,
     ],
   }
 }

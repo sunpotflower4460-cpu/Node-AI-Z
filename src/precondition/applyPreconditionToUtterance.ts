@@ -3,7 +3,7 @@ import type { UtteranceIntent } from '../utterance/types'
 
 /**
  * Applies precondition filter to utterance intent.
- * Preconditions subtly shape emotional distance and withhold tendency.
+ * Preconditions subtly shape emotional distance and ambiguity tolerance.
  */
 export const applyPreconditionToUtterance = (
   utteranceIntent: UtteranceIntent,
@@ -11,8 +11,8 @@ export const applyPreconditionToUtterance = (
 ): UtteranceIntent => {
   const { home, existence, belief } = precondition
 
-  // Home: if allowOneLivingThread is high, reduce scatter
-  const homeCoherence = home.allowOneLivingThread
+  // Home: if allowOneLivingThread is high, increase structure need
+  const homeStructureBoost = home.allowOneLivingThread * 0.1
 
   // Existence: selfPresence affects emotional distance
   // Higher selfPresence can mean more grounded, slightly closer emotional distance
@@ -22,23 +22,25 @@ export const applyPreconditionToUtterance = (
     Math.min(1, utteranceIntent.emotionalDistance + existenceDistanceModulation),
   )
 
-  // Belief: honorFragility increases withhold tendency to protect delicate states
-  const beliefWithholdBoost = belief.honorFragility * 0.1
-  const modulatedWithhold = Math.min(
+  // Belief: honorFragility increases ambiguity tolerance to protect delicate states
+  const beliefAmbiguityBoost = belief.honorFragility * 0.1
+  const modulatedAmbiguity = Math.min(
     1,
-    utteranceIntent.withholdTendency + beliefWithholdBoost,
+    utteranceIntent.ambiguityTolerance + beliefAmbiguityBoost,
+  )
+
+  // Belief: doNotForceTooEarly reduces answerForce
+  const beliefAnswerReduction = belief.doNotForceTooEarly * 0.1
+  const modulatedAnswerForce = Math.max(
+    0,
+    utteranceIntent.answerForce - beliefAnswerReduction,
   )
 
   return {
     ...utteranceIntent,
     emotionalDistance: modulatedDistance,
-    withholdTendency: modulatedWithhold,
-    // Add subtle trace if significant modulation occurred
-    trace: [
-      ...(utteranceIntent.trace || []),
-      ...(homeCoherence > 0.7 ? ['precondition:home_coherent'] : []),
-      ...(existence.selfPresence > 0.6 ? ['precondition:self_present'] : []),
-      ...(belief.honorFragility > 0.7 ? ['precondition:honor_fragile'] : []),
-    ],
+    ambiguityTolerance: modulatedAmbiguity,
+    answerForce: modulatedAnswerForce,
+    structureNeed: Math.min(1, utteranceIntent.structureNeed + homeStructureBoost),
   }
 }

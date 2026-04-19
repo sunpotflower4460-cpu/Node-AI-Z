@@ -12,7 +12,6 @@ import { buildPreconditionFilter } from '../precondition/buildPreconditionFilter
 import { applyPreconditionToFusedState } from '../precondition/applyPreconditionToFusedState'
 import { applyPreconditionToUtterance } from '../precondition/applyPreconditionToUtterance'
 import { getPersonaWeightVector } from '../persona/getPersonaWeightVector'
-import { applyPersonaToSignals } from '../persona/applyPersonaToSignals'
 import { applyPersonaToProtoMeanings } from '../persona/applyPersonaToProtoMeanings'
 import { applyPersonaToOptionAwareness } from '../persona/applyPersonaToOptionAwareness'
 import { applyPersonaToUtterance } from '../persona/applyPersonaToUtterance'
@@ -65,13 +64,7 @@ export const runCrystallizedThinkingRuntime = ({
     personalLearning.somaticMarkers,
   )
 
-  // ===== Pass 3: Apply Persona to signals and meanings =====
-
-  // Apply persona weighting to active cues (from dual stream)
-  const personaModulatedCues = applyPersonaToSignals(
-    chunkedResult.dualStream.activeCues,
-    personaWeightVector,
-  )
+  // ===== Pass 3: Apply Persona to proto meanings =====
 
   // Apply persona to proto meanings
   const personaModulatedSensory = applyPersonaToProtoMeanings(
