@@ -15,6 +15,8 @@ import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
 import type { ExperienceMessage, AppMode, ObservationRecord, RuntimeMode, ImplementationMode } from '../types/experience'
 import type { RevisionEntry, RevisionState, UserTuningAction } from '../types/nodeStudio'
 import type { SessionBrainState } from '../brain/sessionBrainState'
+import { createInitialBrainState } from '../brain/createInitialBrainState'
+import { loadSessionBrainState, saveSessionBrainState } from '../storage/sessionBrainStorage'
 import { mapExperienceMessagesToObservationHistory, mergeObservationHistories } from '../studio/mapExperienceMessagesToObservationHistory'
 import { ModeSwitch } from '../ui/components/ModeSwitch'
 import { ExperienceMode } from '../ui/modes/ExperienceMode'
@@ -32,7 +34,11 @@ export default function NodeStudioPage() {
   const [isApiPanelOpen, setIsApiPanelOpen] = useState(false)
   const [personalLearning, setPersonalLearning] = useState<PersonalLearningState>(() => createPersonalLearningState())
   // Phase 1: Session brain state for crystallized_thinking mode
-  const [brainState, setBrainState] = useState<SessionBrainState | undefined>(undefined)
+  const [brainState, setBrainState] = useState<SessionBrainState | undefined>(() => {
+    // Load from localStorage if available, otherwise create new initial state
+    const loaded = loadSessionBrainState()
+    return loaded ?? createInitialBrainState()
+  })
 
   const currentProviderConfig = useMemo(() => getApiProviderConfig(apiSelection.baseProvider), [apiSelection.baseProvider])
 
@@ -47,6 +53,13 @@ export default function NodeStudioPage() {
   useEffect(() => {
     saveApiSelection(apiSelection)
   }, [apiSelection])
+
+  // Phase 1: Save brain state to localStorage when it changes
+  useEffect(() => {
+    if (brainState && implementationMode === 'crystallized_thinking') {
+      saveSessionBrainState(brainState)
+    }
+  }, [brainState, implementationMode])
 
   const addRevisionEntryToMemory = useCallback((entry: RevisionEntry) => {
     setRevisionState((previous) => addRevisionEntry(previous, entry))

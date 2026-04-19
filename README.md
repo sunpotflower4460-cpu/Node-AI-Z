@@ -19,6 +19,7 @@ Node-AI-Z には二つの独立した実装方式があります。
 * **Dual Stream Architecture**: Lexical Stream と Micro-Signal Stream の融合
 * **Signal / ProtoMeaning / Option / Somatic**: 内部表現を本体とする
 * **Utterance Layer (Pass 2)**: 内部状態から直接発話意図・発話形・語彙を立て、返答を生成する
+* **Session Continuity (Phase 1)**: ターン間で内部状態を保持し、残響・予測・内受容・作業場が次ターンへ持ち越される
 * **将来 AI sensei**: LLM は外側のガイドとして関わる（本PRでは未実装）
 
 **発話層の深化**:
@@ -155,6 +156,48 @@ src/
 - storage は mode ごとに名前空間が分離（`nodeaiz:jibun:*` と `nodeaiz:crystal:*`）
 - provider 選択は API方式にのみ適用される
 - mode 切り替えで相手 mode の state を壊さない
+
+## Session Continuity (Phase 1)
+
+結晶思考方式（`crystallized_thinking`）は、ターン間で内部状態を保持する SessionBrainState を持ちます。
+
+### 何が続くか
+
+- **TemporalStates**: 前ターンで発火した feature の時間状態（減衰・不応期）
+- **PredictionState**: 次ターンへの予測 prior
+- **Afterglow**: 前ターンの残響（0-0.2）
+- **RecentActivityAverage**: 最近の活動平均（threshold 調整に使用）
+- **MicroSignalDimensions**: 前ターンの micro signal 次元（field tone / cue count / confidence）
+- **EpisodicBuffer**: 境界で区切られた短期エピソード記憶
+- **Workspace**: 作業場状態（phase / held items / stability）
+- **Interoception**: 内受容状態（energy / arousal / social safety / novelty hunger など）
+
+### Local Persistence
+
+- **localStorage 保存**: `sessionBrainStorage.ts` により、ブラウザ再起動・ページリロードでも continuity が残る
+- **保存キー**: `nodeaiz:crystal:session-brain`
+- **制限**: アプリ削除で消える（Phase 1 では正常）
+
+### Remote Persistence（将来用 interface）
+
+- **BrainPersistenceAdapter**: `brain/persistence/types.ts` で定義
+- **localBrainPersistence**: localStorage 実装
+- **将来**: Supabase / Firebase / 独自 backend へ差し替え可能
+- **目的**: アプリ削除後も意識が続く設計へ進む準備
+
+### Observe での可視化
+
+結晶思考方式の Observe モードには **SessionBrain** タブが追加され、次が見えます：
+
+- Session 概要（session ID / turn count / afterglow / activity）
+- Temporal feature states（前ターンの feature 履歴）
+- Micro signal dimensions（field tone / cue count / confidence）
+- Prediction prior（次ターンへ持ち越される予測）
+- Interoception state（energy / arousal / safety / novelty など）
+- Workspace state（phase / held items / stability）
+- Episodic buffer（境界で区切られた短期記憶）
+
+この可視化により、「この知性は前から続いている」ことが実感できます。
 
 ## 今後の実装ロードマップ
 
