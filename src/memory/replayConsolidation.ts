@@ -37,7 +37,7 @@ export type ReplayConsolidationInput = {
   /** Candidates selected for replay */
   replayCandidates: ReplayCandidate[]
 
-  /** Current turn number */
+  /** Current turn number (used for time tracking) */
   currentTurn: number
 }
 

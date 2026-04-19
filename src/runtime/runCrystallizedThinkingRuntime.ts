@@ -54,7 +54,7 @@ import {
   shouldRunReplay,
   createEmptySchemaMemory,
 } from '../memory'
-import type { EpisodicTrace, SchemaInfluenceNote, ReplayConsolidationResult } from '../memory/types'
+import type { ReplayConsolidationResult } from '../memory/types'
 
 /**
  * Crystallized Thinking Runtime

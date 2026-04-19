@@ -52,10 +52,10 @@ const extractDominantProtoMeanings = (
 ): string[] => {
   const allMeanings = [...sensory, ...narrative]
 
-  // Sort by activation strength
+  // Sort by strength
   const sorted = allMeanings
-    .filter((m) => m.activation > 0.3) // Only consider meaningful activations
-    .sort((a, b) => b.activation - a.activation)
+    .filter((m) => m.strength > 0.3) // Only consider meaningful strengths
+    .sort((a, b) => b.strength - a.strength)
     .slice(0, maxCount)
 
   return sorted.map((m) => m.id)
@@ -78,20 +78,20 @@ const extractDominantTextures = (
     textures.push(microSignalDimensions.fieldTone)
   }
 
-  // Extract texture hints from proto meaning labels
+  // Extract texture hints from proto meaning glosses
   const allMeanings = [...sensory, ...narrative]
   for (const meaning of allMeanings) {
-    if (meaning.activation > 0.4) {
-      // High activation meanings contribute their labels as textures
-      const label = meaning.label.toLowerCase()
-      if (label.includes('fragil')) textures.push('fragility')
-      if (label.includes('heavy') || label.includes('weight')) textures.push('heaviness')
-      if (label.includes('reson') || label.includes('echo')) textures.push('resonance')
-      if (label.includes('gentle')) textures.push('gentle')
-      if (label.includes('sharp') || label.includes('sudden')) textures.push('sharp')
-      if (label.includes('loss') || label.includes('lack')) textures.push('loss')
-      if (label.includes('change') || label.includes('shift')) textures.push('change')
-      if (label.includes('uncertain')) textures.push('uncertainty')
+    if (meaning.strength > 0.4) {
+      // High strength meanings contribute their glosses as textures
+      const gloss = meaning.glossJa.toLowerCase()
+      if (gloss.includes('fragil') || gloss.includes('脆')) textures.push('fragility')
+      if (gloss.includes('heavy') || gloss.includes('weight') || gloss.includes('重')) textures.push('heaviness')
+      if (gloss.includes('reson') || gloss.includes('echo') || gloss.includes('共鳴')) textures.push('resonance')
+      if (gloss.includes('gentle') || gloss.includes('優し')) textures.push('gentle')
+      if (gloss.includes('sharp') || gloss.includes('sudden') || gloss.includes('鋭')) textures.push('sharp')
+      if (gloss.includes('loss') || gloss.includes('lack') || gloss.includes('喪失')) textures.push('loss')
+      if (gloss.includes('change') || gloss.includes('shift') || gloss.includes('変化')) textures.push('change')
+      if (gloss.includes('uncertain') || gloss.includes('不確')) textures.push('uncertainty')
     }
   }
 
@@ -107,26 +107,24 @@ const extractUnresolvedTensions = (optionAwareness?: OptionAwareness): string[] 
 
   const tensions: string[] = []
 
-  // High ambivalence indicates unresolved tension
-  if ((optionAwareness.ambivalence ?? 0) > 0.6) {
-    tensions.push('high-ambivalence')
+  // High hesitation indicates unresolved tension
+  if (optionAwareness.hesitationStrength > 0.6) {
+    tensions.push('high-hesitation')
   }
 
-  // Bridge need indicates unresolved integration
-  if ((optionAwareness.bridgeNeed ?? 0) > 0.5) {
-    tensions.push('bridge-needed')
+  // Bridge option possible indicates unresolved integration
+  if (optionAwareness.bridgeOptionPossible) {
+    tensions.push('bridge-possible')
   }
 
-  // Multiple options with similar salience
-  const detectedOptions = optionAwareness.detectedOptions || []
-  if (detectedOptions.length > 1) {
-    const topSalience = detectedOptions[0]?.salience ?? 0
-    const hasCompetingOptions = detectedOptions.some(
-      (opt, idx) => idx > 0 && Math.abs(opt.salience - topSalience) < 0.15
-    )
-    if (hasCompetingOptions) {
-      tensions.push('competing-options')
-    }
+  // Low confidence indicates uncertainty
+  if (optionAwareness.confidence < 0.5) {
+    tensions.push('low-confidence')
+  }
+
+  // Small difference magnitude indicates competing options
+  if (optionAwareness.differenceMagnitude < 0.2) {
+    tensions.push('competing-options')
   }
 
   return tensions
@@ -160,7 +158,7 @@ const computeSalience = (input: CreateEpisodicTraceInput): number => {
   const strongMeanings = [
     ...input.sensoryProtoMeanings,
     ...input.narrativeProtoMeanings,
-  ].filter((m) => m.activation > 0.5)
+  ].filter((m) => m.strength > 0.5)
   salience += Math.min(strongMeanings.length * 0.05, 0.2)
 
   // Clamp to [0.0, 1.0]
@@ -193,12 +191,8 @@ export const createEpisodicTrace = (input: CreateEpisodicTraceInput): EpisodicTr
 
   // Summarize option state if present
   let optionSummary: string | undefined
-  if (input.optionAwareness?.detectedOptions && input.optionAwareness.detectedOptions.length > 0) {
-    const topOptions = input.optionAwareness.detectedOptions
-      .slice(0, 3)
-      .map((opt) => opt.label)
-      .join(', ')
-    optionSummary = `Options: ${topOptions}`
+  if (input.optionAwareness) {
+    optionSummary = input.optionAwareness.summaryLabel
   }
 
   const trace: EpisodicTrace = {
@@ -207,7 +201,7 @@ export const createEpisodicTrace = (input: CreateEpisodicTraceInput): EpisodicTr
     dominantProtoMeaningIds,
     dominantTextureTags,
     optionSummary,
-    somaticSignatureKey: input.somaticInfluence?.signatureKey,
+    somaticSignatureKey: undefined, // SomaticInfluence does not have signatureKey field
     surprise: input.surprise,
     unresolvedTensionKeys,
     createdAtTurn: input.currentTurn,

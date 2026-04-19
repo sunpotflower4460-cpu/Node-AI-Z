@@ -10,8 +10,7 @@
 import type { SchemaMemoryState, SchemaInfluenceNote } from './types'
 import type { FusedState } from '../fusion/types'
 import type { ProtoMeaning } from '../meaning/types'
-import type { OptionAwareness } from '../option/types'
-import type { OptionDecision } from '../option/mapOptionAwarenessToDecision'
+import type { OptionAwareness, OptionDecisionShape } from '../option/types'
 
 export type ApplySchemaInfluenceInput = {
   /** Current fused state */
@@ -27,7 +26,7 @@ export type ApplySchemaInfluenceInput = {
   optionAwareness?: OptionAwareness
 
   /** Option decision */
-  optionDecision?: OptionDecision
+  optionDecision?: OptionDecisionShape
 
   /** Schema memory state */
   schemaMemory: SchemaMemoryState
@@ -91,20 +90,25 @@ const applySchemaToFusedState = (
 
   for (const { schema, relevance } of relevantSchemas.slice(0, 2)) {
     // Only top 2 schemas
-    // If schema shows recurring unresolved patterns, slightly boost integrated tensions
+    // If schema shows recurring unresolved patterns, add to integrated tensions
     if (schema.optionTendencyKeys.some((key) => key.includes('ambivalence') || key.includes('tension'))) {
-      const delta = relevance * 0.05 // Small boost
-      updated = {
-        ...updated,
-        integratedTensions: Math.min((updated.integratedTensions ?? 0) + delta, 1.0),
-      }
+      const tensionKey = schema.optionTendencyKeys.find((key) =>
+        key.includes('ambivalence') || key.includes('tension')
+      )
 
-      notes.push({
-        patternId: schema.id,
-        target: 'fused',
-        delta,
-        reason: `Schema shows recurring tension pattern`,
-      })
+      if (tensionKey && !updated.integratedTensions.includes(tensionKey)) {
+        updated = {
+          ...updated,
+          integratedTensions: [...updated.integratedTensions, tensionKey],
+        }
+
+        notes.push({
+          patternId: schema.id,
+          target: 'fused',
+          delta: relevance * 0.1,
+          reason: `Schema adds recurring tension: ${tensionKey}`,
+        })
+      }
     }
   }
 
@@ -136,11 +140,11 @@ const applySchemaToProtoMeanings = (
           patternId: schema.id,
           target: 'proto',
           delta: boost,
-          reason: `Schema reinforces recurring narrative '${meaning.label}'`,
+          reason: `Schema reinforces recurring narrative '${meaning.glossJa}'`,
         })
         return {
           ...meaning,
-          activation: Math.min(meaning.activation + boost, 1.0),
+          strength: Math.min(meaning.strength + boost, 1.0),
         }
       }
       return meaning
@@ -152,7 +156,7 @@ const applySchemaToProtoMeanings = (
 
 /**
  * Applies schema influence to option awareness.
- * Recurring ambivalence or bridge-need patterns may slightly boost current values.
+ * Recurring hesitation or bridge patterns may slightly boost current values.
  */
 const applySchemaToOptions = (
   optionAwareness: OptionAwareness,
@@ -162,33 +166,28 @@ const applySchemaToOptions = (
   let updated = optionAwareness
 
   for (const { schema, relevance } of relevantSchemas.slice(0, 2)) {
-    // Ambivalence tendency
-    if (schema.optionTendencyKeys.includes('high-ambivalence')) {
+    // Hesitation tendency
+    if (schema.optionTendencyKeys.includes('high-hesitation')) {
       const boost = relevance * schema.strength * 0.06
       updated = {
         ...updated,
-        ambivalence: Math.min((updated.ambivalence ?? 0) + boost, 1.0),
+        hesitationStrength: Math.min(updated.hesitationStrength + boost, 1.0),
       }
       notes.push({
         patternId: schema.id,
         target: 'option',
         delta: boost,
-        reason: 'Schema shows recurring ambivalence tendency',
+        reason: 'Schema shows recurring hesitation tendency',
       })
     }
 
-    // Bridge need tendency
-    if (schema.optionTendencyKeys.includes('bridge-needed')) {
-      const boost = relevance * schema.strength * 0.06
-      updated = {
-        ...updated,
-        bridgeNeed: Math.min((updated.bridgeNeed ?? 0) + boost, 1.0),
-      }
+    // Bridge possible tendency - note: bridgeOptionPossible is boolean, so we just note it
+    if (schema.optionTendencyKeys.includes('bridge-possible') && !updated.bridgeOptionPossible) {
       notes.push({
         patternId: schema.id,
         target: 'option',
-        delta: boost,
-        reason: 'Schema shows recurring bridge need',
+        delta: 0,
+        reason: 'Schema suggests bridge option possibility',
       })
     }
   }
@@ -198,23 +197,23 @@ const applySchemaToOptions = (
 
 /**
  * Applies schema influence to option decision.
- * If schemas show tendency to push too hard or be too vague, adjust answerForce/structureNeed.
+ * If schemas show tendency to push too hard or be too vague, adjust confidence.
  */
 const applySchemaToDecision = (
-  optionDecision: OptionDecision,
+  optionDecision: OptionDecisionShape,
   relevantSchemas: ReturnType<typeof findRelevantSchemas>,
   notes: SchemaInfluenceNote[],
-): OptionDecision => {
+): OptionDecisionShape => {
   let updated = optionDecision
 
   for (const { schema, relevance } of relevantSchemas.slice(0, 1)) {
     // Only top schema
-    // If schema shows pattern of excessive force, dial it down
+    // If schema shows pattern of excessive force, dial down confidence
     if (schema.optionTendencyKeys.some((key) => key.includes('push') || key.includes('force'))) {
       const adjustment = -relevance * schema.confidence * 0.05
       updated = {
         ...updated,
-        answerForce: Math.max((updated.answerForce ?? 0.5) + adjustment, 0.0),
+        confidence: Math.max(updated.confidence + adjustment, 0.0),
       }
       notes.push({
         patternId: schema.id,
@@ -224,17 +223,12 @@ const applySchemaToDecision = (
       })
     }
 
-    // If schema shows pattern of excessive vagueness, boost structure need
+    // If schema shows pattern of excessive vagueness, boost shouldDefer
     if (schema.optionTendencyKeys.some((key) => key.includes('vague') || key.includes('unclear'))) {
-      const adjustment = relevance * schema.confidence * 0.05
-      updated = {
-        ...updated,
-        structureNeed: Math.min((updated.structureNeed ?? 0.5) + adjustment, 1.0),
-      }
       notes.push({
         patternId: schema.id,
         target: 'decision',
-        delta: adjustment,
+        delta: 0,
         reason: 'Schema shows recurring vagueness pattern',
       })
     }
@@ -254,7 +248,7 @@ export const applySchemaInfluence = (
   sensoryProtoMeanings: ProtoMeaning[]
   narrativeProtoMeanings: ProtoMeaning[]
   optionAwareness?: OptionAwareness
-  optionDecision?: OptionDecision
+  optionDecision?: OptionDecisionShape
   influenceNotes: SchemaInfluenceNote[]
 } => {
   const notes: SchemaInfluenceNote[] = []

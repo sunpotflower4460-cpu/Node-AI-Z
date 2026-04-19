@@ -85,10 +85,10 @@ const computeReplayCandidateScore = (
 
   // Resonance with workspace held items
   if (input.workspace.heldItems.length > 0) {
-    // Check if trace textures match workspace item labels (simple heuristic)
-    const workspaceLabels = input.workspace.heldItems.map((item) => item.label.toLowerCase())
+    // Check if trace textures match workspace item content (simple heuristic)
+    const workspaceContents = input.workspace.heldItems.map((item) => item.content.toLowerCase())
     const matchesWorkspace = trace.dominantTextureTags.some((tag) =>
-      workspaceLabels.some((label) => label.includes(tag) || tag.includes(label.split(' ')[0]))
+      workspaceContents.some((content) => content.includes(tag) || tag.includes(content.split(' ')[0]))
     )
     if (matchesWorkspace) {
       score += 0.2
