@@ -17,6 +17,10 @@ import type { EventBoundary } from '../boundary/boundaryTypes'
 import type { ConfidenceState } from '../meta/computeInterpretationConfidence'
 import type { UncertaintyState } from '../predictive/uncertaintyTypes'
 import type { ReplaySummary } from '../replay/runIdleReplay'
+import type { InteroceptiveState } from '../interoception/interoceptiveState'
+import type { CoalitionState } from '../coalition/mergeCoalitionState'
+import type { WorkspaceState } from '../workspace/workspacePhaseMachine'
+import type { InternalActionPolicy } from '../action/buildActiveSensingPolicy'
 
 /**
  * Base runtime result shared by both modes
@@ -77,6 +81,11 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   confidenceState?: ConfidenceState
   uncertaintyState?: UncertaintyState
   replaySummary?: ReplaySummary
+  // Phase 3: Interoception / Coalition / Workspace / Action
+  interoceptiveState?: InteroceptiveState
+  coalitionState?: CoalitionState
+  workspaceState?: WorkspaceState
+  internalActionPolicy?: InternalActionPolicy
 }
 
 /**

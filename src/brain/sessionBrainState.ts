@@ -6,6 +6,8 @@
 
 import type { TemporalFeatureState } from '../signal/temporalTypes'
 import type { PredictionState } from '../predictive/types'
+import type { InteroceptiveState } from '../interoception/interoceptiveState'
+import type { WorkspaceState } from '../workspace/workspacePhaseMachine'
 
 /**
  * Episodic buffer entry
@@ -19,22 +21,6 @@ export type EpisodicBufferEntry = {
   boundaryScore?: number
   /** Surprise magnitude at this segment */
   surpriseMagnitude?: number
-}
-
-/**
- * Workspace state (simplified for Phase 1)
- */
-export type WorkspaceState = {
-  activeItems: string[]
-  capacity: number
-}
-
-/**
- * Interoceptive state (simplified for Phase 1)
- */
-export type InteroceptiveState = {
-  arousal: number // 0-1
-  valence: number // -1 to 1
 }
 
 /**
@@ -78,9 +64,9 @@ export type SessionBrainState = {
   /** Episodic buffer (minimal for Phase 1) */
   episodicBuffer: EpisodicBufferEntry[]
 
-  /** Workspace state (minimal for Phase 1) */
+  /** Workspace state (Phase 3: full phase-based control) */
   workspace: WorkspaceState
 
-  /** Interoceptive state (minimal for Phase 1) */
+  /** Interoceptive state (Phase 3: full regulation state) */
   interoception: InteroceptiveState
 }
