@@ -445,6 +445,70 @@ Phase M7 により、結晶思考方式は：
 
 詳細なセットアップ方法は `docs/phase-m7-remote-backend-setup.md` を参照してください。
 
+## Phase M8 — Snapshot 世代管理 / Restore 実行 / 複数端末復帰
+
+結晶思考方式は、Phase M8 で **Snapshot 世代管理と Restore 実行** を獲得しました。
+
+### 何が変わったか
+
+Phase M8 では、Phase M6/M7 で準備した persistence infrastructure に対して、実際に **復元できる仕組み** を追加しました：
+
+* **Snapshot Catalog**: snapshot を世代管理し、種類ごとに保持ポリシーを適用
+* **Snapshot Retention**: turn / manual / safety / restore_checkpoint の各世代を適切に保持・削除
+* **Restore Preview**: restore 前に「何が変わるか」を確認できる
+* **Restore Execution**: 実際に SessionBrainState を過去の状態へ復元
+* **Safety Snapshot**: restore 前に必ず現在状態の safety snapshot を自動作成
+* **Journal Replay**: journal events から復旧候補を抽出（最小版）
+* **Device Session Registry**: どの端末がいつ session に触ったかを記録
+* **Conflict Resolver**: local / remote / snapshot が異なる場合にどれを採用するか決定
+
+### Snapshot Generation Types
+
+Phase M8 では4種類の snapshot generation を扱います：
+
+* **turn**: 一定ターンごとの自動 snapshot（デフォルト: 10個保持）
+* **manual**: 手動で作成したバックアップ用 snapshot（デフォルト: 20個保持）
+* **safety**: restore 前の自動バックアップ（デフォルト: 5個保持）
+* **restore_checkpoint**: restore 後の確認用 snapshot（デフォルト: 5個保持）
+
+### Restore フロー
+
+Restore は以下の流れで実行されます：
+
+1. **Preview**: restore 候補の状態と現在状態を比較し、差分を表示
+2. **Safety Snapshot**: 現在状態の safety snapshot を自動作成
+3. **Execution**: target state を load し、SessionBrainState を置き換え
+4. **Journal Record**: restore を journal に記録
+
+### Multi-Device 対応
+
+Phase M8 では、複数端末からの復帰を最小限サポートします：
+
+* **Device Session Registry**: 各端末がいつ・何ターンで保存したかを記録
+* **Conflict Resolver**: local / remote で状態が異なる場合、updatedAt と turnCount で判断
+* **簡易ルール**: 基本的に「新しい方を優先」「同じ時刻なら turnCount が高い方」
+
+### UI での可視化
+
+SessionBrain タブに以下が追加されました：
+
+* **Snapshot Catalog**: 各世代の snapshot 数
+* **Retention Summary**: 保持 / 削除される snapshot 数
+* **Device Session Tracking**: この端末と他端末の状態
+* **Conflict Resolution**: local / remote の競合状態
+
+### Phase M8 の主要コンポーネント
+
+1. **snapshotCatalog.ts**: snapshot の一覧管理・世代別グループ化
+2. **snapshotRetention.ts**: retention policy 適用・pruning 実行
+3. **restorePreview.ts**: restore 前の差分プレビュー生成
+4. **restoreExecutor.ts**: restore 実行と safety snapshot 作成
+5. **journalReplay.ts**: journal events から復旧候補を抽出
+6. **deviceSessionRegistry.ts**: 端末ごとの session 状態記録
+7. **conflictResolver.ts**: 複数 source の競合解決
+
+これにより、「この知性は保存できる」だけでなく「安全に戻せる」ことが実感できます。
+
 ## 今後の実装ロードマップ
 
 次の機能追加は、原則としてこの順で積みます。

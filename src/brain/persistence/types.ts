@@ -120,3 +120,82 @@ export type RecoveryPlan = {
   /** Created at timestamp */
   createdAt: number
 }
+
+/**
+ * Phase M8: Snapshot Generation Management Types
+ */
+
+/**
+ * Snapshot generation type
+ */
+export type SnapshotGeneration = 'turn' | 'manual' | 'safety' | 'restore_checkpoint'
+
+/**
+ * Snapshot catalog entry for managing snapshot generations
+ */
+export type SnapshotCatalogEntry = {
+  snapshotId: string
+  sessionId: string
+  createdAt: number
+  turnCount: number
+  generation: SnapshotGeneration
+  storageTarget: 'local' | 'remote'
+  label?: string
+  sizeHint?: number
+}
+
+/**
+ * Restore preview information
+ * Shows what will change if restore is executed
+ */
+export type RestorePreview = {
+  sessionId: string
+  sourceSnapshotId?: string
+  source: 'local_snapshot' | 'remote_snapshot' | 'journal_replay' | 'latest_remote' | 'latest_local'
+  currentTurnCount?: number
+  targetTurnCount?: number
+  currentUpdatedAt?: number
+  targetUpdatedAt?: number
+  summary: string[]
+  diffs: {
+    afterglowChanged: boolean
+    episodicCountDelta: number
+    schemaCountDelta: number
+    mixedNodeCountDelta: number
+    interoceptionChangedKeys: string[]
+  }
+  recommended: boolean
+  cautionNotes: string[]
+}
+
+/**
+ * Restore execution result
+ */
+export type RestoreExecutionResult = {
+  success: boolean
+  restoredFrom: string
+  safetySnapshotId?: string
+  notes: string[]
+}
+
+/**
+ * Device session record for multi-device management
+ */
+export type DeviceSessionRecord = {
+  sessionId: string
+  deviceId: string
+  deviceLabel?: string
+  lastSeenAt: number
+  lastSavedAt: number
+  turnCount: number
+  updatedAt: number
+}
+
+/**
+ * Conflict resolution result
+ */
+export type ConflictResolutionResult = {
+  chosenSource: 'local' | 'remote' | 'snapshot' | 'journal_replay'
+  reason: string
+  notes: string[]
+}
