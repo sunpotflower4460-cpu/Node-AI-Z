@@ -69,6 +69,7 @@ export {
   recordWorkspaceChanged,
   recordMixedNodeSelected,
   recordRecoveryPlanned,
+  addJournalEvent,
 } from './journalWriter'
 
 // Recovery planning

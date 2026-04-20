@@ -268,6 +268,25 @@ export const recordRecoveryPlanned = (
 }
 
 /**
+ * Add a journal event with custom payload (Phase M8)
+ * General-purpose helper for adding arbitrary journal events
+ */
+export const addJournalEvent = (params: {
+  sessionId: string
+  type: JournalEventType
+  turnCount: number
+  payload: Record<string, unknown>
+}): void => {
+  const event = createJournalEvent(
+    params.sessionId,
+    params.turnCount,
+    params.type,
+    params.payload
+  )
+  appendJournalEvent(event)
+}
+
+/**
  * List all journal events for a session (Phase M7)
  * Combines local and remote journal events
  */

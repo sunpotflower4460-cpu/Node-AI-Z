@@ -4,6 +4,7 @@
  * Shows how the internal state persists and evolves across turns.
  *
  * Phase M6: Added persistence state visualization (snapshots, journal, recovery)
+ * Phase M8: Added snapshot catalog, restore preview, device tracking, conflict resolution
  */
 
 import { useState, useEffect } from 'react'
@@ -13,6 +14,12 @@ import {
   loadSnapshotMetadataList,
   getSessionJournalEvents,
   getRecoveryOptions,
+  // Phase M8
+  listSnapshotCatalog,
+  getDeviceSessionSummary,
+  hasConflict,
+  getRetentionSummary,
+  DEFAULT_RETENTION_POLICY,
 } from '../../brain/persistence'
 
 type SessionBrainTabProps = {
@@ -27,6 +34,18 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
   const [snapshotCount, setSnapshotCount] = useState(0)
   const [journalCount, setJournalCount] = useState(0)
   const [recoveryOptions, setRecoveryOptions] = useState<Awaited<ReturnType<typeof getRecoveryOptions>> | null>(null)
+
+  // Phase M8: Extended persistence state
+  const [catalogSummary, setCatalogSummary] = useState<{
+    total: number
+    byGeneration: Record<string, number>
+  } | null>(null)
+  const [deviceSummary, setDeviceSummary] = useState<ReturnType<typeof getDeviceSessionSummary> | null>(null)
+  const [conflictStatus, setConflictStatus] = useState<Awaited<ReturnType<typeof hasConflict>> | null>(null)
+  const [retentionSummary, setRetentionSummary] = useState<{
+    kept: number
+    pruned: number
+  } | null>(null)
 
   useEffect(() => {
     if (nextBrainState) {
@@ -44,6 +63,45 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
         setRecoveryOptions(options)
       }).catch(error => {
         console.warn('Failed to get recovery options:', error)
+      })
+
+      // Phase M8: Load snapshot catalog
+      listSnapshotCatalog(nextBrainState.sessionId).then(catalog => {
+        const byGeneration: Record<string, number> = {
+          turn: 0,
+          manual: 0,
+          safety: 0,
+          restore_checkpoint: 0,
+        }
+
+        for (const entry of catalog) {
+          byGeneration[entry.generation] = (byGeneration[entry.generation] ?? 0) + 1
+        }
+
+        setCatalogSummary({
+          total: catalog.length,
+          byGeneration,
+        })
+
+        // Get retention summary
+        const retention = getRetentionSummary(catalog, DEFAULT_RETENTION_POLICY)
+        setRetentionSummary({
+          kept: retention.summary.kept,
+          pruned: retention.summary.pruned,
+        })
+      }).catch(error => {
+        console.warn('Failed to load snapshot catalog:', error)
+      })
+
+      // Phase M8: Load device session summary
+      const deviceSummaryData = getDeviceSessionSummary(nextBrainState.sessionId)
+      setDeviceSummary(deviceSummaryData)
+
+      // Phase M8: Check for conflicts
+      hasConflict(nextBrainState.sessionId).then(conflict => {
+        setConflictStatus(conflict)
+      }).catch(error => {
+        console.warn('Failed to check conflict status:', error)
       })
     }
   }, [nextBrainState])
@@ -275,6 +333,115 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
         <div className="mt-3 pt-3 border-t border-cyan-200 text-xs text-cyan-600">
           🏗️ Phase M6: Infrastructure ready for Mother Core Server.
           Snapshot/journal/recovery mechanisms are in place, backend integration deferred to future phases.
+        </div>
+      </div>
+
+      {/* Phase M8: Snapshot Generation Management */}
+      {catalogSummary && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
+          <h3 className="text-sm font-bold text-emerald-900 mb-2">Snapshot Catalog (Phase M8)</h3>
+
+          <div className="mb-3 pb-3 border-b border-emerald-200">
+            <div className="text-xs text-emerald-700 mb-1">
+              <span className="font-bold">Total Snapshots:</span> {catalogSummary.total}
+            </div>
+            <div className="text-xs text-emerald-600 space-y-0.5">
+              <div>• Turn: {catalogSummary.byGeneration.turn} (automatic, every N turns)</div>
+              <div>• Manual: {catalogSummary.byGeneration.manual} (user-created)</div>
+              <div>• Safety: {catalogSummary.byGeneration.safety} (pre-restore backups)</div>
+              <div>• Restore Checkpoint: {catalogSummary.byGeneration.restore_checkpoint} (post-restore markers)</div>
+            </div>
+          </div>
+
+          {retentionSummary && (
+            <div className="mb-3 pb-3 border-b border-emerald-200">
+              <div className="text-xs text-emerald-700 mb-1">
+                <span className="font-bold">Retention Policy:</span>
+              </div>
+              <div className="text-xs text-emerald-600">
+                {retentionSummary.kept} snapshots kept, {retentionSummary.pruned} would be pruned
+              </div>
+            </div>
+          )}
+
+          <div className="text-xs text-emerald-600">
+            ✨ Snapshot generations allow safe restore operations with preview and rollback
+          </div>
+        </div>
+      )}
+
+      {/* Phase M8: Device Session Tracking */}
+      {deviceSummary && (
+        <div className="rounded-lg border border-teal-200 bg-teal-50 p-4">
+          <h3 className="text-sm font-bold text-teal-900 mb-2">Multi-Device Tracking (Phase M8)</h3>
+
+          <div className="mb-3 pb-3 border-b border-teal-200">
+            <div className="text-xs text-teal-700 mb-1">
+              <span className="font-bold">Devices:</span> {deviceSummary.totalDevices}
+            </div>
+            <div className="text-xs text-teal-600">
+              {deviceSummary.isThisPrimary ? '✓ This device is primary' : '○ This device is secondary'}
+            </div>
+          </div>
+
+          {deviceSummary.thisDevice && (
+            <div className="mb-3 pb-3 border-b border-teal-200">
+              <div className="text-xs text-teal-700 mb-1">
+                <span className="font-bold">This Device:</span>
+              </div>
+              <div className="text-xs text-teal-600 space-y-0.5">
+                <div>Label: {deviceSummary.thisDevice.deviceLabel ?? 'Unknown'}</div>
+                <div>Turn: {deviceSummary.thisDevice.turnCount}</div>
+                <div>Last Saved: {new Date(deviceSummary.thisDevice.lastSavedAt).toLocaleString()}</div>
+              </div>
+            </div>
+          )}
+
+          <div className="text-xs text-teal-600">
+            🔄 Device tracking enables seamless multi-device session continuity
+          </div>
+        </div>
+      )}
+
+      {/* Phase M8: Conflict Resolution */}
+      {conflictStatus && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <h3 className="text-sm font-bold text-amber-900 mb-2">Conflict Resolution (Phase M8)</h3>
+
+          <div className="mb-3 pb-3 border-b border-amber-200">
+            <div className="text-xs text-amber-700 mb-1">
+              <span className="font-bold">Status:</span> {conflictStatus.hasConflict ? 'Conflict detected' : 'No conflicts'}
+            </div>
+            {conflictStatus.hasConflict && (
+              <div className="text-xs text-amber-600 space-y-0.5 mt-1">
+                <div>Sources: {conflictStatus.sources.join(', ')}</div>
+                {conflictStatus.details.map((detail, i) => (
+                  <div key={i}>• {detail}</div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="text-xs text-amber-600">
+            {conflictStatus.hasConflict
+              ? '⚠️ Multiple sources have different states - resolve before continuing'
+              : '✓ All sources are synchronized'}
+          </div>
+        </div>
+      )}
+
+      {/* Phase M8: Info Note */}
+      <div className="rounded-lg border border-violet-200 bg-violet-50 p-4">
+        <div className="text-xs text-violet-700">
+          <div className="font-bold mb-2">🚀 Phase M8: Snapshot Management & Restore</div>
+          <div className="space-y-1 text-violet-600">
+            <div>• Snapshot catalog tracks generation types (turn, manual, safety, checkpoint)</div>
+            <div>• Retention policy prevents unbounded growth</div>
+            <div>• Restore preview shows what will change before execution</div>
+            <div>• Safety snapshots created automatically before restore</div>
+            <div>• Device session registry tracks multi-device access</div>
+            <div>• Conflict resolver chooses best source when differences exist</div>
+          </div>
         </div>
       </div>
     </div>
