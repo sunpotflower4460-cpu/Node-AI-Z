@@ -1,76 +1,123 @@
 /**
- * Remote Brain Persistence (Stub)
- * Future implementation for remote brain state persistence.
+ * Remote Brain Persistence
+ * Real implementation for remote brain state persistence.
  * Enables cross-device synchronization and post-deletion recovery.
  *
- * Phase M6: Stub implementation with infrastructure ready
- * - Interface is defined and integrated
- * - Snapshot/journal mechanisms are in place
- * - Adapter switching works
- * - Backend integration is deferred to future phases
- *
- * Future implementation will add:
- * - Supabase/Firebase backend integration
+ * Phase M7: Real remote backend implementation
+ * - Supabase backend integration
  * - Multi-device synchronization
  * - Server-side snapshot storage
  * - Journal event persistence
- * - Mother Core Server connection
+ * - Mother Core Server connection foundation
  */
 
 import type { BrainPersistenceAdapter } from './types'
 import type { SessionBrainState } from '../sessionBrainState'
+import { loadBrainState, saveBrainState, clearBrainState } from './backendClient'
+import { getPersistenceConfig } from '../../config/persistenceEnv'
 
 /**
- * Remote persistence adapter (stub).
+ * Remote persistence adapter.
  *
- * Phase M6: This is a stub that returns gracefully without throwing errors.
- * The infrastructure for remote persistence is in place (snapshots, journal, recovery),
- * but the actual backend integration is deferred to future phases.
+ * Phase M7: Full implementation with Supabase backend
  *
- * Future capabilities:
- * - Remote database storage (Supabase, Firebase, etc.)
- * - Mother Core Server integration
+ * Capabilities:
+ * - Remote database storage (Supabase)
+ * - Mother Core Server integration (foundation)
  * - Cross-device synchronization
  * - Post-deletion recovery
  * - Server-side snapshot rotation
  * - Distributed journal storage
- *
- * Current behavior:
- * - load(): Returns undefined (no remote data available)
- * - save(): Returns false (remote not configured)
- * - clear(): Returns false (remote not configured)
  */
 export const remoteBrainPersistence: BrainPersistenceAdapter = {
   /**
    * Loads brain state from remote storage.
    *
-   * Phase M6: Stub returns undefined (no remote backend yet)
+   * Phase M7: Real implementation using Supabase
    */
-  async load(_sessionId: string): Promise<SessionBrainState | undefined> {
-    // Stub: Remote backend not yet implemented
-    // Return undefined to indicate no remote data available
-    return undefined
+  async load(sessionId: string): Promise<SessionBrainState | undefined> {
+    const config = getPersistenceConfig()
+
+    if (!config.remoteEnabled) {
+      if (config.debug) {
+        console.log('Remote persistence disabled, skipping load')
+      }
+      return undefined
+    }
+
+    try {
+      const state = await loadBrainState(sessionId)
+
+      if (config.debug && state) {
+        console.log(`Loaded brain state from remote for session ${sessionId}`)
+      }
+
+      return state
+    } catch (error) {
+      console.warn('Failed to load brain state from remote:', error)
+      return undefined
+    }
   },
 
   /**
    * Saves brain state to remote storage.
    *
-   * Phase M6: Stub returns false (no remote backend yet)
+   * Phase M7: Real implementation using Supabase
    */
-  async save(_state: SessionBrainState): Promise<boolean> {
-    // Stub: Remote backend not yet implemented
-    // Return false to indicate save not successful
-    return false
+  async save(state: SessionBrainState): Promise<boolean> {
+    const config = getPersistenceConfig()
+
+    if (!config.remoteEnabled) {
+      if (config.debug) {
+        console.log('Remote persistence disabled, skipping save')
+      }
+      return false
+    }
+
+    try {
+      const success = await saveBrainState(state)
+
+      if (config.debug) {
+        console.log(
+          `Save brain state to remote for session ${state.sessionId}: ${success ? 'success' : 'failed'}`,
+        )
+      }
+
+      return success
+    } catch (error) {
+      console.warn('Failed to save brain state to remote:', error)
+      return false
+    }
   },
 
   /**
    * Clears brain state from remote storage.
    *
-   * Phase M6: Stub returns false (no remote backend yet)
+   * Phase M7: Real implementation using Supabase
    */
-  async clear(_sessionId: string): Promise<boolean> {
-    // Stub: Remote backend not yet implemented
-    // Return false to indicate clear not successful
-    return false
+  async clear(sessionId: string): Promise<boolean> {
+    const config = getPersistenceConfig()
+
+    if (!config.remoteEnabled) {
+      if (config.debug) {
+        console.log('Remote persistence disabled, skipping clear')
+      }
+      return false
+    }
+
+    try {
+      const success = await clearBrainState(sessionId)
+
+      if (config.debug) {
+        console.log(
+          `Clear brain state from remote for session ${sessionId}: ${success ? 'success' : 'failed'}`,
+        )
+      }
+
+      return success
+    } catch (error) {
+      console.warn('Failed to clear brain state from remote:', error)
+      return false
+    }
   },
 }
