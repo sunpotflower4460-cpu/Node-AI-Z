@@ -2,48 +2,100 @@
  * Recovery Planner
  * Plans recovery strategy for brain state restoration
  *
- * Phase M6: Recovery infrastructure for remote persistence
+ * Phase M7: Real data-based recovery planning
  */
 
 import type { RecoveryPlan, RecoverySource } from './types'
-import { getLatestSnapshot, loadSnapshotMetadataList } from './snapshotManager'
-import { getSessionJournalEvents } from './journalWriter'
+import { getLatestSnapshot, loadSnapshotMetadataList, listAllSnapshots } from './snapshotManager'
+import { getSessionJournalEvents, listAllJournalEvents } from './journalWriter'
+import { localBrainPersistence } from './localBrainPersistence'
+import { remoteBrainPersistence } from './remoteBrainPersistence'
+import { getPersistenceConfig } from '../../config/persistenceEnv'
 
 /**
- * Create a recovery plan for a session
+ * Create a recovery plan for a session (Phase M7)
+ * Uses real data from local and remote sources
  */
-export const createRecoveryPlan = (
+export const createRecoveryPlan = async (
   sessionId: string,
   options: {
     preferSnapshot?: boolean
     targetTurnCount?: number
     maxAge?: number
   } = {},
-): RecoveryPlan => {
+): Promise<RecoveryPlan> => {
   const {
     preferSnapshot = true,
     targetTurnCount,
     maxAge = 7 * 24 * 60 * 60 * 1000, // 7 days default
   } = options
 
-  // Check for available snapshots
-  const snapshots = loadSnapshotMetadataList()
-    .filter(meta => meta.sessionId === sessionId)
-    .sort((a, b) => b.createdAt - a.createdAt)
+  const config = getPersistenceConfig()
 
-  // Check for journal events
-  const journalEvents = getSessionJournalEvents(sessionId)
+  // Check for local and remote brain states
+  let localBrainState
+  let remoteBrainState
+  try {
+    localBrainState = await localBrainPersistence.load(sessionId)
+  } catch (error) {
+    // Ignore errors
+  }
+  try {
+    if (config.remoteEnabled) {
+      remoteBrainState = await remoteBrainPersistence.load(sessionId)
+    }
+  } catch (error) {
+    // Ignore errors
+  }
 
-  // Determine primary source based on availability
+  // Check for available snapshots (local + remote)
+  let snapshots
+  try {
+    snapshots = await listAllSnapshots(sessionId)
+  } catch (error) {
+    // Fall back to local only
+    snapshots = loadSnapshotMetadataList()
+      .filter(meta => meta.sessionId === sessionId)
+      .sort((a, b) => b.createdAt - a.createdAt)
+  }
+
+  // Check for journal events (local + remote)
+  let journalEvents
+  try {
+    journalEvents = await listAllJournalEvents(sessionId)
+  } catch (error) {
+    // Fall back to local only
+    journalEvents = getSessionJournalEvents(sessionId)
+  }
+
+  // Determine primary source based on availability and recency
   let primarySource: RecoverySource
   let fallbackSources: RecoverySource[]
   let targetSnapshotId: string | undefined
   let applyJournalEvents = false
 
-  if (preferSnapshot && snapshots.length > 0) {
+  // Compare local and remote brain states by updatedAt
+  const localTime = localBrainState?.updatedAt ?? 0
+  const remoteTime = remoteBrainState?.updatedAt ?? 0
+  const latestSnapshotTime = snapshots[0]?.createdAt ?? 0
+
+  // Decision matrix:
+  // 1. If remote brain state is newest, use it
+  // 2. Else if local brain state is newest, use it
+  // 3. Else if snapshots exist and preferred, use latest snapshot
+  // 4. Else if journal events exist, use journal
+  // 5. Else fall back to local
+
+  if (remoteTime > localTime && remoteTime > latestSnapshotTime) {
+    primarySource = 'remote'
+    fallbackSources = ['local', 'snapshot', 'journal']
+  } else if (localTime > remoteTime && localTime > latestSnapshotTime) {
+    primarySource = 'local'
+    fallbackSources = ['remote', 'snapshot', 'journal']
+  } else if (preferSnapshot && snapshots.length > 0) {
     // Prefer snapshot recovery
     primarySource = 'snapshot'
-    fallbackSources = ['local', 'journal']
+    fallbackSources = ['local', 'remote', 'journal']
 
     // Find the best snapshot (closest to target turn, or latest)
     if (targetTurnCount !== undefined) {
@@ -62,12 +114,12 @@ export const createRecoveryPlan = (
   } else if (journalEvents.length > 0) {
     // Use journal-based recovery
     primarySource = 'journal'
-    fallbackSources = ['local', 'snapshot']
+    fallbackSources = ['local', 'remote', 'snapshot']
     applyJournalEvents = true
   } else {
     // Fall back to local storage
     primarySource = 'local'
-    fallbackSources = ['snapshot', 'journal']
+    fallbackSources = ['remote', 'snapshot', 'journal']
     applyJournalEvents = false
   }
 
@@ -165,14 +217,29 @@ export const isRecoveryNeeded = (sessionId: string): boolean => {
 }
 
 /**
- * Get recovery options for a session
+ * Get recovery options for a session (Phase M7)
+ * Returns information about available recovery sources
  */
-export const getRecoveryOptions = (sessionId: string) => {
-  const snapshots = loadSnapshotMetadataList()
-    .filter(meta => meta.sessionId === sessionId)
-    .sort((a, b) => b.createdAt - a.createdAt)
+export const getRecoveryOptions = async (sessionId: string) => {
+  // Get all snapshots (local + remote)
+  let snapshots
+  try {
+    snapshots = await listAllSnapshots(sessionId)
+  } catch (error) {
+    // Fall back to local only
+    snapshots = loadSnapshotMetadataList()
+      .filter(meta => meta.sessionId === sessionId)
+      .sort((a, b) => b.createdAt - a.createdAt)
+  }
 
-  const journalEvents = getSessionJournalEvents(sessionId)
+  // Get all journal events (local + remote)
+  let journalEvents
+  try {
+    journalEvents = await listAllJournalEvents(sessionId)
+  } catch (error) {
+    // Fall back to local only
+    journalEvents = getSessionJournalEvents(sessionId)
+  }
 
   return {
     hasSnapshots: snapshots.length > 0,
