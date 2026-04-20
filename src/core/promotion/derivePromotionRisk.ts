@@ -20,7 +20,7 @@ export type PromotionRiskAssessment = {
  */
 export const derivePromotionRisk = (
   candidate: PromotionCandidate,
-  branch: PersonalBranchState,
+  _branch: PersonalBranchState,
   trunk: SharedTrunkState
 ): PromotionRiskAssessment => {
   const notes: string[] = []
@@ -178,7 +178,7 @@ const assessTrunkConflict = (
     } else {
       // Check for similar patterns that might conflict
       const similarExists = trunk.schemaPatterns.some(
-        (t) => t.category === schema.category && Math.abs(t.strength - schema.strength) > 0.5
+        (t) => Math.abs(t.strength - schema.strength) > 0.5
       )
       if (similarExists) {
         risk += 0.1

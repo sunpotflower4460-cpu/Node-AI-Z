@@ -28,8 +28,7 @@ export const validatePromotionCandidate = (
   // Determine initial status based on risk and confidence
   const status = deriveValidationStatus(
     riskAssessment.riskScore,
-    confidenceScore,
-    candidate
+    confidenceScore
   )
 
   // Build reasons for this validation result
@@ -84,8 +83,7 @@ const calculateValidationConfidence = (
  */
 const deriveValidationStatus = (
   riskScore: number,
-  confidenceScore: number,
-  candidate: PromotionCandidate
+  confidenceScore: number
 ): PromotionStatus => {
   // High risk → reject or quarantine
   if (riskScore > 0.7) {

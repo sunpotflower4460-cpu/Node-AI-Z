@@ -87,8 +87,6 @@ import {
   logCandidateApplied,
   getPromotionQueueState,
   getPromotionLogState,
-  restorePromotionQueueState,
-  restorePromotionLogState,
 } from '../core'
 import type { CoreInfluenceNote } from '../core/coreTypes'
 

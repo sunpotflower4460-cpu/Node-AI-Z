@@ -509,6 +509,102 @@ SessionBrain タブに以下が追加されました：
 
 これにより、「この知性は保存できる」だけでなく「安全に戻せる」ことが実感できます。
 
+## Phase M9 — Shared Trunk / Personal Branch / App Facade Separation
+
+結晶思考方式は、Phase M9 で **Mother Core の分離** を獲得しました。
+
+### 何が変わったか
+
+Phase M9 では、これまで単一の状態として扱われていた Mother Core を、3つの層に明確に分離しました：
+
+* **Shared Trunk (共有幹)**: 全ユーザー共通のパターンと知識のリポジトリ（read-mostly、昇格により稀に更新）
+* **Personal Branch (個人枝)**: ユーザー固有の学習パターンと記憶（active learning、独立して成長）
+* **App Facade (アプリ視点)**: アプリケーション固有の表示層とアクセス制御（どちらをどれだけ見せるか）
+
+### 実装の詳細
+
+Phase M9 の主要コンポーネント：
+
+1. **sharedTrunk.ts**: Shared Trunk の管理（universal patterns / biases / promoted nodes）
+2. **personalBranch.ts**: Personal Branch の管理（personal schemas / nodes / markers / session state）
+3. **appFacade.ts**: App Facade の設定（read/write permissions / influence weights / filters）
+4. **resolveCoreView.ts**: trunk + branch + facade から統一ビューを解決
+5. **applyTrunkInfluence.ts**: trunk からの影響を現在のターンに適用（薄く、read-only）
+6. **applyBranchInfluence.ts**: branch からの影響を現在のターンに適用（強く、primary）
+7. **derivePromotionCandidates.ts**: personal branch の中から trunk 昇格候補を導出
+
+### Promotion Candidates
+
+Personal Branch で十分に確立されたパターン（高い recurrence / confidence / 一般性）は、Promotion Candidate として識別されます。
+
+* **Schema Promotion**: 強固で信頼性の高い schema pattern が trunk 候補になる
+* **Mixed Node Promotion**: 安定した multi-axis state が trunk 候補になる
+* **Bias Promotion**: 一般的な conceptual biases が trunk 候補になる
+
+Phase M9 では候補を **識別するのみ** で、実際の昇格は将来の phase で行われます。
+
+これにより、「個人の学びは個人のもの、共有する価値があるものだけが慎重に共有幹へ入る」ことが実感できます。
+
+## Phase M10 — Promotion Pipeline + Shared Trunk への安全昇格
+
+結晶思考方式は、Phase M10 で **安全な昇格パイプライン** を獲得しました。
+
+### 何が変わったか
+
+Phase M10 では、Personal Branch から Shared Trunk へのパターン昇格が、いきなり直接入るのではなく、**安全パイプライン** を通るようになりました：
+
+* **Promotion Queue**: 候補はまず queue に積まれる
+* **Validation**: risk level / confidence / recurrence / supporting evidence を検査
+* **Decision Resolution**: quarantine / reject / approve を決定
+* **Trunk Application**: approved candidate のみが trunk に適用される（保守的に）
+* **Promotion Logs**: 全ての昇格イベントを記録
+
+### パイプラインの流れ
+
+1. **Candidate → Queue**: `derivePromotionCandidates()` で識別された候補が queue へ
+2. **Queue → Validation**: `validatePromotionCandidate()` でリスク評価・検査
+3. **Validation → Decision**: `resolvePromotionDecision()` で quarantine / reject / approve を判定
+4. **Approved → Trunk**: `applyApprovedPromotion()` で trunk に保守的に適用
+5. **Log Everything**: 各段階が promotion log に記録される
+
+### Promotion Status
+
+* **queued**: Queue に積まれた初期状態
+* **validated**: Validation 完了、判定待ち
+* **quarantined**: 保留（まだ早い、もっと evidence が必要）
+* **rejected**: 却下（リスクが高い、trunk に適さない）
+* **approved**: 承認済み、trunk 適用可能
+* **applied**: Trunk に適用済み
+
+### Risk Assessment
+
+Promotion Candidate のリスクは以下の要素で評価されます：
+
+* **Recurrence Count**: 何回再登場したか（少ない = risky）
+* **Confidence / Strength**: パターンの信頼性・強度（低い = risky）
+* **Supporting Evidence**: 裏付けとなる trace / reasons の数（少ない = risky）
+* **Trunk Conflict**: 既存 trunk pattern との矛盾（矛盾 = risky）
+* **Novelty / Stability**: 新規性・安定性（不安定 = risky）
+
+### Trunk への適用は保守的
+
+Approved candidate が trunk に入る際も、**保守的** に扱われます：
+
+* **新規 schema**: 初期 strength/confidence を cap（最大 0.6〜0.7）
+* **既存 schema 強化**: 小さな増分でのみ強化（+0.05 など）
+* **新規 mixed node**: 初期 salience を cap、novelty を高めに保つ
+* **Bias / Proto Weight**: 10% の影響のみを適用
+
+これにより、「共有幹は慎重に育てられ、個人枝の単発的な変化は直接流し込まれない」ことが実感できます。
+
+### Actor フィールド（Phase M10 最小版）
+
+Phase M10 では promotion decision は **system による自動判定** ですが、将来の拡張のため `actor` フィールドが導入されています：
+
+* `system`: 自動判定（Phase M10）
+* `future_guardian`: AI sensei による守護（将来）
+* `future_human_review`: Human による review（将来）
+
 ## 今後の実装ロードマップ
 
 次の機能追加は、原則としてこの順で積みます。
