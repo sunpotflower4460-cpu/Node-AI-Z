@@ -64,6 +64,17 @@ import {
   applyMixedNodesToDecision,
 } from '../node'
 import type { MixedNodeInfluenceNote } from '../node/mixedNodeTypes'
+import {
+  createEmptySharedTrunk,
+  createEmptyPersonalBranch,
+  createCrystallizedThinkingFacade,
+  resolveCoreView,
+  applyTrunkInfluence,
+  applyBranchInfluence,
+  derivePromotionCandidates,
+  updateBranchSessionState,
+} from '../core'
+import type { CoreInfluenceNote } from '../core/coreTypes'
 
 /**
  * Crystallized Thinking Runtime
@@ -708,6 +719,60 @@ export const runCrystallizedThinkingRuntime = ({
     }
   }
 
+  // ===== Phase M9: Trunk / Branch / Facade Integration =====
+  // Initialize trunk, branch, and facade (in production, these would be loaded from storage)
+  const sharedTrunk = createEmptySharedTrunk()
+  const personalBranch = createEmptyPersonalBranch('default-user')
+
+  // Update branch with current session state
+  const updatedBranch = updateBranchSessionState(personalBranch, nextBrainState)
+
+  // Create app facade for crystallized thinking
+  const appFacade = createCrystallizedThinkingFacade()
+
+  // Derive promotion candidates from branch patterns
+  const promotionCandidates = derivePromotionCandidates(
+    updatedBranch,
+    sharedTrunk,
+    nextBrainState.turnCount
+  )
+
+  // Apply trunk influence (read-only, subtle)
+  const trunkInfluenceResult = applyTrunkInfluence(
+    updatedSchemaMemory.patterns,
+    scoredMixedNodes,
+    sharedTrunk,
+    appFacade.trunkInfluenceWeight
+  )
+
+  // Apply branch influence (primary, strong)
+  const branchInfluenceResult = applyBranchInfluence(
+    updatedSchemaMemory.patterns,
+    scoredMixedNodes,
+    updatedBranch,
+    appFacade.branchInfluenceWeight
+  )
+
+  // Collect all core influence notes
+  const allCoreInfluenceNotes: CoreInfluenceNote[] = [
+    ...trunkInfluenceResult.notes,
+    ...branchInfluenceResult.notes,
+  ]
+
+  // Resolve unified core view
+  const coreView = resolveCoreView(
+    sharedTrunk,
+    updatedBranch,
+    appFacade,
+    promotionCandidates
+  )
+
+  // Update brain state with core influence notes
+  nextBrainState = {
+    ...nextBrainState,
+    coreInfluenceNotes: allCoreInfluenceNotes,
+  }
+
   return {
     implementationMode: 'crystallized_thinking',
     lexicalState: chunkedResult.dualStream.lexicalState,
@@ -766,5 +831,9 @@ export const runCrystallizedThinkingRuntime = ({
     },
     mixedNodeInfluencedOptions,
     mixedNodeNotes: allMixedNodeNotes,
+    // Phase M9: Trunk / Branch / Facade
+    coreView,
+    coreInfluenceNotes: allCoreInfluenceNotes,
+    promotionCandidates,
   }
 }

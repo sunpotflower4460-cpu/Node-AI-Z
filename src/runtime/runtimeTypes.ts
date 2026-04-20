@@ -29,6 +29,7 @@ import type { EpisodicTrace, ReplayConsolidationResult, SchemaInfluenceNote } fr
 import type { MixedNodeSelectionResult, MixedNodeInfluenceNote } from '../node/mixedNodeTypes'
 import type { ProtoMeaning } from '../meaning/types'
 import type { OptionAwareness } from '../option/types'
+import type { CoreView, CoreInfluenceNote, PromotionCandidate } from '../core/coreTypes'
 
 /**
  * Base runtime result shared by both modes
@@ -114,6 +115,10 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   }
   mixedNodeInfluencedOptions?: OptionAwareness
   mixedNodeNotes?: MixedNodeInfluenceNote[]
+  // Phase M9: Trunk / Branch / Facade
+  coreView?: CoreView
+  coreInfluenceNotes?: CoreInfluenceNote[]
+  promotionCandidates?: PromotionCandidate[]
 }
 
 /**
