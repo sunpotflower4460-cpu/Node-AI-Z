@@ -57,9 +57,38 @@ export { applyPrecisionToSignalDynamics } from './applyPrecisionToSignalDynamics
 export type { SignalDynamicsAdjustment } from './applyPrecisionToSignalDynamics'
 
 // Persistence adapters
-export type { BrainPersistenceAdapter } from './persistence/types'
+export type { BrainPersistenceAdapter, PersistenceMode } from './persistence/types'
 export { localBrainPersistence } from './persistence/localBrainPersistence'
 export { remoteBrainPersistence } from './persistence/remoteBrainPersistence'
+
+// Phase M6: Persistence infrastructure
+export type {
+  SnapshotMetadata,
+  JournalEvent,
+  JournalEventType,
+  RecoveryPlan,
+  RecoverySource,
+  PersistenceConfig,
+  Snapshot,
+} from './persistence'
+export {
+  hybridBrainPersistence,
+  DEFAULT_PERSISTENCE_CONFIG,
+  getPersistenceAdapter,
+  loadPersistenceConfig,
+  savePersistenceConfig,
+  createSnapshot,
+  shouldCreateSnapshot,
+  saveSnapshotLocal,
+  getLatestSnapshot,
+  createJournalEvent,
+  appendJournalEvent,
+  recordBrainSaved,
+  recordSnapshotCreated,
+  createRecoveryPlan,
+  executeRecoveryPlan,
+  getRecoveryOptions,
+} from './persistence'
 
 // Phase M3: Workspace Gate
 export type {
