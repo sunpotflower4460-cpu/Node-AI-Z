@@ -11,6 +11,7 @@ import type { WorkspaceState } from '../workspace/workspacePhaseMachine'
 import type { PrecisionControl, UncertaintyState, PrecisionInfluenceNote } from './precisionTypes'
 import type { SchemaMemoryState, SchemaInfluenceNote, EpisodicTrace } from '../memory/types'
 import type { MixedLatentNode, MixedNodeInfluenceNote } from '../node/mixedNodeTypes'
+import type { CoreInfluenceNote } from '../core/coreTypes'
 
 /**
  * Episodic buffer entry
@@ -99,4 +100,7 @@ export type SessionBrainState = {
 
   /** Phase M5: Mixed node influence notes (for Observe visualization) */
   mixedNodeNotes?: MixedNodeInfluenceNote[]
+
+  /** Phase M9: Core influence notes (trunk/branch/facade influence) */
+  coreInfluenceNotes?: CoreInfluenceNote[]
 }
