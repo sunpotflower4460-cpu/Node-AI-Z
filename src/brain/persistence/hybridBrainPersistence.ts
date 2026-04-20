@@ -32,7 +32,7 @@ export const getLastSaveStatus = (): SaveStatus => {
       return { localSuccess: false, remoteSuccess: false, errors: [] }
     }
     return JSON.parse(stored)
-  } catch (error) {
+  } catch {
     return { localSuccess: false, remoteSuccess: false, errors: [] }
   }
 }

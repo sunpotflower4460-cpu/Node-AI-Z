@@ -351,7 +351,7 @@ export const isBackendAvailable = async (): Promise<boolean> => {
       .limit(1)
 
     return !error
-  } catch (error) {
+  } catch {
     return false
   }
 }

@@ -37,14 +37,14 @@ export const createRecoveryPlan = async (
   let remoteBrainState
   try {
     localBrainState = await localBrainPersistence.load(sessionId)
-  } catch (error) {
+  } catch {
     // Ignore errors
   }
   try {
     if (config.remoteEnabled) {
       remoteBrainState = await remoteBrainPersistence.load(sessionId)
     }
-  } catch (error) {
+  } catch {
     // Ignore errors
   }
 
@@ -52,7 +52,7 @@ export const createRecoveryPlan = async (
   let snapshots
   try {
     snapshots = await listAllSnapshots(sessionId)
-  } catch (error) {
+  } catch {
     // Fall back to local only
     snapshots = loadSnapshotMetadataList()
       .filter(meta => meta.sessionId === sessionId)
@@ -63,7 +63,7 @@ export const createRecoveryPlan = async (
   let journalEvents
   try {
     journalEvents = await listAllJournalEvents(sessionId)
-  } catch (error) {
+  } catch {
     // Fall back to local only
     journalEvents = getSessionJournalEvents(sessionId)
   }
@@ -225,7 +225,7 @@ export const getRecoveryOptions = async (sessionId: string) => {
   let snapshots
   try {
     snapshots = await listAllSnapshots(sessionId)
-  } catch (error) {
+  } catch {
     // Fall back to local only
     snapshots = loadSnapshotMetadataList()
       .filter(meta => meta.sessionId === sessionId)
@@ -236,7 +236,7 @@ export const getRecoveryOptions = async (sessionId: string) => {
   let journalEvents
   try {
     journalEvents = await listAllJournalEvents(sessionId)
-  } catch (error) {
+  } catch {
     // Fall back to local only
     journalEvents = getSessionJournalEvents(sessionId)
   }
