@@ -3,12 +3,14 @@
  * Derives the next turn's brain state from the current runtime result.
  *
  * Phase M2: Now includes precision control state persistence.
+ * Phase M4: Now includes episodic trace and schema memory persistence.
  */
 
 import type { SessionBrainState } from './sessionBrainState'
 import type { ChunkedNodePipelineResult } from '../runtime/runChunkedNodePipeline'
 import type { TemporalFeatureState } from '../signal/temporalTypes'
 import type { PrecisionControl, UncertaintyState, PrecisionInfluenceNote } from './precisionTypes'
+import type { EpisodicTrace, SchemaMemoryState, SchemaInfluenceNote } from '../memory/types'
 
 /**
  * Builds the next temporal states map from active features.
@@ -86,10 +88,12 @@ const calculateFieldIntensity = (chunkedResult: ChunkedNodePipelineResult): numb
  * Updates brain state for the next turn based on the current runtime result.
  *
  * Phase M2: Accepts optional precision state that will be persisted for next turn.
+ * Phase M4: Accepts optional memory state (episodic traces and schema memory).
  *
  * @param previousState The brain state from the previous turn
  * @param chunkedResult The runtime result from the current turn
  * @param precisionState Optional precision state from current turn
+ * @param memoryState Optional memory state from current turn (Phase M4)
  * @returns Updated brain state for the next turn
  */
 export const updateBrainState = (
@@ -99,6 +103,11 @@ export const updateBrainState = (
     precisionControl: PrecisionControl
     uncertaintyState: UncertaintyState
     precisionNotes: PrecisionInfluenceNote[]
+  },
+  memoryState?: {
+    episodicTraces: EpisodicTrace[]
+    schemaMemory: SchemaMemoryState
+    schemaInfluenceNotes: SchemaInfluenceNote[]
   },
 ): SessionBrainState => {
   const nextTurnCount = previousState.turnCount + 1
@@ -161,6 +170,10 @@ export const updateBrainState = (
     precisionControl: nextPrecisionControl,
     uncertaintyState: nextUncertaintyState,
     precisionNotes: nextPrecisionNotes,
+    // Phase M4: Memory state
+    episodicTraces: memoryState?.episodicTraces ?? previousState.episodicTraces ?? [],
+    schemaMemory: memoryState?.schemaMemory ?? previousState.schemaMemory,
+    schemaInfluenceNotes: memoryState?.schemaInfluenceNotes ?? previousState.schemaInfluenceNotes,
     // Episodic buffer, workspace, and interoception remain unchanged for Phase 1
     // These will be enhanced in future phases
   }

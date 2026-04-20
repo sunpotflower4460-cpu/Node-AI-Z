@@ -25,6 +25,7 @@ import type { CoalitionState } from '../coalition/mergeCoalitionState'
 import type { WorkspaceState } from '../workspace/workspacePhaseMachine'
 import type { InternalActionPolicy } from '../action/buildActiveSensingPolicy'
 import type { WorkspaceGateResult } from '../brain/workspaceTypes'
+import type { EpisodicTrace, ReplayConsolidationResult, SchemaInfluenceNote } from '../memory/types'
 
 /**
  * Base runtime result shared by both modes
@@ -98,6 +99,10 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   internalActionPolicy?: InternalActionPolicy
   // Phase M3: Workspace Gate
   workspaceGateResult?: WorkspaceGateResult
+  // Phase M4: Episodic / Schema / Replay
+  currentEpisodicTrace?: EpisodicTrace
+  replayConsolidationResult?: ReplayConsolidationResult
+  schemaInfluenceNotes?: SchemaInfluenceNote[]
 }
 
 /**

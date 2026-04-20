@@ -9,6 +9,7 @@ import type { PredictionState } from '../predictive/types'
 import type { InteroceptiveState } from '../interoception/interoceptiveState'
 import type { WorkspaceState } from '../workspace/workspacePhaseMachine'
 import type { PrecisionControl, UncertaintyState, PrecisionInfluenceNote } from './precisionTypes'
+import type { SchemaMemoryState, SchemaInfluenceNote, EpisodicTrace } from '../memory/types'
 
 /**
  * Episodic buffer entry
@@ -62,8 +63,17 @@ export type SessionBrainState = {
   /** Micro-signal dimensions from previous turn */
   microSignalDimensions: MicroSignalDimensions
 
-  /** Episodic buffer (minimal for Phase 1) */
+  /** Episodic buffer (Phase 1: minimal event boundaries, Phase M4: full episodic traces) */
   episodicBuffer: EpisodicBufferEntry[]
+
+  /** Phase M4: Episodic trace buffer (rich single-event memories) */
+  episodicTraces?: EpisodicTrace[]
+
+  /** Phase M4: Schema memory (recurring patterns consolidated from episodic traces) */
+  schemaMemory?: SchemaMemoryState
+
+  /** Phase M4: Schema influence notes (for Observe visualization) */
+  schemaInfluenceNotes?: SchemaInfluenceNote[]
 
   /** Workspace state (Phase 3: full phase-based control) */
   workspace: WorkspaceState
