@@ -2,11 +2,13 @@
  * Snapshot Manager
  * Creates and manages brain state snapshots for recovery
  *
- * Phase M6: Snapshot infrastructure for remote persistence
+ * Phase M7: Remote snapshot management
  */
 
 import type { SessionBrainState } from '../sessionBrainState'
 import type { SnapshotMetadata } from './types'
+import { createSnapshot as createRemoteSnapshot, listSnapshots as listRemoteSnapshots } from './backendClient'
+import { getPersistenceConfig } from '../../config/persistenceEnv'
 
 /**
  * Generate a unique snapshot ID
@@ -179,4 +181,90 @@ export const pruneSnapshots = (sessionId: string, keepCount: number = 5): void =
   } catch (error) {
     console.warn('Failed to prune snapshots:', error)
   }
+}
+
+/**
+ * Save snapshot to both local and remote storage (Phase M7)
+ * Returns true if at least local save succeeded
+ */
+export const maybeCreateSnapshot = async (
+  state: SessionBrainState,
+  snapshotInterval: number,
+): Promise<boolean> => {
+  const config = getPersistenceConfig()
+
+  // Check if we should create a snapshot
+  if (!shouldCreateSnapshot(state.turnCount, snapshotInterval)) {
+    return false
+  }
+
+  // Create snapshot with appropriate storage target
+  const storageTarget = config.remoteEnabled ? 'remote' : 'local'
+  const snapshot = createSnapshot(state, storageTarget)
+
+  let localSuccess = false
+  let remoteSuccess = false
+
+  // Save to local
+  try {
+    localSuccess = saveSnapshotLocal(snapshot)
+    if (config.debug) {
+      console.log(`Snapshot local save: ${localSuccess ? 'success' : 'failed'}`)
+    }
+  } catch (error) {
+    console.warn('Failed to save snapshot locally:', error)
+  }
+
+  // Save to remote if enabled
+  if (config.remoteEnabled) {
+    try {
+      remoteSuccess = await createRemoteSnapshot(state, snapshot.metadata)
+      if (config.debug) {
+        console.log(`Snapshot remote save: ${remoteSuccess ? 'success' : 'failed'}`)
+      }
+    } catch (error) {
+      console.warn('Failed to save snapshot remotely:', error)
+    }
+  }
+
+  // Return true if at least local save succeeded
+  return localSuccess
+}
+
+/**
+ * List all snapshots for a session (Phase M7)
+ * Combines local and remote snapshots
+ */
+export const listAllSnapshots = async (sessionId: string): Promise<SnapshotMetadata[]> => {
+  const config = getPersistenceConfig()
+
+  // Get local snapshots
+  const localSnapshots = loadSnapshotMetadataList().filter(
+    meta => meta.sessionId === sessionId
+  )
+
+  // Get remote snapshots if enabled
+  let remoteSnapshots: SnapshotMetadata[] = []
+  if (config.remoteEnabled) {
+    try {
+      remoteSnapshots = await listRemoteSnapshots(sessionId)
+    } catch (error) {
+      console.warn('Failed to list remote snapshots:', error)
+    }
+  }
+
+  // Merge and deduplicate by snapshotId
+  const allSnapshots = [...localSnapshots, ...remoteSnapshots]
+  const uniqueSnapshots = new Map<string, SnapshotMetadata>()
+
+  for (const snapshot of allSnapshots) {
+    // Keep the one with the latest createdAt if duplicates
+    const existing = uniqueSnapshots.get(snapshot.snapshotId)
+    if (!existing || snapshot.createdAt > existing.createdAt) {
+      uniqueSnapshots.set(snapshot.snapshotId, snapshot)
+    }
+  }
+
+  // Sort by createdAt descending
+  return Array.from(uniqueSnapshots.values()).sort((a, b) => b.createdAt - a.createdAt)
 }
