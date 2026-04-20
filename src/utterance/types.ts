@@ -38,6 +38,12 @@ export type UtteranceIntent = {
 
   /** Tolerance for ambiguity (0.0 = resolve, 1.0 = stay open) */
   ambiguityTolerance: number
+
+  /** How direct to be (0.0 = indirect, 1.0 = very direct) */
+  directness: number
+
+  /** Whether to stay open and not conclude */
+  shouldStayOpen: boolean
 }
 
 /**

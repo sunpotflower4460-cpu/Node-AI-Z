@@ -11,6 +11,7 @@ import type { EpisodicTrace } from './types'
 import type { ProtoMeaning } from '../meaning/types'
 import type { OptionAwareness } from '../option/types'
 import type { SomaticInfluence } from '../somatic/types'
+import type { MixedLatentNode } from '../node/mixedNodeTypes'
 
 export type CreateEpisodicTraceInput = {
   /** User input text */
@@ -39,6 +40,9 @@ export type CreateEpisodicTraceInput = {
     fieldTone: string
     fusedConfidence: number
   }
+
+  /** Phase M5: Dominant mixed nodes from this turn */
+  dominantMixedNodes?: MixedLatentNode[]
 }
 
 /**
@@ -209,6 +213,9 @@ export const createEpisodicTrace = (input: CreateEpisodicTraceInput): EpisodicTr
     salience,
     replayCount: 0,
     consolidated: false,
+    // Phase M5: Mixed node information
+    dominantMixedNodeIds: input.dominantMixedNodes?.map((n) => n.id),
+    mixedNodeTags: input.dominantMixedNodes?.flatMap((n) => n.tags),
   }
 
   return trace

@@ -11,6 +11,7 @@ import type { ChunkedNodePipelineResult } from '../runtime/runChunkedNodePipelin
 import type { TemporalFeatureState } from '../signal/temporalTypes'
 import type { PrecisionControl, UncertaintyState, PrecisionInfluenceNote } from './precisionTypes'
 import type { EpisodicTrace, SchemaMemoryState, SchemaInfluenceNote } from '../memory/types'
+import type { MixedLatentNode, MixedNodeInfluenceNote } from '../node/mixedNodeTypes'
 
 /**
  * Builds the next temporal states map from active features.
@@ -89,11 +90,13 @@ const calculateFieldIntensity = (chunkedResult: ChunkedNodePipelineResult): numb
  *
  * Phase M2: Accepts optional precision state that will be persisted for next turn.
  * Phase M4: Accepts optional memory state (episodic traces and schema memory).
+ * Phase M5: Accepts optional mixed node state (mixed latent pool and influence notes).
  *
  * @param previousState The brain state from the previous turn
  * @param chunkedResult The runtime result from the current turn
  * @param precisionState Optional precision state from current turn
  * @param memoryState Optional memory state from current turn (Phase M4)
+ * @param mixedNodeState Optional mixed node state from current turn (Phase M5)
  * @returns Updated brain state for the next turn
  */
 export const updateBrainState = (
@@ -108,6 +111,10 @@ export const updateBrainState = (
     episodicTraces: EpisodicTrace[]
     schemaMemory: SchemaMemoryState
     schemaInfluenceNotes: SchemaInfluenceNote[]
+  },
+  mixedNodeState?: {
+    mixedLatentPool: MixedLatentNode[]
+    mixedNodeNotes: MixedNodeInfluenceNote[]
   },
 ): SessionBrainState => {
   const nextTurnCount = previousState.turnCount + 1
@@ -157,6 +164,24 @@ export const updateBrainState = (
     nextPrecisionNotes = precisionState.precisionNotes
   }
 
+  // Phase M5: Mixed node state (session-local, keep max ~10 nodes)
+  let nextMixedLatentPool: MixedLatentNode[] | undefined
+  let nextMixedNodeNotes: MixedNodeInfluenceNote[] | undefined
+
+  if (mixedNodeState) {
+    // Keep only recent mixed nodes (max 10, prefer recent turns)
+    const allMixedNodes = [
+      ...(previousState.mixedLatentPool ?? []),
+      ...mixedNodeState.mixedLatentPool,
+    ]
+    // Sort by turn (newest first) and take top 10
+    allMixedNodes.sort((a, b) => b.generatedAtTurn - a.generatedAtTurn)
+    nextMixedLatentPool = allMixedNodes.slice(0, 10)
+
+    // Mixed node notes are kept for Observe (only current turn)
+    nextMixedNodeNotes = mixedNodeState.mixedNodeNotes
+  }
+
   return {
     ...previousState,
     turnCount: nextTurnCount,
@@ -174,6 +199,9 @@ export const updateBrainState = (
     episodicTraces: memoryState?.episodicTraces ?? previousState.episodicTraces ?? [],
     schemaMemory: memoryState?.schemaMemory ?? previousState.schemaMemory,
     schemaInfluenceNotes: memoryState?.schemaInfluenceNotes ?? previousState.schemaInfluenceNotes,
+    // Phase M5: Mixed node state
+    mixedLatentPool: nextMixedLatentPool,
+    mixedNodeNotes: nextMixedNodeNotes,
     // Episodic buffer, workspace, and interoception remain unchanged for Phase 1
     // These will be enhanced in future phases
   }

@@ -50,6 +50,12 @@ export type EpisodicTrace = {
 
   /** Whether this trace has been consolidated into a schema */
   consolidated: boolean
+
+  /** Phase M5: Dominant mixed node IDs from this turn */
+  dominantMixedNodeIds?: string[]
+
+  /** Phase M5: Mixed node tags from this turn */
+  mixedNodeTags?: string[]
 }
 
 /**

@@ -26,6 +26,9 @@ import type { WorkspaceState } from '../workspace/workspacePhaseMachine'
 import type { InternalActionPolicy } from '../action/buildActiveSensingPolicy'
 import type { WorkspaceGateResult } from '../brain/workspaceTypes'
 import type { EpisodicTrace, ReplayConsolidationResult, SchemaInfluenceNote } from '../memory/types'
+import type { MixedNodeSelectionResult, MixedNodeInfluenceNote } from '../node/mixedNodeTypes'
+import type { ProtoMeaning } from '../meaning/types'
+import type { OptionAwareness } from '../option/types'
 
 /**
  * Base runtime result shared by both modes
@@ -103,6 +106,14 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   currentEpisodicTrace?: EpisodicTrace
   replayConsolidationResult?: ReplayConsolidationResult
   schemaInfluenceNotes?: SchemaInfluenceNote[]
+  // Phase M5: Mixed-Selective Latent Pool
+  mixedNodeSelection?: MixedNodeSelectionResult
+  mixedNodeInfluencedProto?: {
+    sensory: ProtoMeaning[]
+    narrative: ProtoMeaning[]
+  }
+  mixedNodeInfluencedOptions?: OptionAwareness
+  mixedNodeNotes?: MixedNodeInfluenceNote[]
 }
 
 /**
