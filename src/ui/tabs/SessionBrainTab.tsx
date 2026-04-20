@@ -2,9 +2,18 @@
  * Session Brain Tab
  * Displays continuity information for the crystallized thinking mode.
  * Shows how the internal state persists and evolves across turns.
+ *
+ * Phase M6: Added persistence state visualization (snapshots, journal, recovery)
  */
 
+import { useState, useEffect } from 'react'
 import type { ObservationRecord } from '../../types/experience'
+import {
+  loadPersistenceConfig,
+  loadSnapshotMetadataList,
+  getSessionJournalEvents,
+  getRecoveryOptions,
+} from '../../brain/persistence'
 
 type SessionBrainTabProps = {
   observation: ObservationRecord
@@ -12,6 +21,28 @@ type SessionBrainTabProps = {
 
 export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
   const { nextBrainState, chunkedResult, dualStreamResult } = observation
+
+  // Phase M6: Load persistence state
+  const [persistenceConfig] = useState(() => loadPersistenceConfig())
+  const [snapshotCount, setSnapshotCount] = useState(0)
+  const [journalCount, setJournalCount] = useState(0)
+  const [recoveryOptions, setRecoveryOptions] = useState<ReturnType<typeof getRecoveryOptions> | null>(null)
+
+  useEffect(() => {
+    if (nextBrainState) {
+      // Load persistence state
+      const snapshots = loadSnapshotMetadataList().filter(
+        meta => meta.sessionId === nextBrainState.sessionId
+      )
+      setSnapshotCount(snapshots.length)
+
+      const journalEvents = getSessionJournalEvents(nextBrainState.sessionId)
+      setJournalCount(journalEvents.length)
+
+      const options = getRecoveryOptions(nextBrainState.sessionId)
+      setRecoveryOptions(options)
+    }
+  }, [nextBrainState])
 
   if (!nextBrainState) {
     return (
@@ -159,6 +190,87 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
         <div className="text-xs text-emerald-800">
           💾 <span className="font-bold">Continuity enabled:</span> This state persists across page reloads and app restarts.
           When you return, the system remembers where it left off - the afterglow, predictions, interoception, and workspace contents all carry forward.
+        </div>
+      </div>
+
+      {/* Phase M6: Persistence State */}
+      <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-4">
+        <h3 className="text-sm font-bold text-cyan-900 mb-2">Persistence Infrastructure (Phase M6)</h3>
+
+        {/* Persistence Mode */}
+        <div className="mb-3 pb-3 border-b border-cyan-200">
+          <div className="text-xs text-cyan-700 mb-1">
+            <span className="font-bold">Mode:</span> {persistenceConfig.mode}
+          </div>
+          <div className="text-xs text-cyan-600">
+            {persistenceConfig.mode === 'local' && 'Local storage only (browser-based)'}
+            {persistenceConfig.mode === 'remote' && 'Remote storage (Mother Core Server)'}
+            {persistenceConfig.mode === 'hybrid' && 'Local + Remote (best resilience)'}
+          </div>
+        </div>
+
+        {/* Snapshot State */}
+        <div className="mb-3 pb-3 border-b border-cyan-200">
+          <div className="text-xs text-cyan-700 mb-1">
+            <span className="font-bold">Snapshots:</span> {snapshotCount} available
+            {persistenceConfig.snapshotEnabled && (
+              <span className="ml-2 text-cyan-600">
+                (interval: every {persistenceConfig.snapshotInterval} turns)
+              </span>
+            )}
+          </div>
+          {recoveryOptions?.hasSnapshots && recoveryOptions.latestSnapshotTurn !== undefined && (
+            <div className="text-xs text-cyan-600">
+              Latest snapshot: Turn {recoveryOptions.latestSnapshotTurn}
+              {recoveryOptions.latestSnapshotAge && (
+                <span className="ml-2">
+                  ({Math.floor(recoveryOptions.latestSnapshotAge / 1000 / 60)} min ago)
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Journal State */}
+        <div className="mb-3 pb-3 border-b border-cyan-200">
+          <div className="text-xs text-cyan-700 mb-1">
+            <span className="font-bold">Journal:</span> {journalCount} events recorded
+            {persistenceConfig.journalEnabled && (
+              <span className="ml-2 text-cyan-600">
+                (max: {persistenceConfig.maxJournalEntries} entries)
+              </span>
+            )}
+          </div>
+          {recoveryOptions?.hasJournal && recoveryOptions.latestJournalTurn !== undefined && (
+            <div className="text-xs text-cyan-600">
+              Latest event: Turn {recoveryOptions.latestJournalTurn}
+            </div>
+          )}
+        </div>
+
+        {/* Recovery Capability */}
+        <div>
+          <div className="text-xs text-cyan-700 mb-1">
+            <span className="font-bold">Recovery:</span> {
+              recoveryOptions?.hasSnapshots || recoveryOptions?.hasJournal
+                ? 'Available'
+                : 'Not yet available'
+            }
+          </div>
+          {recoveryOptions && (recoveryOptions.hasSnapshots || recoveryOptions.hasJournal) && (
+            <div className="text-xs text-cyan-600">
+              Can recover from{' '}
+              {recoveryOptions.hasSnapshots && 'snapshots'}
+              {recoveryOptions.hasSnapshots && recoveryOptions.hasJournal && ' and '}
+              {recoveryOptions.hasJournal && 'journal events'}
+            </div>
+          )}
+        </div>
+
+        {/* Info Note */}
+        <div className="mt-3 pt-3 border-t border-cyan-200 text-xs text-cyan-600">
+          🏗️ Phase M6: Infrastructure ready for Mother Core Server.
+          Snapshot/journal/recovery mechanisms are in place, backend integration deferred to future phases.
         </div>
       </div>
     </div>
