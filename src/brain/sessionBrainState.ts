@@ -46,6 +46,9 @@ export type SessionBrainState = {
   /** Current turn count (0-indexed) */
   turnCount: number
 
+  /** Last updated timestamp (for hybrid persistence sync) */
+  updatedAt?: number
+
   /** Temporal feature states from previous turn */
   temporalStates: Map<string, TemporalFeatureState>
 

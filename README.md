@@ -379,6 +379,72 @@ Mixed Node は **決定ではなく、傾向** として効きます：
 
 これにより、「この知性は単語ではなく、交差状態で考え始めている」ことが実感できます。
 
+## Phase M6 — Remote Persistence Infrastructure
+
+結晶思考方式は、Phase M6 で **Remote Persistence の器** を獲得しました。
+
+### 何が変わったか
+
+Phase M6 以前は、SessionBrainState は local storage のみに保存され、ブラウザを閉じたり、端末が変わったりすると、知性の連続性が途切れていました。
+
+Phase M6 では、persistence の **器** を用意し、将来の remote backend 接続に向けて基盤を整備しました：
+
+* **BrainPersistenceAdapter**: local / remote / hybrid を切り替える adapter interface
+* **SnapshotMetadata**: 一定ターンごとの snapshot 記録の metadata
+* **JournalEvent**: brain state 変更の append-only event 記録
+* **RecoveryPlan**: snapshot / journal / local / remote からの復元計画
+
+Phase M6 では remote は stub ですが、Phase M7 で本実装へ移行します。
+
+## Phase M7 — Remote Backend 実接続 + Minimum Viable Persistence
+
+結晶思考方式は、Phase M7 で **Remote Backend への実接続** を獲得しました。
+
+### 何が変わったか
+
+Phase M7 では、Phase M6 で準備した器に対して、実際に **Supabase backend** を接続し、minimum viable version として運用可能にしました：
+
+* **SessionBrainState の remote 保存**: Supabase へ brain state を実際に保存
+* **Snapshot の remote 保存**: 一定ターンごとの snapshot を remote backend に記録
+* **Journal の remote 保存**: brain state 変更イベントを remote に append-only で記録
+* **Hybrid Mode の実運用化**: local と remote を両方見て、最新の状態を自動選択
+* **Recovery Plan の実データ対応**: local / remote / snapshot / journal の実際のデータを見て recovery 戦略を立てる
+* **Graceful Degradation**: remote 失敗時も local で継続可能
+
+### 実装の詳細
+
+Phase M7 の主要コンポーネント：
+
+1. **backendClient.ts**: Supabase への最小アクセス層（load / save / clear / snapshot / journal）
+2. **remoteBrainPersistence.ts**: remote adapter の本実装（Phase M6 の stub から移行）
+3. **hybridBrainPersistence.ts**: local / remote 両方を見て、updatedAt で新しい方を優先
+4. **snapshotManager.ts**: remote snapshot 作成・一覧取得の実装
+5. **journalWriter.ts**: remote journal event 追記・取得の実装
+6. **recoveryPlanner.ts**: 実データ（local / remote / snapshot / journal）を見て recovery plan を作成
+7. **persistenceEnv.ts**: 環境変数（Supabase URL / key）と persistence mode の設定
+
+### Persistence Mode
+
+Phase M7 では3つの mode を切り替え可能：
+
+* **local**: brain state を local storage のみに保存（default if remote not configured）
+* **remote**: brain state を remote backend のみに保存
+* **hybrid**: brain state を local と remote の両方に保存し、load 時は新しい方を優先（recommended）
+
+環境変数 `VITE_SUPABASE_URL` と `VITE_SUPABASE_ANON_KEY` が設定されていれば、自動的に **hybrid mode** になります。
+
+### Mother Core Server への一歩
+
+Phase M7 により、結晶思考方式は：
+
+* **端末を超えた知性の連続性**: ブラウザを閉じても、端末が変わっても、母体知性へ戻れる
+* **snapshot / journal による復元**: 過去の状態へ戻ったり、journal replay で再構築できる基盤
+* **Mother Core Server の土台**: 将来の分散運用・multi-device sync・AI sensei 守護ラインへの基盤
+
+が実現されました。
+
+詳細なセットアップ方法は `docs/phase-m7-remote-backend-setup.md` を参照してください。
+
 ## 今後の実装ロードマップ
 
 次の機能追加は、原則としてこの順で積みます。

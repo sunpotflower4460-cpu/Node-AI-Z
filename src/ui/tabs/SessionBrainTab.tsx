@@ -26,7 +26,7 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
   const [persistenceConfig] = useState(() => loadPersistenceConfig())
   const [snapshotCount, setSnapshotCount] = useState(0)
   const [journalCount, setJournalCount] = useState(0)
-  const [recoveryOptions, setRecoveryOptions] = useState<ReturnType<typeof getRecoveryOptions> | null>(null)
+  const [recoveryOptions, setRecoveryOptions] = useState<Awaited<ReturnType<typeof getRecoveryOptions>> | null>(null)
 
   useEffect(() => {
     if (nextBrainState) {
@@ -39,8 +39,12 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
       const journalEvents = getSessionJournalEvents(nextBrainState.sessionId)
       setJournalCount(journalEvents.length)
 
-      const options = getRecoveryOptions(nextBrainState.sessionId)
-      setRecoveryOptions(options)
+      // Fetch recovery options (async in Phase M7)
+      getRecoveryOptions(nextBrainState.sessionId).then(options => {
+        setRecoveryOptions(options)
+      }).catch(error => {
+        console.warn('Failed to get recovery options:', error)
+      })
     }
   }, [nextBrainState])
 

@@ -2,10 +2,12 @@
  * Journal Writer
  * Records brain state change events for recovery and audit
  *
- * Phase M6: Journal infrastructure for remote persistence
+ * Phase M7: Remote journal writing
  */
 
 import type { JournalEvent, JournalEventType } from './types'
+import { appendJournalEvent as appendRemoteJournalEvent, listRecentJournalEvents as listRemoteJournalEvents } from './backendClient'
+import { getPersistenceConfig } from '../../config/persistenceEnv'
 
 /**
  * Generate a unique journal event ID
@@ -70,17 +72,41 @@ const saveJournalEvents = (events: JournalEvent[]): boolean => {
 }
 
 /**
- * Append a journal event
+ * Append a journal event to both local and remote storage (Phase M7)
+ * Returns true if at least local save succeeded
  */
-export const appendJournalEvent = (event: JournalEvent): boolean => {
+export const appendJournalEvent = async (event: JournalEvent): Promise<boolean> => {
+  const config = getPersistenceConfig()
+
+  let localSuccess = false
+  let remoteSuccess = false
+
+  // Save to local
   try {
     const events = loadJournalEvents()
     events.push(event)
-    return saveJournalEvents(events)
+    localSuccess = saveJournalEvents(events)
+    if (config.debug) {
+      console.log(`Journal local append: ${localSuccess ? 'success' : 'failed'}`)
+    }
   } catch (error) {
-    console.warn('Failed to append journal event:', error)
-    return false
+    console.warn('Failed to append journal event locally:', error)
   }
+
+  // Save to remote if enabled
+  if (config.remoteEnabled) {
+    try {
+      remoteSuccess = await appendRemoteJournalEvent(event)
+      if (config.debug) {
+        console.log(`Journal remote append: ${remoteSuccess ? 'success' : 'failed'}`)
+      }
+    } catch (error) {
+      console.warn('Failed to append journal event remotely:', error)
+    }
+  }
+
+  // Return true if at least local save succeeded
+  return localSuccess
 }
 
 /**
@@ -239,4 +265,45 @@ export const recordRecoveryPlanned = (
 ): void => {
   const event = createJournalEvent(sessionId, turnCount, 'recovery_planned', { source })
   appendJournalEvent(event)
+}
+
+/**
+ * List all journal events for a session (Phase M7)
+ * Combines local and remote journal events
+ */
+export const listAllJournalEvents = async (
+  sessionId: string,
+  limit: number = 50,
+): Promise<JournalEvent[]> => {
+  const config = getPersistenceConfig()
+
+  // Get local events
+  const localEvents = getSessionJournalEvents(sessionId)
+
+  // Get remote events if enabled
+  let remoteEvents: JournalEvent[] = []
+  if (config.remoteEnabled) {
+    try {
+      remoteEvents = await listRemoteJournalEvents(sessionId, limit)
+    } catch (error) {
+      console.warn('Failed to list remote journal events:', error)
+    }
+  }
+
+  // Merge and deduplicate by event ID
+  const allEvents = [...localEvents, ...remoteEvents]
+  const uniqueEvents = new Map<string, JournalEvent>()
+
+  for (const event of allEvents) {
+    // Keep the one with the latest createdAt if duplicates
+    const existing = uniqueEvents.get(event.id)
+    if (!existing || event.createdAt > existing.createdAt) {
+      uniqueEvents.set(event.id, event)
+    }
+  }
+
+  // Sort by createdAt descending and limit
+  return Array.from(uniqueEvents.values())
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .slice(0, limit)
 }
