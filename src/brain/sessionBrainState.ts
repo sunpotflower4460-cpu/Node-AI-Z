@@ -10,6 +10,7 @@ import type { InteroceptiveState } from '../interoception/interoceptiveState'
 import type { WorkspaceState } from '../workspace/workspacePhaseMachine'
 import type { PrecisionControl, UncertaintyState, PrecisionInfluenceNote } from './precisionTypes'
 import type { SchemaMemoryState, SchemaInfluenceNote, EpisodicTrace } from '../memory/types'
+import type { MixedLatentNode, MixedNodeInfluenceNote } from '../node/mixedNodeTypes'
 
 /**
  * Episodic buffer entry
@@ -89,4 +90,10 @@ export type SessionBrainState = {
 
   /** Precision influence notes (Phase M2: for Observe visualization) */
   precisionNotes?: PrecisionInfluenceNote[]
+
+  /** Phase M5: Mixed latent pool (session-local, max ~10 nodes) */
+  mixedLatentPool?: MixedLatentNode[]
+
+  /** Phase M5: Mixed node influence notes (for Observe visualization) */
+  mixedNodeNotes?: MixedNodeInfluenceNote[]
 }
