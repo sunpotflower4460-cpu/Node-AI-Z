@@ -32,7 +32,7 @@ export const createSnapshotMetadata = (
     turnCount: state.turnCount,
     afterglow: state.afterglow,
     episodicCount: state.episodicTraces?.length ?? 0,
-    schemaCount: Object.keys(state.schemaMemory?.schemas ?? {}).length,
+    schemaCount: state.schemaMemory?.patterns.length ?? 0,
     mixedNodeCount: state.mixedLatentPool?.length ?? 0,
     storageTarget,
   }

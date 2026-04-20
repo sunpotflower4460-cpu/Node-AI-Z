@@ -61,7 +61,6 @@ export const hybridBrainPersistence: BrainPersistenceAdapter = {
    */
   async save(state: SessionBrainState): Promise<boolean> {
     let localSuccess = false
-    let remoteSuccess = false
 
     // Save to local (primary, required)
     try {
@@ -72,7 +71,7 @@ export const hybridBrainPersistence: BrainPersistenceAdapter = {
 
     // Save to remote (secondary, best-effort)
     try {
-      remoteSuccess = await remoteBrainPersistence.save(state)
+      await remoteBrainPersistence.save(state)
     } catch (error) {
       // Remote is stubbed in Phase M6, so this is expected
       // Don't log as warning since it's intentional
@@ -87,7 +86,6 @@ export const hybridBrainPersistence: BrainPersistenceAdapter = {
    */
   async clear(sessionId: string): Promise<boolean> {
     let localSuccess = false
-    let remoteSuccess = false
 
     // Clear from local
     try {
@@ -98,7 +96,7 @@ export const hybridBrainPersistence: BrainPersistenceAdapter = {
 
     // Clear from remote (best-effort)
     try {
-      remoteSuccess = await remoteBrainPersistence.clear(sessionId)
+      await remoteBrainPersistence.clear(sessionId)
     } catch (error) {
       // Remote is stubbed in Phase M6, so this is expected
     }
