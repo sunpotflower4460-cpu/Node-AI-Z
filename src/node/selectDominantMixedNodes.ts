@@ -90,13 +90,13 @@ export const selectDominantMixedNodes = (input: SelectDominantMixedNodesInput): 
 
     // Precision control adjustments
     if (precisionControl) {
-      // High precision = prefer high coherence
-      if (precisionControl.sensoryPrecision > 0.7 && node.coherence > 0.6) {
+      // High bottom-up precision = prefer high coherence
+      if (precisionControl.bottomUpWeight > 0.7 && node.coherence > 0.6) {
         dominanceScore += 0.1
         notes.push(`${node.key}: boosted for coherence under high precision`)
       }
-      // Low precision = suppress novelty
-      if (precisionControl.sensoryPrecision < 0.4 && node.novelty > 0.7) {
+      // Low bottom-up precision = suppress novelty
+      if (precisionControl.bottomUpWeight < 0.4 && node.novelty > 0.7) {
         dominanceScore -= 0.15
         notes.push(`${node.key}: suppressed for novelty under low precision`)
       }

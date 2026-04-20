@@ -55,6 +55,15 @@ import {
   createEmptySchemaMemory,
 } from '../memory'
 import type { ReplayConsolidationResult } from '../memory/types'
+import {
+  composeMixedNodes,
+  scoreMixedNodeSalience,
+  selectDominantMixedNodes,
+  applyMixedNodesToProto,
+  applyMixedNodesToOption,
+  applyMixedNodesToDecision,
+} from '../node'
+import type { MixedNodeInfluenceNote } from '../node/mixedNodeTypes'
 
 /**
  * Crystallized Thinking Runtime
@@ -185,7 +194,9 @@ export const runCrystallizedThinkingRuntime = ({
   )
 
   // ===== Phase M4: Memory System — Create Episodic Trace =====
-  // Create episodic trace from current turn BEFORE applying schema influence
+  // Phase M5: Create episodic trace AFTER mixed nodes are generated
+  // Note: We create the trace before schema influence but after mixed node generation
+  // so that we can store which mixed nodes were dominant in this turn
   const currentEpisodicTrace = createEpisodicTrace({
     inputText: text,
     sensoryProtoMeanings: personaModulatedSensory,
@@ -198,6 +209,7 @@ export const runCrystallizedThinkingRuntime = ({
       fieldTone: chunkedResult.dualStream.microSignalState.fieldTone,
       fusedConfidence: chunkedResult.dualStream.fusedState.fusedConfidence,
     },
+    dominantMixedNodes: [], // Will be updated after mixed nodes are generated
   })
 
   // Add trace to buffer temporarily (will be pruned and persisted later)
@@ -270,9 +282,69 @@ export const runCrystallizedThinkingRuntime = ({
   const schemaInfluencedOptions = schemaInfluenceResult.optionAwareness ?? personaModulatedOptions
   const schemaInfluencedDecision = schemaInfluenceResult.optionDecision ?? chunkedResult.optionDecision
 
-  // Run signal-centered runtime with schema-influenced state
-  const signalResult = runSignalRuntime(text, {
+  // ===== Phase M5: Mixed-Selective Latent Pool =====
+  // Generate mixed latent nodes from current turn state
+  const mixedNodeCandidates = composeMixedNodes({
+    fusedState: schemaInfluencedFusedState,
+    sensoryProtoMeanings: schemaInfluencedSensory,
+    narrativeProtoMeanings: schemaInfluencedNarrative,
     optionAwareness: schemaInfluencedOptions,
+    workspace: brainState.workspace,
+    interoception: brainState.interoception,
+    schemaMemory: updatedSchemaMemory,
+    currentTurn: brainState.turnCount,
+  })
+
+  // Score salience, coherence, and novelty for each mixed node
+  const scoredMixedNodes = mixedNodeCandidates.map((node) =>
+    scoreMixedNodeSalience({
+      node,
+      workspace: brainState.workspace,
+      interoception: brainState.interoception,
+      schemaMemory: updatedSchemaMemory,
+      surprise: chunkedResult.predictionModulationResult?.overallSurprise,
+    })
+  )
+
+  // Select dominant vs suppressed mixed nodes
+  const mixedNodeSelection = selectDominantMixedNodes({
+    allNodes: scoredMixedNodes,
+    precisionControl: precisionControlResult.precisionControl,
+    workspace: brainState.workspace,
+    interoception: brainState.interoception,
+  })
+
+  // Apply dominant mixed nodes to proto meanings
+  const mixedNodeProtoResult = applyMixedNodesToProto({
+    sensoryProtoMeanings: schemaInfluencedSensory,
+    narrativeProtoMeanings: schemaInfluencedNarrative,
+    dominantMixedNodes: mixedNodeSelection.dominantNodes,
+  })
+
+  // Apply dominant mixed nodes to option awareness
+  const mixedNodeOptionResult = applyMixedNodesToOption({
+    optionAwareness: schemaInfluencedOptions,
+    dominantMixedNodes: mixedNodeSelection.dominantNodes,
+  })
+
+  // Use mixed-node-influenced states for signal runtime and utterance
+  const mixedNodeInfluencedSensory = mixedNodeProtoResult.sensoryProtoMeanings
+  const mixedNodeInfluencedNarrative = mixedNodeProtoResult.narrativeProtoMeanings
+  const mixedNodeInfluencedOptions = mixedNodeOptionResult.optionAwareness ?? schemaInfluencedOptions
+
+  // Collect all mixed node influence notes
+  const allMixedNodeNotes: MixedNodeInfluenceNote[] = [
+    ...mixedNodeProtoResult.influenceNotes,
+    ...mixedNodeOptionResult.influenceNotes,
+  ]
+
+  // Update episodic trace with dominant mixed nodes
+  currentEpisodicTrace.dominantMixedNodeIds = mixedNodeSelection.dominantNodes.map((n) => n.id)
+  currentEpisodicTrace.mixedNodeTags = mixedNodeSelection.dominantNodes.flatMap((n) => n.tags)
+
+  // Run signal-centered runtime with mixed-node-influenced state
+  const signalResult = runSignalRuntime(text, {
+    optionAwareness: mixedNodeInfluencedOptions,
     optionDecision: schemaInfluencedDecision,
     optionUtteranceHints: chunkedResult.optionUtteranceHints,
     somaticInfluence: chunkedResult.somaticInfluence,
@@ -283,12 +355,12 @@ export const runCrystallizedThinkingRuntime = ({
 
   // ===== Utterance Layer Generation (Pass 2) =====
 
-  // 1. Derive utterance intent from internal state (with schema-influenced meanings)
+  // 1. Derive utterance intent from internal state (with mixed-node-influenced meanings)
   const baseUtteranceIntent = deriveUtteranceIntent({
     fusedState: schemaInfluencedFusedState,
-    sensoryProtoMeanings: schemaInfluencedSensory,
-    narrativeProtoMeanings: schemaInfluencedNarrative,
-    optionAwareness: schemaInfluencedOptions,
+    sensoryProtoMeanings: mixedNodeInfluencedSensory,
+    narrativeProtoMeanings: mixedNodeInfluencedNarrative,
+    optionAwareness: mixedNodeInfluencedOptions,
     somaticInfluence: chunkedResult.somaticInfluence,
     currentDecision: schemaInfluencedDecision,
   })
@@ -299,35 +371,45 @@ export const runCrystallizedThinkingRuntime = ({
     baseUtteranceIntent,
     preconditionFilter,
   )
-  const utteranceIntent = applyPersonaToUtterance(
+  const personaModulatedIntent = applyPersonaToUtterance(
     preconditionModulatedIntent,
     personaWeightVector,
   )
 
-  // 2. Derive utterance shape (with schema-influenced meanings)
+  // ===== Phase M5: Apply mixed nodes to decision/utterance intent =====
+  const mixedNodeDecisionResult = applyMixedNodesToDecision({
+    utteranceIntent: personaModulatedIntent,
+    dominantMixedNodes: mixedNodeSelection.dominantNodes,
+  })
+  const utteranceIntent = mixedNodeDecisionResult.utteranceIntent
+
+  // Add decision influence notes to all mixed node notes
+  allMixedNodeNotes.push(...mixedNodeDecisionResult.influenceNotes)
+
+  // 2. Derive utterance shape (with mixed-node-influenced meanings)
   const utteranceShape = deriveUtteranceShape({
     utteranceIntent,
-    optionAwareness: schemaInfluencedOptions,
-    narrativeProtoMeanings: schemaInfluencedNarrative,
-    sensoryProtoMeanings: schemaInfluencedSensory,
+    optionAwareness: mixedNodeInfluencedOptions,
+    narrativeProtoMeanings: mixedNodeInfluencedNarrative,
+    sensoryProtoMeanings: mixedNodeInfluencedSensory,
   })
 
-  // 3. Derive lexical pulls (with schema-influenced state)
+  // 3. Derive lexical pulls (with mixed-node-influenced state)
   const lexicalPulls = deriveLexicalPulls({
     fusedState: schemaInfluencedFusedState,
-    sensoryProtoMeanings: schemaInfluencedSensory,
-    narrativeProtoMeanings: schemaInfluencedNarrative,
-    optionAwareness: schemaInfluencedOptions,
+    sensoryProtoMeanings: mixedNodeInfluencedSensory,
+    narrativeProtoMeanings: mixedNodeInfluencedNarrative,
+    optionAwareness: mixedNodeInfluencedOptions,
   })
 
-  // 4. Build sentence plan (with schema-influenced meanings)
+  // 4. Build sentence plan (with mixed-node-influenced meanings)
   const crystallizedSentencePlan = buildCrystallizedSentencePlan({
     utteranceIntent,
     utteranceShape,
     lexicalPulls,
-    sensoryProtoMeanings: schemaInfluencedSensory,
-    narrativeProtoMeanings: schemaInfluencedNarrative,
-    optionAwareness: schemaInfluencedOptions,
+    sensoryProtoMeanings: mixedNodeInfluencedSensory,
+    narrativeProtoMeanings: mixedNodeInfluencedNarrative,
+    optionAwareness: mixedNodeInfluencedOptions,
     currentDecision: schemaInfluencedDecision,
   })
 
@@ -576,6 +658,7 @@ export const runCrystallizedThinkingRuntime = ({
   // ===== Phase 1: Update brain state for next turn =====
   // Phase M2: Pass precision state to updateBrainState
   // Phase M4: Pass memory state to updateBrainState
+  // Phase M5: Pass mixed node state to updateBrainState
   let nextBrainState = updateBrainState(
     brainState,
     chunkedResult,
@@ -588,6 +671,10 @@ export const runCrystallizedThinkingRuntime = ({
       episodicTraces: consolidatedEpisodicTraces,
       schemaMemory: updatedSchemaMemory,
       schemaInfluenceNotes: schemaInfluenceResult.influenceNotes,
+    },
+    {
+      mixedLatentPool: scoredMixedNodes,
+      mixedNodeNotes: allMixedNodeNotes,
     }
   )
 
@@ -671,5 +758,13 @@ export const runCrystallizedThinkingRuntime = ({
     currentEpisodicTrace,
     replayConsolidationResult,
     schemaInfluenceNotes: schemaInfluenceResult.influenceNotes,
+    // Phase M5: Mixed-Selective Latent Pool
+    mixedNodeSelection,
+    mixedNodeInfluencedProto: {
+      sensory: mixedNodeInfluencedSensory,
+      narrative: mixedNodeInfluencedNarrative,
+    },
+    mixedNodeInfluencedOptions,
+    mixedNodeNotes: allMixedNodeNotes,
   }
 }

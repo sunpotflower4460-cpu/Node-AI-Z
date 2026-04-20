@@ -89,5 +89,7 @@ export const deriveUtteranceIntent = ({
     structureNeed,
     warmth,
     ambiguityTolerance,
+    directness: answerForce, // directness correlates with answerForce
+    shouldStayOpen: ambiguityTolerance > 0.6, // stay open if high ambiguity tolerance
   }
 }
