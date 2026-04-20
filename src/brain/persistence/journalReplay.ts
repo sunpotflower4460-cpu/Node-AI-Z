@@ -141,8 +141,6 @@ export const getRecentJournalSummary = async (
   lastSnapshot?: JournalEvent
   eventCounts: Record<string, number>
 }> => {
-  const config = getPersistenceConfig()
-
   // Get all journal events for session
   let events: JournalEvent[]
 
@@ -191,8 +189,6 @@ export const estimateJournalRecoverableRange = async (
   totalEvents: number
   coverage: number // 0-1, estimate of how complete the journal is
 }> => {
-  const config = getPersistenceConfig()
-
   // Get all journal events for session
   let events: JournalEvent[]
 

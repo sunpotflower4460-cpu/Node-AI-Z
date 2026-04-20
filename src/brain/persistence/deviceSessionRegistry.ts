@@ -94,7 +94,7 @@ export const listDeviceSessions = (sessionId: string): DeviceSessionRecord[] => 
     const registry = loadRegistry()
     const records: DeviceSessionRecord[] = []
 
-    for (const [key, record] of registry.entries()) {
+    for (const [, record] of registry.entries()) {
       if (record.sessionId === sessionId) {
         records.push(record)
       }

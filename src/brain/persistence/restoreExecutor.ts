@@ -6,7 +6,7 @@
  */
 
 import type { SessionBrainState } from '../sessionBrainState'
-import type { RestoreExecutionResult, SnapshotGeneration } from './types'
+import type { RestoreExecutionResult } from './types'
 import { createSnapshot, saveSnapshotLocal, loadSnapshotLocal } from './snapshotManager'
 import { addSnapshotCatalogEntry } from './snapshotCatalog'
 import { localBrainPersistence } from './localBrainPersistence'
@@ -239,8 +239,7 @@ export const restoreFromLatestRemote = async (
  * Mainly used to reload from localStorage
  */
 export const restoreFromLatestLocal = async (
-  sessionId: string,
-  currentState: SessionBrainState | undefined
+  sessionId: string
 ): Promise<RestoreExecutionResult> => {
   const notes: string[] = []
 

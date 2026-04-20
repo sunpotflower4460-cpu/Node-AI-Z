@@ -333,7 +333,9 @@ export const hasConflict = async (
 
   // Check if there's a meaningful difference
   if (localState && remoteState) {
-    const timeDiff = Math.abs(localState.updatedAt - remoteState.updatedAt)
+    const localTime = localState.updatedAt ?? 0
+    const remoteTime = remoteState.updatedAt ?? 0
+    const timeDiff = Math.abs(localTime - remoteTime)
     const turnDiff = Math.abs(localState.turnCount - remoteState.turnCount)
 
     if (timeDiff > maxTimeDelta || turnDiff > 0) {

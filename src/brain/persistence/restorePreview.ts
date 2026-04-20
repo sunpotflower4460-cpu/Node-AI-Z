@@ -56,7 +56,6 @@ export const generateRestorePreview = (
       'arousal',
       'socialSafety',
       'noveltyHunger',
-      'overloadPressure',
     ]
 
     for (const key of keys) {
@@ -81,7 +80,7 @@ export const generateRestorePreview = (
 
   // Time difference
   if (currentUpdatedAt && targetUpdatedAt) {
-    const timeDiff = targetUpdatedAt - currentUpdatedAt
+    const timeDiff = (targetUpdatedAt ?? 0) - currentUpdatedAt
     const hoursDiff = Math.round(timeDiff / (1000 * 60 * 60))
 
     if (hoursDiff > 0) {
@@ -123,21 +122,21 @@ export const generateRestorePreview = (
   if (!current) {
     // Always recommend if no current state
     recommended = true
-  } else if (targetTurnCount <= currentTurnCount && targetUpdatedAt <= currentUpdatedAt) {
+  } else if (targetTurnCount <= currentTurnCount && (targetUpdatedAt ?? 0) <= currentUpdatedAt) {
     // Recommend if going back in time and turns
     recommended = true
-  } else if (targetTurnCount > currentTurnCount || targetUpdatedAt > currentUpdatedAt) {
+  } else if (targetTurnCount > currentTurnCount || (targetUpdatedAt ?? 0) > currentUpdatedAt) {
     // Not recommended if trying to go forward
     recommended = false
     cautionNotes.push('推奨されません: 通常、未来の状態へ戻すことは想定されていません')
   }
 
-  // Additional caution notes
-  if (episodicCountDelta < -5) {
+  // Additional caution notes (only check if we have data)
+  if (currentTurnCount !== undefined && targetTurnCount !== undefined && episodicCountDelta < -5) {
     cautionNotes.push(`警告: エピソード記憶が ${Math.abs(episodicCountDelta)} 件減少します`)
   }
 
-  if (schemaCountDelta < -3) {
+  if (currentTurnCount !== undefined && targetTurnCount !== undefined && schemaCountDelta < -3) {
     cautionNotes.push(`警告: スキーマパターンが ${Math.abs(schemaCountDelta)} 件減少します`)
   }
 
@@ -166,7 +165,6 @@ export const generateRestorePreview = (
  * Generate preview for restoring from local snapshot
  */
 export const previewRestoreFromLocalSnapshot = async (
-  sessionId: string,
   snapshotId: string,
   currentState: SessionBrainState | undefined
 ): Promise<RestorePreview | undefined> => {
@@ -187,9 +185,8 @@ export const previewRestoreFromLocalSnapshot = async (
  * Generate preview for restoring from remote snapshot
  */
 export const previewRestoreFromRemoteSnapshot = async (
-  sessionId: string,
-  snapshotId: string,
-  currentState: SessionBrainState | undefined
+  // snapshotId: string,
+  // currentState: SessionBrainState | undefined
 ): Promise<RestorePreview | undefined> => {
   // TODO: Phase M8: Implement remote snapshot loading
   // For now, return undefined

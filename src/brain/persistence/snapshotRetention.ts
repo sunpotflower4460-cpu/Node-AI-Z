@@ -7,7 +7,6 @@
 
 import type { SnapshotCatalogEntry, SnapshotGeneration } from './types'
 import { groupSnapshotsByGeneration, sortSnapshotsNewestFirst, removeFromCatalog } from './snapshotCatalog'
-import { loadSnapshotLocal } from './snapshotManager'
 
 /**
  * Retention policy for different snapshot generations
