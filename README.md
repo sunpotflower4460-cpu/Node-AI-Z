@@ -316,6 +316,69 @@ Schema は **支配しない。少し傾けるだけ** です：
 
 これにより、「この知性は出来事をすぐ性格にせず、反復してから傾向にしている」ことが実感できます。
 
+## Phase M5 — Mixed-Selective Latent Pool / 交差ノード生成
+
+結晶思考方式は、Phase M5 で **Mixed-Selective Latent Pool** を獲得しました。
+
+### 何が変わったか
+
+Phase M5 以前は、`fatigue`, `uncertainty`, `fragility` のような単独ラベルだけで状態を表現していました。これは：
+
+* 複雑な感情状態を単一の単語に押し込めてしまう
+* 複数の軸が同時に立っている交差状態を捉えられない
+* 「期待圧の下での消耗」のような文脈依存の状態を見逃す
+
+という問題を抱えていました。
+
+Phase M5 では、**Mixed Latent Node** として、感情・目標・関係・身体・文脈・時間残響の **交差状態** を動的に生成します：
+
+* **Mixed Node**: 単独ラベルではなく、複数軸の交差として立つ中間状態
+* **Session-Local**: ターンごとに生成され、条件を満たせば schema 候補になる
+* **Contextual Templates**: 固定辞書ではなく「こういう組み合わせならこういう状態」というルール
+* **Selective**: 1ターンあたり 3〜8個程度生成し、そのうち dominant は 1〜3個に絞る
+
+### 混合ノードの例
+
+Phase M5 で生成される混合ノードの例：
+
+* **fatigue_under_expectation** (期待圧の下での消耗)
+* **wish_to_open_but_guarded** (開きたいが守られている)
+* **curiosity_with_low_safety** (安全感の低い好奇心)
+* **gentle_withdrawal** (穏やかな引き下がり)
+* **protective_openness** (防御的な開き)
+* **meaning_loss_under_pressure** (圧の下での意味喪失)
+* **change_pull_with_ambivalence** (両価を持つ変化の引き)
+* **fragile_but_not_closed** (壊れやすいが閉じてはいない)
+
+### 実装の詳細
+
+Phase M5 の主要コンポーネント：
+
+1. **mixedNodeTypes.ts**: Mixed latent node の型定義
+2. **contextualNodeTemplates.ts**: 交差ノード生成のテンプレート群 (5〜10個)
+3. **mixedNodeComposer.ts**: 現在ターンの状態から mixed node を生成
+4. **scoreMixedNodeSalience.ts**: salience / coherence / novelty を計算
+5. **selectDominantMixedNodes.ts**: dominant / suppressed を分ける
+6. **applyMixedNodesToProto.ts**: proto meaning を少し深める
+7. **applyMixedNodesToOption.ts**: option awareness の見え方を傾ける
+8. **applyMixedNodesToDecision.ts**: utterance intent を少し歪める
+
+### Mixed Node の効き方
+
+Mixed Node は **決定ではなく、傾向** として効きます：
+
+* **Proto Meaning**: 交差状態に関連する narrative を前景化
+* **Option Awareness**: hesitation / confidence / bridge を少し調整
+* **Utterance Intent**: answerForce / directness / warmth などを微調整
+
+### Episodic / Schema との関係
+
+* **Episodic Trace**: dominant mixed node の ID と tags を保存
+* **Schema Pattern**: 同じ mixed node key が反復すれば schema 候補になる
+* **Session-Local Pool**: 最大 10件程度を session 内で保持
+
+これにより、「この知性は単語ではなく、交差状態で考え始めている」ことが実感できます。
+
 ## 今後の実装ロードマップ
 
 次の機能追加は、原則としてこの順で積みます。
