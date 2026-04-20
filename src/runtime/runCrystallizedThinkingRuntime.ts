@@ -73,6 +73,22 @@ import {
   applyBranchInfluence,
   derivePromotionCandidates,
   updateBranchSessionState,
+  enqueuePromotionCandidate,
+  listPromotionQueue,
+  updatePromotionQueueEntry,
+  validatePromotionCandidate,
+  resolvePromotionDecision,
+  applyApprovedPromotion,
+  logCandidateQueued,
+  logValidationFinished,
+  logCandidateQuarantined,
+  logCandidateRejected,
+  logCandidateApproved,
+  logCandidateApplied,
+  getPromotionQueueState,
+  getPromotionLogState,
+  restorePromotionQueueState,
+  restorePromotionLogState,
 } from '../core'
 import type { CoreInfluenceNote } from '../core/coreTypes'
 
@@ -737,11 +753,110 @@ export const runCrystallizedThinkingRuntime = ({
     nextBrainState.turnCount
   )
 
+  // ===== Phase M10: Promotion Pipeline =====
+  // Process new candidates through the promotion pipeline
+  const promotionPipelineResults: {
+    queuedCount: number
+    validatedCount: number
+    approvedCount: number
+    appliedCount: number
+    quarantinedCount: number
+    rejectedCount: number
+  } = {
+    queuedCount: 0,
+    validatedCount: 0,
+    approvedCount: 0,
+    appliedCount: 0,
+    quarantinedCount: 0,
+    rejectedCount: 0,
+  }
+
+  let updatedTrunk = sharedTrunk
+
+  // Step 1: Enqueue new promotion candidates
+  for (const candidate of promotionCandidates) {
+    const queueEntry = enqueuePromotionCandidate(candidate)
+    logCandidateQueued(queueEntry)
+    promotionPipelineResults.queuedCount++
+  }
+
+  // Step 2: Process queued candidates through validation
+  const queuedEntries = listPromotionQueue('queued')
+  for (const entry of queuedEntries) {
+    // Validate the candidate
+    const validation = validatePromotionCandidate(
+      entry.candidate,
+      updatedBranch,
+      updatedTrunk
+    )
+
+    // Update queue entry with validation result
+    updatePromotionQueueEntry(entry.id, {
+      status: validation.status,
+      validation,
+    })
+
+    logValidationFinished(
+      entry.candidate.id,
+      validation.status,
+      validation.riskLevel,
+      validation.confidenceScore
+    )
+    promotionPipelineResults.validatedCount++
+
+    // Resolve promotion decision
+    const { finalStatus, approvalRecord } = resolvePromotionDecision(validation)
+
+    // Update queue entry with final status
+    updatePromotionQueueEntry(entry.id, {
+      status: finalStatus,
+    })
+
+    // Log decision
+    if (finalStatus === 'approved') {
+      logCandidateApproved(approvalRecord)
+      promotionPipelineResults.approvedCount++
+    } else if (finalStatus === 'rejected') {
+      logCandidateRejected(approvalRecord)
+      promotionPipelineResults.rejectedCount++
+    } else if (finalStatus === 'quarantined') {
+      logCandidateQuarantined(approvalRecord)
+      promotionPipelineResults.quarantinedCount++
+    }
+
+    // Step 3: Apply approved candidates to trunk
+    if (finalStatus === 'approved') {
+      const applyResult = applyApprovedPromotion(
+        updatedTrunk,
+        entry.candidate,
+        validation
+      )
+
+      if (applyResult.success && applyResult.trunkUpdated) {
+        updatedTrunk = applyResult.nextTrunk
+        logCandidateApplied(applyResult)
+        promotionPipelineResults.appliedCount++
+
+        // Mark queue entry as applied
+        updatePromotionQueueEntry(entry.id, {
+          status: 'applied',
+        })
+      }
+    }
+  }
+
+  // Store promotion queue and logs in trunk for persistence
+  updatedTrunk = {
+    ...updatedTrunk,
+    promotionQueue: getPromotionQueueState(),
+    promotionLogs: getPromotionLogState(),
+  }
+
   // Apply trunk influence (read-only, subtle)
   const trunkInfluenceResult = applyTrunkInfluence(
     updatedSchemaMemory.patterns,
     scoredMixedNodes,
-    sharedTrunk,
+    updatedTrunk,
     appFacade.trunkInfluenceWeight
   )
 
@@ -761,7 +876,7 @@ export const runCrystallizedThinkingRuntime = ({
 
   // Resolve unified core view
   const coreView = resolveCoreView(
-    sharedTrunk,
+    updatedTrunk,
     updatedBranch,
     appFacade,
     promotionCandidates
@@ -835,5 +950,8 @@ export const runCrystallizedThinkingRuntime = ({
     coreView,
     coreInfluenceNotes: allCoreInfluenceNotes,
     promotionCandidates,
+    // Phase M10: Promotion Pipeline
+    promotionPipelineResults,
+    updatedTrunk,
   }
 }

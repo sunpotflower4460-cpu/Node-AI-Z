@@ -11,6 +11,7 @@
 import type { SchemaPattern } from '../memory/types'
 import type { MixedLatentNode } from '../node/mixedNodeTypes'
 import type { SessionBrainState } from '../brain/sessionBrainState'
+import type { PromotionQueueEntry, PromotionApprovalRecord } from './promotion/promotionTypes'
 
 /**
  * Core Layer Scope
@@ -50,6 +51,12 @@ export type SharedTrunkState = {
 
   /** Notes about what's in the trunk (for Observe) */
   notes: string[]
+
+  /** Promotion queue entries (Phase M10) */
+  promotionQueue?: PromotionQueueEntry[]
+
+  /** Promotion approval/decision logs (Phase M10) */
+  promotionLogs?: PromotionApprovalRecord[]
 }
 
 /**
