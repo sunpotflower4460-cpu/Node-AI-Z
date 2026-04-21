@@ -36,6 +36,7 @@ export const mapExperienceMessagesToObservationHistory = (
       somaticSignature: message.somaticSignature,
       somaticInfluence: message.somaticInfluence,
       relevantSomaticMarkers: message.relevantSomaticMarkers,
+      updatedTrunk: message.updatedTrunk,
     }))
 }
 

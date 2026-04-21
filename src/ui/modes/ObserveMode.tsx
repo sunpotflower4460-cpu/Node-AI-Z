@@ -15,7 +15,15 @@ import { RevisionTab } from '../tabs/RevisionTab'
 import { SessionBrainTab } from '../tabs/SessionBrainTab'
 import { Badge } from '../components/CommonUI'
 import { HumanReviewPanel } from '../review/HumanReviewPanel'
-import { listPendingHumanReviews, listResolvedHumanReviews, submitHumanReviewDecision } from '../../core'
+import { TrunkUndoPanel } from '../review/TrunkUndoPanel'
+import {
+  createEmptySharedTrunk,
+  listPendingHumanReviews,
+  listResolvedHumanReviews,
+  loadSharedTrunkState,
+  safeUndoTrunkApply,
+  submitHumanReviewDecision,
+} from '../../core'
 
 const SAMPLE_INPUTS = [
   '仕事に対する意欲が湧かなくて、転職すべきか悩んでいる',
@@ -150,13 +158,24 @@ export const ObserveMode = ({
   const [isRawOpen, setIsRawOpen] = useState(false)
   const [rawViewMode, setRawViewMode] = useState<RawViewMode>('pipeline')
   const [isProcessOpen, setIsProcessOpen] = useState(true)
-  const [, forceHumanReviewRefresh] = useState(0)
+  const [, forceObserveRefresh] = useState(0)
   const humanReviewPending = listPendingHumanReviews()
   const humanReviewResolved = listResolvedHumanReviews()
+  const trunkState = loadSharedTrunkState() ?? currentObservation?.updatedTrunk ?? null
 
   const handleHumanDecision = (input: HumanReviewDecisionInput) => {
     submitHumanReviewDecision(input)
-    forceHumanReviewRefresh((value) => value + 1)
+    forceObserveRefresh((value) => value + 1)
+  }
+
+  const handleUndoTrunkApply = (input: { applyRecordId: string; reason: string }) => {
+    safeUndoTrunkApply({
+      currentTrunk: trunkState ?? createEmptySharedTrunk(),
+      applyRecordId: input.applyRecordId,
+      reason: input.reason,
+      revertedBy: 'human_reviewer',
+    })
+    forceObserveRefresh((value) => value + 1)
   }
 
   const handleAnalyze = () => {
@@ -1154,6 +1173,16 @@ export const ObserveMode = ({
               pending={humanReviewPending}
               resolved={humanReviewResolved}
               onDecision={handleHumanDecision}
+            />
+          </div>
+
+          <div className="mt-6">
+            <TrunkUndoPanel
+              applyRecords={trunkState?.trunkApplyRecords ?? []}
+              revertRecords={trunkState?.trunkRevertRecords ?? []}
+              currentSafetySnapshotId={trunkState?.currentRevertSafetySnapshotId}
+              consistencyResult={trunkState?.lastTrunkConsistencyCheck}
+              onUndo={handleUndoTrunkApply}
             />
           </div>
 

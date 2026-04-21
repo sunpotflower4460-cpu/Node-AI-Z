@@ -8,6 +8,7 @@ import type { SharedTrunkState, PromotionCandidate } from '../coreTypes'
 import type { PromotionApplyResult, PromotionValidationResult } from './promotionTypes'
 import type { SchemaPattern } from '../../memory/types'
 import type { MixedLatentNode } from '../../node/mixedNodeTypes'
+import type { TrunkApplyRollbackMetadata } from '../trunkSafety/trunkSafetyTypes'
 
 /**
  * Apply an approved promotion to the shared trunk.
@@ -20,6 +21,7 @@ export const applyApprovedPromotion = (
 ): PromotionApplyResult => {
   const notes: string[] = []
   let trunkUpdated = false
+  let rollbackMetadata: TrunkApplyRollbackMetadata | undefined
 
   // Create a copy of trunk to modify
   const nextTrunk: SharedTrunkState = {
@@ -33,16 +35,20 @@ export const applyApprovedPromotion = (
     // Apply promotion based on candidate type
     if (candidate.type === 'schema') {
       const result = applySchemaPromotion(nextTrunk, candidate, notes)
-      trunkUpdated = result
+      trunkUpdated = result.trunkUpdated
+      rollbackMetadata = result.rollbackMetadata
     } else if (candidate.type === 'mixed_node') {
       const result = applyMixedNodePromotion(nextTrunk, candidate, notes)
-      trunkUpdated = result
+      trunkUpdated = result.trunkUpdated
+      rollbackMetadata = result.rollbackMetadata
     } else if (candidate.type === 'bias') {
       const result = applyBiasPromotion(nextTrunk, candidate, notes)
-      trunkUpdated = result
+      trunkUpdated = result.trunkUpdated
+      rollbackMetadata = result.rollbackMetadata
     } else if (candidate.type === 'proto_weight') {
       const result = applyProtoWeightPromotion(nextTrunk, candidate, notes)
-      trunkUpdated = result
+      trunkUpdated = result.trunkUpdated
+      rollbackMetadata = result.rollbackMetadata
     } else {
       notes.push(`Unknown candidate type: ${candidate.type}`)
       return {
@@ -51,6 +57,7 @@ export const applyApprovedPromotion = (
         trunkUpdated: false,
         notes,
         nextTrunk: trunk, // Return original trunk on failure
+        rollbackMetadata,
       }
     }
 
@@ -67,6 +74,7 @@ export const applyApprovedPromotion = (
       trunkUpdated,
       notes,
       nextTrunk,
+      rollbackMetadata,
     }
   } catch (error) {
     notes.push(`Error applying promotion: ${error instanceof Error ? error.message : String(error)}`)
@@ -76,6 +84,7 @@ export const applyApprovedPromotion = (
       trunkUpdated: false,
       notes,
       nextTrunk: trunk, // Return original trunk on error
+      rollbackMetadata,
     }
   }
 }
@@ -87,7 +96,7 @@ const applySchemaPromotion = (
   trunk: SharedTrunkState,
   candidate: PromotionCandidate,
   notes: string[]
-): boolean => {
+): { trunkUpdated: boolean; rollbackMetadata: TrunkApplyRollbackMetadata } => {
   const schema = candidate.sourceData as SchemaPattern
 
   // Check if schema already exists in trunk
@@ -96,15 +105,28 @@ const applySchemaPromotion = (
   if (existingIndex >= 0) {
     // Reinforce existing schema (conservative update)
     const existing = trunk.schemaPatterns[existingIndex]!
-    trunk.schemaPatterns[existingIndex] = {
+    const updatedPattern = {
       ...existing,
       strength: Math.min(1.0, existing.strength + 0.05), // Small boost
       confidence: Math.min(1.0, existing.confidence + 0.03),
       recurrenceCount: existing.recurrenceCount + 1,
       lastReinforcedTurn: Date.now(),
     }
+    trunk.schemaPatterns[existingIndex] = updatedPattern
     notes.push(`Reinforced existing trunk schema: ${schema.key}`)
-    return true
+    return {
+      trunkUpdated: true,
+      rollbackMetadata: {
+        schemaPatterns: [
+          {
+            key: schema.key,
+            action: 'updated',
+            previousPattern: existing,
+            nextPattern: updatedPattern,
+          },
+        ],
+      },
+    }
   } else {
     // Add new schema to trunk (conservative strength)
     const newTrunkSchema: SchemaPattern = {
@@ -114,7 +136,18 @@ const applySchemaPromotion = (
     }
     trunk.schemaPatterns.push(newTrunkSchema)
     notes.push(`Added new schema to trunk: ${schema.key}`)
-    return true
+    return {
+      trunkUpdated: true,
+      rollbackMetadata: {
+        schemaPatterns: [
+          {
+            key: schema.key,
+            action: 'added',
+            nextPattern: newTrunkSchema,
+          },
+        ],
+      },
+    }
   }
 }
 
@@ -125,7 +158,7 @@ const applyMixedNodePromotion = (
   trunk: SharedTrunkState,
   candidate: PromotionCandidate,
   notes: string[]
-): boolean => {
+): { trunkUpdated: boolean; rollbackMetadata: TrunkApplyRollbackMetadata } => {
   const node = candidate.sourceData as MixedLatentNode
 
   // Check if node already exists in trunk
@@ -134,14 +167,27 @@ const applyMixedNodePromotion = (
   if (existingIndex >= 0) {
     // Reinforce existing node (conservative update)
     const existing = trunk.promotedMixedNodes[existingIndex]!
-    trunk.promotedMixedNodes[existingIndex] = {
+    const updatedNode = {
       ...existing,
       salience: Math.min(1.0, existing.salience + 0.03), // Small boost
       coherence: Math.min(1.0, existing.coherence + 0.02),
       novelty: Math.max(0.0, existing.novelty - 0.05), // Decrease novelty (more familiar)
     }
+    trunk.promotedMixedNodes[existingIndex] = updatedNode
     notes.push(`Reinforced existing trunk mixed node: ${node.key}`)
-    return true
+    return {
+      trunkUpdated: true,
+      rollbackMetadata: {
+        mixedNodes: [
+          {
+            key: node.key,
+            action: 'updated',
+            previousNode: existing,
+            nextNode: updatedNode,
+          },
+        ],
+      },
+    }
   } else {
     // Add new node to trunk (conservative salience)
     const newTrunkNode: MixedLatentNode = {
@@ -151,7 +197,18 @@ const applyMixedNodePromotion = (
     }
     trunk.promotedMixedNodes.push(newTrunkNode)
     notes.push(`Added new mixed node to trunk: ${node.key}`)
-    return true
+    return {
+      trunkUpdated: true,
+      rollbackMetadata: {
+        mixedNodes: [
+          {
+            key: node.key,
+            action: 'added',
+            nextNode: newTrunkNode,
+          },
+        ],
+      },
+    }
   }
 }
 
@@ -162,18 +219,30 @@ const applyBiasPromotion = (
   trunk: SharedTrunkState,
   candidate: PromotionCandidate,
   notes: string[]
-): boolean => {
+): { trunkUpdated: boolean; rollbackMetadata: TrunkApplyRollbackMetadata } => {
   const biases = candidate.sourceData as Record<string, number>
+  const conceptualBiases: NonNullable<TrunkApplyRollbackMetadata['conceptualBiases']> = []
 
   // Apply biases conservatively (small increments)
   for (const [key, value] of Object.entries(biases)) {
-    const currentValue = trunk.conceptualBiases[key] || 0.0
+    const previousValue = trunk.conceptualBiases[key]
+    const currentValue = previousValue || 0.0
     const delta = value * 0.1 // Only apply 10% of the bias value
     trunk.conceptualBiases[key] = currentValue + delta
+    conceptualBiases.push({
+      key,
+      previousValue,
+      nextValue: currentValue + delta,
+    })
     notes.push(`Updated trunk bias ${key}: ${currentValue.toFixed(3)} → ${(currentValue + delta).toFixed(3)}`)
   }
 
-  return true
+  return {
+    trunkUpdated: true,
+    rollbackMetadata: {
+      conceptualBiases,
+    },
+  }
 }
 
 /**
@@ -183,16 +252,28 @@ const applyProtoWeightPromotion = (
   trunk: SharedTrunkState,
   candidate: PromotionCandidate,
   notes: string[]
-): boolean => {
+): { trunkUpdated: boolean; rollbackMetadata: TrunkApplyRollbackMetadata } => {
   const weights = candidate.sourceData as Record<string, number>
+  const protoMeaningBiases: NonNullable<TrunkApplyRollbackMetadata['protoMeaningBiases']> = []
 
   // Apply weights conservatively (small increments)
   for (const [key, value] of Object.entries(weights)) {
-    const currentValue = trunk.protoMeaningBias[key] || 0.0
+    const previousValue = trunk.protoMeaningBias[key]
+    const currentValue = previousValue || 0.0
     const delta = value * 0.1 // Only apply 10% of the weight value
     trunk.protoMeaningBias[key] = currentValue + delta
+    protoMeaningBiases.push({
+      key,
+      previousValue,
+      nextValue: currentValue + delta,
+    })
     notes.push(`Updated trunk proto weight ${key}: ${currentValue.toFixed(3)} → ${(currentValue + delta).toFixed(3)}`)
   }
 
-  return true
+  return {
+    trunkUpdated: true,
+    rollbackMetadata: {
+      protoMeaningBiases,
+    },
+  }
 }

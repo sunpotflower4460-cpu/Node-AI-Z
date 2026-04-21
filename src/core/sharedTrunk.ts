@@ -8,6 +8,8 @@ import type { SharedTrunkState } from './coreTypes'
 import type { SchemaPattern } from '../memory/types'
 import type { MixedLatentNode } from '../node/mixedNodeTypes'
 
+const SHARED_TRUNK_STORAGE_KEY = 'nodeaiz:core:shared-trunk'
+
 /**
  * Create an empty shared trunk state.
  * Used for initialization when no trunk exists yet.
@@ -27,6 +29,51 @@ export const createEmptySharedTrunk = (): SharedTrunkState => {
     promotionLogs: [], // Phase M10: Initialize promotion logs
     humanReviewSummaries: [], // Phase M13: Initialize human review state
     humanReviewRecords: [], // Phase M13: Initialize human review records
+    trunkApplyRecords: [], // Phase M14: Initialize trunk apply ledger
+    trunkRevertRecords: [], // Phase M14: Initialize trunk revert ledger
+    trunkSnapshotRecords: [], // Phase M14: Initialize trunk snapshot metadata
+    safeUndoNotes: [],
+  }
+}
+
+export const loadSharedTrunkState = (): SharedTrunkState | undefined => {
+  if (typeof localStorage === 'undefined') {
+    return undefined
+  }
+
+  try {
+    const stored = localStorage.getItem(SHARED_TRUNK_STORAGE_KEY)
+    if (!stored) {
+      return undefined
+    }
+    return JSON.parse(stored) as SharedTrunkState
+  } catch (error) {
+    console.warn('Failed to load shared trunk state.', error)
+    return undefined
+  }
+}
+
+export const saveSharedTrunkState = (trunk: SharedTrunkState): void => {
+  if (typeof localStorage === 'undefined') {
+    return
+  }
+
+  try {
+    localStorage.setItem(SHARED_TRUNK_STORAGE_KEY, JSON.stringify(trunk))
+  } catch (error) {
+    console.warn('Failed to save shared trunk state.', error)
+  }
+}
+
+export const clearSharedTrunkState = (): void => {
+  if (typeof localStorage === 'undefined') {
+    return
+  }
+
+  try {
+    localStorage.removeItem(SHARED_TRUNK_STORAGE_KEY)
+  } catch (error) {
+    console.warn('Failed to clear shared trunk state.', error)
   }
 }
 

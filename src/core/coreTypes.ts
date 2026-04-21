@@ -67,6 +67,24 @@ export type SharedTrunkState = {
 
   /** Human review decision records (Phase M13) */
   humanReviewRecords?: import('./guardian/humanReview/humanReviewTypes').HumanReviewRecord[]
+
+  /** Trunk apply ledger (Phase M14) */
+  trunkApplyRecords?: import('./trunkSafety/trunkSafetyTypes').TrunkApplyRecord[]
+
+  /** Trunk revert ledger (Phase M14) */
+  trunkRevertRecords?: import('./trunkSafety/trunkSafetyTypes').TrunkRevertRecord[]
+
+  /** Trunk snapshot metadata (Phase M14) */
+  trunkSnapshotRecords?: import('./trunkSafety/trunkSafetyTypes').TrunkSnapshotRecord[]
+
+  /** Current revert safety snapshot (Phase M14) */
+  currentRevertSafetySnapshotId?: string
+
+  /** Last trunk consistency check result (Phase M14) */
+  lastTrunkConsistencyCheck?: import('./trunkSafety/trunkSafetyTypes').TrunkConsistencyResult
+
+  /** Safe undo notes (Phase M14) */
+  safeUndoNotes?: string[]
 }
 
 /**
