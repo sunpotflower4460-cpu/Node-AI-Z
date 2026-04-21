@@ -7,7 +7,7 @@
  * Phase M8: Added snapshot catalog, restore preview, device tracking, conflict resolution
  */
 
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ObservationRecord } from '../../types/experience'
 import {
   loadPersistenceConfig,
@@ -28,11 +28,17 @@ type SessionBrainTabProps = {
 
 export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
   const { nextBrainState, chunkedResult, dualStreamResult } = observation
+  const aiSenseiMode =
+    observation.aiSenseiConfig?.mode ??
+    observation.guardianReviewResults?.find(result => result.aiSensei)?.aiSensei?.mode
+
+  const aiSenseiReviews =
+    observation.guardianReviewResults?.filter(
+      result => result.actor === 'ai_sensei' || result.aiSensei
+    ) ?? []
 
   // Phase M6: Load persistence state
   const [persistenceConfig] = useState(() => loadPersistenceConfig())
-  const [snapshotCount, setSnapshotCount] = useState(0)
-  const [journalCount, setJournalCount] = useState(0)
   const [recoveryOptions, setRecoveryOptions] = useState<Awaited<ReturnType<typeof getRecoveryOptions>> | null>(null)
 
   // Phase M8: Extended persistence state
@@ -40,24 +46,39 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
     total: number
     byGeneration: Record<string, number>
   } | null>(null)
-  const [deviceSummary, setDeviceSummary] = useState<ReturnType<typeof getDeviceSessionSummary> | null>(null)
   const [conflictStatus, setConflictStatus] = useState<Awaited<ReturnType<typeof hasConflict>> | null>(null)
   const [retentionSummary, setRetentionSummary] = useState<{
     kept: number
     pruned: number
   } | null>(null)
+  const snapshotCount = useMemo(() => {
+    if (!nextBrainState) {
+      return 0
+    }
+
+    return loadSnapshotMetadataList().filter(
+      meta => meta.sessionId === nextBrainState.sessionId
+    ).length
+  }, [nextBrainState])
+
+  const journalCount = useMemo(() => {
+    if (!nextBrainState) {
+      return 0
+    }
+
+    return getSessionJournalEvents(nextBrainState.sessionId).length
+  }, [nextBrainState])
+
+  const deviceSummary = useMemo(() => {
+    if (!nextBrainState) {
+      return null
+    }
+
+    return getDeviceSessionSummary(nextBrainState.sessionId)
+  }, [nextBrainState])
 
   useEffect(() => {
     if (nextBrainState) {
-      // Load persistence state
-      const snapshots = loadSnapshotMetadataList().filter(
-        meta => meta.sessionId === nextBrainState.sessionId
-      )
-      setSnapshotCount(snapshots.length)
-
-      const journalEvents = getSessionJournalEvents(nextBrainState.sessionId)
-      setJournalCount(journalEvents.length)
-
       // Fetch recovery options (async in Phase M7)
       getRecoveryOptions(nextBrainState.sessionId).then(options => {
         setRecoveryOptions(options)
@@ -92,10 +113,6 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
       }).catch(error => {
         console.warn('Failed to load snapshot catalog:', error)
       })
-
-      // Phase M8: Load device session summary
-      const deviceSummaryData = getDeviceSessionSummary(nextBrainState.sessionId)
-      setDeviceSummary(deviceSummaryData)
 
       // Phase M8: Check for conflicts
       hasConflict(nextBrainState.sessionId).then(conflict => {
@@ -254,6 +271,72 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
           When you return, the system remembers where it left off - the afterglow, predictions, interoception, and workspace contents all carry forward.
         </div>
       </div>
+
+      {(aiSenseiMode || aiSenseiReviews.length > 0) && (
+        <div className="rounded-lg border border-fuchsia-200 bg-fuchsia-50 p-4">
+          <h3 className="text-sm font-bold text-fuchsia-900 mb-2">AI Sensei Guardian Review</h3>
+          <div className="space-y-3 text-xs text-fuchsia-800">
+            <div>
+              <span className="font-semibold">AI Sensei Mode:</span>{' '}
+              <span className="font-mono">{aiSenseiMode ?? 'not_recorded'}</span>
+            </div>
+            {aiSenseiReviews.length === 0 ? (
+              <div>No AI sensei guardian reviews were recorded on this turn.</div>
+            ) : (
+              aiSenseiReviews.map(review => (
+                <div
+                  key={`${review.requestId}-${review.createdAt}`}
+                  className="rounded border border-fuchsia-200 bg-white/70 p-3"
+                >
+                  <div className="font-semibold text-fuchsia-900">
+                    Request {review.requestId}
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    <div>
+                      <span className="font-semibold">AI Sensei Payload Summary:</span>{' '}
+                      {review.aiSensei?.payload?.summary?.length
+                        ? review.aiSensei.payload.summary.join(' / ')
+                        : 'none'}
+                    </div>
+                    <div>
+                      <span className="font-semibold">AI Sensei Raw Response Summary:</span>{' '}
+                      {review.aiSensei?.rawResponse
+                        ? [
+                            review.aiSensei.rawResponse.decision,
+                            review.aiSensei.rawResponse.confidence !== undefined
+                              ? `confidence=${review.aiSensei.rawResponse.confidence.toFixed(2)}`
+                              : undefined,
+                            review.aiSensei.rawResponse.rawText,
+                          ]
+                            .filter(Boolean)
+                            .join(' | ')
+                        : 'none'}
+                    </div>
+                    <div>
+                      <span className="font-semibold">AI Sensei Parsed Review:</span>{' '}
+                      {review.aiSensei?.parsedReview
+                        ? `success=${review.aiSensei.parsedReview.success}, decision=${review.aiSensei.parsedReview.decision}, confidence=${review.aiSensei.parsedReview.confidence.toFixed(2)}`
+                        : 'none'}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Fallback Notes:</span>{' '}
+                      {review.aiSensei?.fallbackNotes?.length
+                        ? review.aiSensei.fallbackNotes.join(' / ')
+                        : 'none'}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Final Guardian Decision:</span>{' '}
+                      {review.finalDecision
+                        ? `${review.finalDecision.guardianDecision} -> ${review.finalDecision.finalStatus}`
+                        : review.decision}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Phase M6: Persistence State */}
       <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-4">

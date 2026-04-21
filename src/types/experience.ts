@@ -64,6 +64,10 @@ export type ObservationRecord = {
   confidenceState?: ConfidenceState
   uncertaintyState?: UncertaintyState
   replaySummary?: ReplaySummary
+  guardianReviewRequests?: import('../core/guardian/guardianTypes').GuardianReviewRequest[]
+  guardianReviewResults?: import('../core/guardian/guardianTypes').GuardianReviewResult[]
+  guardianPolicy?: import('../core/guardian/guardianTypes').GuardianPolicy
+  aiSenseiConfig?: import('../core/guardian/aiSensei').AiSenseiConfig
 }
 
 export type ExperienceMessage = {
@@ -95,4 +99,8 @@ export type ExperienceMessage = {
   confidenceState?: ConfidenceState
   uncertaintyState?: UncertaintyState
   replaySummary?: ReplaySummary
+  guardianReviewRequests?: import('../core/guardian/guardianTypes').GuardianReviewRequest[]
+  guardianReviewResults?: import('../core/guardian/guardianTypes').GuardianReviewResult[]
+  guardianPolicy?: import('../core/guardian/guardianTypes').GuardianPolicy
+  aiSenseiConfig?: import('../core/guardian/aiSensei').AiSenseiConfig
 }

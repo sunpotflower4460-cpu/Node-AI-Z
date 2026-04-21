@@ -112,6 +112,10 @@ export const createObservationRecord = async ({
     confidenceState: runtimeResult.confidenceState,
     uncertaintyState: runtimeResult.uncertaintyState,
     replaySummary: runtimeResult.replaySummary,
+    guardianReviewRequests: runtimeResult.guardianReviewRequests,
+    guardianReviewResults: runtimeResult.guardianReviewResults,
+    guardianPolicy: runtimeResult.guardianPolicy,
+    aiSenseiConfig: runtimeResult.aiSenseiConfig,
   }
 }
 
@@ -147,6 +151,10 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       confidenceState: record.confidenceState,
       uncertaintyState: record.uncertaintyState,
       replaySummary: record.replaySummary,
+      guardianReviewRequests: record.guardianReviewRequests,
+      guardianReviewResults: record.guardianReviewResults,
+      guardianPolicy: record.guardianPolicy,
+      aiSenseiConfig: record.aiSenseiConfig,
     },
     {
       id: createObservationId('exp_assistant'),
@@ -176,7 +184,10 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       confidenceState: record.confidenceState,
       uncertaintyState: record.uncertaintyState,
       replaySummary: record.replaySummary,
+      guardianReviewRequests: record.guardianReviewRequests,
+      guardianReviewResults: record.guardianReviewResults,
+      guardianPolicy: record.guardianPolicy,
+      aiSenseiConfig: record.aiSenseiConfig,
     },
   ]
 }
-

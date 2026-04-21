@@ -87,9 +87,11 @@ import {
   getPromotionQueueState,
   getPromotionLogState,
   getGuardianPolicy,
+  getAiSenseiConfig,
   resolveGuardianMode,
   buildGuardianReviewRequest,
   enqueueGuardianReview,
+  resolveGuardianReviewQueueEntry,
   resolveGuardianReview,
   guardianDecisionResolver,
   getGuardianReviewQueueState,
@@ -677,7 +679,6 @@ export const runCrystallizedThinkingRuntime = async ({
 
   // ===== Phase 2: Idle Replay System =====
   let replaySummary
-  let updatedPersonalLearning = personalLearning
   if (phase2Flags.replayEnabled) {
     // Build replay queue
     const replayQueue = buildReplayQueue(
@@ -687,9 +688,8 @@ export const runCrystallizedThinkingRuntime = async ({
     )
 
     // Run idle replay (consolidation)
-    const replayResult = runIdleReplay(replayQueue, personalLearning)
-    replaySummary = replayResult.summary
-    updatedPersonalLearning = replayResult.updatedLearning
+    const { summary: nextReplaySummary } = runIdleReplay(replayQueue, personalLearning)
+    replaySummary = nextReplaySummary
   }
 
   // ===== Phase 1: Update brain state for next turn =====
@@ -787,6 +787,7 @@ export const runCrystallizedThinkingRuntime = async ({
 
   // Get guardian policy
   const guardianPolicy = getGuardianPolicy()
+  const aiSenseiConfig = getAiSenseiConfig()
 
   // Storage for guardian review requests and results
   const guardianReviewRequests: GuardianReviewRequest[] = []
@@ -844,13 +845,9 @@ export const runCrystallizedThinkingRuntime = async ({
     const guardianResult = await resolveGuardianReview(
       guardianRequest,
       guardianPolicy,
-      undefined // No guardian adapter connected yet
+      undefined,
+      aiSenseiConfig
     )
-
-    if (guardianResult) {
-      guardianReviewResults.push(guardianResult)
-      promotionPipelineResults.guardianReviewedCount++
-    }
 
     // Resolve final promotion decision with guardian result
     const guardianDecision = guardianDecisionResolver(
@@ -860,6 +857,20 @@ export const runCrystallizedThinkingRuntime = async ({
     )
 
     const finalStatus = guardianDecision.finalStatus
+
+    if (guardianResult) {
+      const guardianResultWithFinalDecision: GuardianReviewResult = {
+        ...guardianResult,
+        finalDecision: guardianDecision,
+      }
+
+      guardianReviewResults.push(guardianResultWithFinalDecision)
+      resolveGuardianReviewQueueEntry(
+        guardianQueueEntry.id,
+        guardianResultWithFinalDecision
+      )
+      promotionPipelineResults.guardianReviewedCount++
+    }
 
     // Update queue entry with final status
     updatePromotionQueueEntry(entry.id, {
@@ -1032,5 +1043,6 @@ export const runCrystallizedThinkingRuntime = async ({
     guardianReviewRequests,
     guardianReviewResults,
     guardianPolicy,
+    aiSenseiConfig,
   }
 }

@@ -130,11 +130,20 @@ const resolveGuardianAssisted = (
 const resolveHumanRequired = (
   guardianResult: GuardianReviewResult
 ): GuardianDecisionResult => {
+  if (guardianResult.actor !== 'human_reviewer') {
+    return {
+      finalStatus: 'quarantined',
+      guardianDecision: 'hold_for_review',
+      guardianActor: guardianResult.actor,
+      reasons: [
+        ...guardianResult.reasons,
+        'Human review required before trunk apply',
+      ],
+    }
+  }
+
   // Only approve if human reviewer explicitly approved
-  if (
-    guardianResult.actor === 'human_reviewer' &&
-    guardianResult.decision === 'approve'
-  ) {
+  if (guardianResult.decision === 'approve') {
     return {
       finalStatus: 'approved',
       guardianDecision: 'approve',

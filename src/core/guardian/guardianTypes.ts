@@ -5,7 +5,16 @@
  */
 
 import type { PromotionCandidate } from '../coreTypes'
-import type { PromotionValidationResult } from '../promotion/promotionTypes'
+import type {
+  PromotionStatus,
+  PromotionValidationResult,
+} from '../promotion/promotionTypes'
+import type {
+  AiSenseiMode,
+  AiSenseiParsedReview,
+  AiSenseiReviewPayload,
+  AiSenseiReviewRawResponse,
+} from './aiSensei/aiSenseiTypes'
 
 /**
  * Guardian Mode
@@ -84,6 +93,23 @@ export type GuardianReviewResult = {
 
   /** When this result was created */
   createdAt: number
+
+  /** AI sensei review trace (when guardian lane used AI sensei) */
+  aiSensei?: {
+    mode: AiSenseiMode
+    payload: AiSenseiReviewPayload
+    rawResponse: AiSenseiReviewRawResponse | null
+    parsedReview: AiSenseiParsedReview | null
+    fallbackNotes: string[]
+  }
+
+  /** Final decision after guardian resolution */
+  finalDecision?: {
+    finalStatus: PromotionStatus
+    guardianDecision: GuardianDecision
+    guardianActor: GuardianActor
+    reasons: string[]
+  }
 }
 
 /**

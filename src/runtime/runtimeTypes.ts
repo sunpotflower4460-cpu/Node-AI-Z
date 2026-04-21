@@ -134,6 +134,7 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   guardianReviewRequests?: import('../core/guardian/guardianTypes').GuardianReviewRequest[]
   guardianReviewResults?: import('../core/guardian/guardianTypes').GuardianReviewResult[]
   guardianPolicy?: import('../core/guardian/guardianTypes').GuardianPolicy
+  aiSenseiConfig?: import('../core/guardian/aiSensei').AiSenseiConfig
 }
 
 /**
