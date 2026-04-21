@@ -29,7 +29,7 @@ import type { EpisodicTrace, ReplayConsolidationResult, SchemaInfluenceNote } fr
 import type { MixedNodeSelectionResult, MixedNodeInfluenceNote } from '../node/mixedNodeTypes'
 import type { ProtoMeaning } from '../meaning/types'
 import type { OptionAwareness } from '../option/types'
-import type { CoreView, CoreInfluenceNote, PromotionCandidate } from '../core/coreTypes'
+import type { CoreView, CoreInfluenceNote, PromotionCandidate, SharedTrunkState } from '../core/coreTypes'
 
 /**
  * Base runtime result shared by both modes
@@ -119,6 +119,16 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   coreView?: CoreView
   coreInfluenceNotes?: CoreInfluenceNote[]
   promotionCandidates?: PromotionCandidate[]
+  // Phase M10: Promotion Pipeline
+  promotionPipelineResults?: {
+    queuedCount: number
+    validatedCount: number
+    approvedCount: number
+    appliedCount: number
+    quarantinedCount: number
+    rejectedCount: number
+  }
+  updatedTrunk?: SharedTrunkState
 }
 
 /**

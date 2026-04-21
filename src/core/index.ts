@@ -81,3 +81,64 @@ export {
   deriveSchemaPromotionCandidates,
   deriveMixedNodePromotionCandidates,
 } from './derivePromotionCandidates'
+
+// Promotion Pipeline exports (Phase M10)
+export type {
+  PromotionStatus,
+  PromotionRiskLevel,
+  PromotionValidationResult,
+  PromotionQueueEntry,
+  PromotionApprovalRecord,
+  PromotionApplyResult,
+} from './promotion/promotionTypes'
+
+export type {
+  PromotionRiskAssessment,
+} from './promotion/derivePromotionRisk'
+
+export type {
+  PromotionLogEntry,
+} from './promotion/promotionLog'
+
+export {
+  enqueuePromotionCandidate,
+  listPromotionQueue,
+  updatePromotionQueueEntry,
+  findPromotionQueueEntry,
+  clearAppliedPromotionEntries,
+  getPromotionQueueState,
+  restorePromotionQueueState,
+  clearPromotionQueue,
+} from './promotion/promotionQueue'
+
+export {
+  derivePromotionRisk,
+} from './promotion/derivePromotionRisk'
+
+export {
+  validatePromotionCandidate,
+} from './promotion/validatePromotionCandidate'
+
+export {
+  resolvePromotionDecision,
+  shouldReEvaluateCandidate,
+} from './promotion/resolvePromotionDecision'
+
+export {
+  applyApprovedPromotion,
+} from './promotion/applyApprovedPromotion'
+
+export {
+  logCandidateQueued,
+  logValidationFinished,
+  logCandidateQuarantined,
+  logCandidateRejected,
+  logCandidateApproved,
+  logCandidateApplied,
+  getPromotionLog,
+  getPromotionLogForCandidate,
+  getPromotionLogByEventType,
+  clearPromotionLog,
+  getPromotionLogState,
+  restorePromotionLogState,
+} from './promotion/promotionLog'
