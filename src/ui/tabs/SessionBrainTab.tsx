@@ -294,7 +294,7 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
                   <div className="mt-2 space-y-1">
                     <div>
                       <span className="font-semibold">AI Sensei Payload Summary:</span>{' '}
-                      {review.aiSensei?.payload.summary.length
+                      {review.aiSensei?.payload?.summary?.length
                         ? review.aiSensei.payload.summary.join(' / ')
                         : 'none'}
                     </div>
@@ -320,7 +320,7 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
                     </div>
                     <div>
                       <span className="font-semibold">Fallback Notes:</span>{' '}
-                      {review.aiSensei?.fallbackNotes.length
+                      {review.aiSensei?.fallbackNotes?.length
                         ? review.aiSensei.fallbackNotes.join(' / ')
                         : 'none'}
                     </div>

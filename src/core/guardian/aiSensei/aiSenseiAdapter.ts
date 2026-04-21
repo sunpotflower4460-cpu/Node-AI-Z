@@ -28,16 +28,22 @@ const withTimeout = async <T>(
   promise: Promise<T>,
   timeoutMs: number
 ): Promise<T> => {
-  return await Promise.race([
-    promise,
-    new Promise<T>((_, reject) => {
-      const timeoutId = setTimeout(() => {
-        reject(new Error(`AI sensei request timed out after ${timeoutMs}ms`))
-      }, timeoutMs)
+  let timeoutId: ReturnType<typeof setTimeout> | undefined
 
-      void timeoutId
-    }),
-  ])
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(new Error(`AI sensei request timed out after ${timeoutMs}ms`))
+        }, timeoutMs)
+      }),
+    ])
+  } finally {
+    if (timeoutId !== undefined) {
+      clearTimeout(timeoutId)
+    }
+  }
 }
 
 const buildMockResponse = (
