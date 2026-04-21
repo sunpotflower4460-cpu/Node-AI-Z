@@ -1116,10 +1116,26 @@ export const runCrystallizedThinkingRuntime = async ({
     promotionCandidates
   )
 
-  // Update brain state with core influence notes
+  // Phase M16: Get facade view for crystallized_thinking
+  // This filters the core view through facade runtime capability policy
+  const { getCrystallizedThinkingFacadeView, attachFacadeViewToBrainState } = await import('./integrateFacadeRuntime')
+  const facadeViewResult = getCrystallizedThinkingFacadeView(
+    coreView,
+    updatedTrunk,
+    updatedBranch,
+    brainState.sessionId,
+    updatedBranch.branchId || 'anonymous'
+  )
+
+  // Update brain state with core influence notes and facade view
   nextBrainState = {
     ...nextBrainState,
     coreInfluenceNotes: allCoreInfluenceNotes,
+  }
+
+  // Attach facade view if available
+  if (facadeViewResult.success && facadeViewResult.view) {
+    nextBrainState = attachFacadeViewToBrainState(nextBrainState, facadeViewResult.view)
   }
 
   return {
