@@ -34,7 +34,7 @@ const SAMPLE_INPUTS = [
 ]
 
 type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision' | 'SessionBrain'
-type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal' | 'dual'
+type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal' | 'dual' | 'facade_raw' | 'facade_translated' | 'facade_notes'
 const MIN_PLASTICITY_DISPLAY_VALUE = 0.009
 
 const TONE_NOTES: Record<string, (value: number) => string> = {
@@ -223,6 +223,10 @@ export const ObserveMode = ({
   const studioView = currentObservation?.studioView ?? null
   const currentRevisionEntry = currentObservation?.revisionEntry ?? null
   const dualStreamResult = currentObservation?.dualStreamResult ?? currentObservation?.chunkedResult?.dualStream ?? null
+  const translatedFacadeView = currentObservation?.facadeView ?? null
+  const rawFacadeView = currentObservation?.rawFacadeView ?? translatedFacadeView
+  const facadeTranslation = currentObservation?.facadeViewTranslation ?? null
+  const presentationBiasProfile = currentObservation?.presentationBiasProfile ?? facadeTranslation?.biasProfile ?? null
   const relationHighlights = Object.entries(revisionState.plasticity.relationBoosts)
     .filter(([, value]) => value > MIN_PLASTICITY_DISPLAY_VALUE)
     .sort((first, second) => second[1] - first[1])
@@ -235,6 +239,15 @@ export const ObserveMode = ({
     .filter(({ value }) => Math.abs(value) > MIN_PLASTICITY_DISPLAY_VALUE)
     .sort((first, second) => Math.abs(second.value) - Math.abs(first.value))
     .slice(0, 4)
+  const surfaceHighlights = facadeTranslation?.highlightKeys
+    ?? translatedFacadeView?.surfacePresentation?.highlightKeys
+    ?? []
+  const orderingNotes = facadeTranslation?.orderingNotes
+    ?? translatedFacadeView?.surfacePresentation?.notes
+    ?? []
+  const summaryNotes = facadeTranslation?.summaryNotes
+    ?? translatedFacadeView?.surfacePresentation?.notes
+    ?? []
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -311,6 +324,85 @@ export const ObserveMode = ({
 
       {currentObservation && pipelineResult && studioView ? (
         <>
+          {translatedFacadeView || rawFacadeView ? (
+            <section className="rounded-2xl border border-sky-200 bg-white p-4 shadow-sm md:p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-1">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-sky-700">
+                    <Zap className="h-3.5 w-3.5" />
+                    Surface Translator
+                  </div>
+                  <p className="text-sm font-semibold leading-relaxed text-slate-700">
+                    同じ Mother Core を、モードごとの presentation bias でどう見せているかのレイヤーです。
+                  </p>
+                  <p className="text-xs font-medium text-slate-500">
+                    raw facade view を変えず、見せ方 (emphasis / ordering / summary style) だけを変換しています。
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                <div className="rounded-xl border border-sky-100 bg-sky-50/60 p-3">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-sky-700">Presentation Bias Profile</h4>
+                  <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold text-slate-700">
+                    <span className="rounded-md bg-white px-2 py-1 text-sky-700">
+                      mode: {presentationBiasProfile?.mode ?? currentObservation.implementationMode}
+                    </span>
+                    <span className="rounded-md bg-white px-2 py-1 text-slate-700">
+                      ordering: {presentationBiasProfile?.ordering ?? translatedFacadeView?.surfacePresentation?.ordering?.join(' > ') ?? 'branch_first'}
+                    </span>
+                    <span className="rounded-md bg-white px-2 py-1 text-slate-700">
+                      summary: {presentationBiasProfile?.summaryStyle ?? translatedFacadeView?.surfacePresentation?.summaryStyle ?? 'plain'}
+                    </span>
+                    <span className="rounded-md bg-white px-2 py-1 text-slate-700">
+                      metadata: {presentationBiasProfile?.metadataDensity ?? translatedFacadeView?.surfacePresentation?.metadataDensity ?? 'balanced'}
+                    </span>
+                    <span className="rounded-md bg-white px-2 py-1 text-slate-700">
+                      depth: {presentationBiasProfile?.explanationDepth ?? translatedFacadeView?.surfacePresentation?.explanationDepth ?? 'minimal'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-indigo-100 bg-indigo-50/60 p-3">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-indigo-700">Highlights</h4>
+                  {surfaceHighlights.length > 0 ? (
+                    <ul className="mt-2 space-y-1.5 text-xs font-semibold text-indigo-800">
+                      {surfaceHighlights.slice(0, 6).map((key) => (
+                        <li key={key} className="flex items-center gap-2 rounded-lg bg-white px-2 py-1 shadow-sm">
+                          <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
+                          <span>{key}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-xs font-medium text-slate-500">今回は強調ポイントはありません。</p>
+                  )}
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-slate-700">Raw vs Translated</h4>
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs font-semibold text-slate-700">
+                    <div className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Raw</p>
+                      <p>schemas: {rawFacadeView?.visibleSchemas.length ?? 0}</p>
+                      <p>mixed: {rawFacadeView?.visibleMixedNodes.length ?? 0}</p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-white p-2 shadow-sm">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Translated</p>
+                      <p>schemas: {translatedFacadeView?.visibleSchemas.length ?? 0}</p>
+                      <p>mixed: {translatedFacadeView?.visibleMixedNodes.length ?? 0}</p>
+                    </div>
+                  </div>
+                  <div className="mt-2 space-y-1 text-[11px] text-slate-600">
+                    {(orderingNotes.length > 0 ? orderingNotes : summaryNotes).slice(0, 3).map((note) => (
+                      <p key={note} className="leading-snug">・{note}</p>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+          ) : null}
+
           <section className="rounded-2xl border border-indigo-100 bg-white p-4 shadow-sm md:p-5">
             <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
               <div className="max-w-3xl">
@@ -1266,6 +1358,15 @@ export const ObserveMode = ({
                 <button type="button" onClick={() => { setRawViewMode('view'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'view' && isRawOpen ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>Studio View</button>
                 <button type="button" onClick={() => { setRawViewMode('home'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'home' && isRawOpen ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>Home View</button>
                 <button type="button" onClick={() => { setRawViewMode('revision'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'revision' && isRawOpen ? 'bg-slate-800 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>Revision</button>
+                {rawFacadeView ? (
+                  <button type="button" onClick={() => { setRawViewMode('facade_raw'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'facade_raw' && isRawOpen ? 'bg-sky-800 text-white' : 'text-sky-500 hover:bg-slate-800'}`}>Facade Raw</button>
+                ) : null}
+                {translatedFacadeView ? (
+                  <button type="button" onClick={() => { setRawViewMode('facade_translated'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'facade_translated' && isRawOpen ? 'bg-sky-800 text-white' : 'text-sky-500 hover:bg-slate-800'}`}>Facade Translated</button>
+                ) : null}
+                {facadeTranslation || presentationBiasProfile ? (
+                  <button type="button" onClick={() => { setRawViewMode('facade_notes'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'facade_notes' && isRawOpen ? 'bg-sky-900 text-white' : 'text-slate-500 hover:bg-slate-800'}`}>Surface Notes</button>
+                ) : null}
                 {currentObservation.signalResult ? (
                   <button type="button" onClick={() => { setRawViewMode('signal'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'signal' && isRawOpen ? 'bg-rose-800 text-white' : 'text-rose-400 hover:bg-slate-800'}`}>Signal</button>
                 ) : null}
@@ -1281,6 +1382,9 @@ export const ObserveMode = ({
                 {rawViewMode === 'view' ? JSON.stringify(studioView, null, 2) : null}
                 {rawViewMode === 'home' ? JSON.stringify({ homeState: studioView.homeState, homeCheck: studioView.homeCheck, returnTrace: studioView.returnTrace, rawReplyPreview: studioView.rawReplyPreview, adjustedReplyPreview: studioView.adjustedReplyPreview }, null, 2) : null}
                 {rawViewMode === 'revision' ? JSON.stringify({ currentEntry: currentRevisionEntry, revisionState: { plasticity: revisionState.plasticity, memoryCount: revisionState.memory.entries.length, tuningCounts: { locked: revisionState.tuning.locked.size, softened: revisionState.tuning.softened.size, reverted: revisionState.tuning.reverted.size, kept: revisionState.tuning.kept.size } } }, null, 2) : null}
+                {rawViewMode === 'facade_raw' ? JSON.stringify(rawFacadeView, null, 2) : null}
+                {rawViewMode === 'facade_translated' ? JSON.stringify(translatedFacadeView, null, 2) : null}
+                {rawViewMode === 'facade_notes' ? JSON.stringify({ translation: facadeTranslation, profile: presentationBiasProfile }, null, 2) : null}
                 {rawViewMode === 'signal' && currentObservation.signalResult ? JSON.stringify(currentObservation.signalResult, null, 2) : null}
                 {rawViewMode === 'dual' && dualStreamResult ? JSON.stringify(dualStreamResult, null, 2) : null}
               </div>

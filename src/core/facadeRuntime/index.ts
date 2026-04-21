@@ -14,6 +14,8 @@ export type {
   FacadeAction,
   FacadeActionResult,
   FacadeRuntimeContext,
+  SurfacePresentationMeta,
+  FacadeViewTranslation,
 } from './facadeRuntimeTypes'
 
 export type { RunFacadeRuntimeConfig } from './runFacadeRuntime'

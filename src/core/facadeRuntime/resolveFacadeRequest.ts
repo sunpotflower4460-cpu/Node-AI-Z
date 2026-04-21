@@ -13,6 +13,7 @@ import type { CoreView, SharedTrunkState, PersonalBranchState } from '../coreTyp
 import { getFacadeCapabilityPolicy } from './facadeCapabilityPolicy'
 import { buildFacadeView } from './buildFacadeView'
 import { routeFacadeAction } from './facadeActionRouter'
+import { getPresentationBiasProfile, translateFacadeView, translateFacadeWriteIntent } from '../facadePresentation'
 
 /**
  * Resolve a facade request
@@ -80,11 +81,25 @@ const handleGetView = (
 ): FacadeResponse => {
   // Build facade view from core view
   const facadeView = buildFacadeView(coreView, context.policy, request.mode)
+  const biasProfile = getPresentationBiasProfile(request.mode)
+  const translation = translateFacadeView({
+    mode: request.mode,
+    rawFacadeView: facadeView,
+    profile: biasProfile,
+  })
 
   return {
     success: true,
     type: 'view',
-    view: facadeView,
+    view: translation.translatedFacadeView,
+    rawView: facadeView,
+    translation: {
+      mode: request.mode,
+      highlightKeys: translation.highlightKeys,
+      orderingNotes: translation.orderingNotes,
+      summaryNotes: translation.summaryNotes,
+      biasProfile,
+    },
     metadata: {
       timestamp: context.timestamp,
       facadeId: `facade-${request.mode}-${request.sessionId}`,
@@ -110,6 +125,20 @@ const handleSubmitBranchUpdate = (
     )
   }
 
+  const writeNormalization = translateFacadeWriteIntent(
+    request.payload,
+    request.mode,
+    context.policy
+  )
+
+  if (writeNormalization.blocked) {
+    return createErrorResponse(
+      'PERMISSION_DENIED',
+      'Write intent suppressed by surface translator',
+      context.mode
+    )
+  }
+
   // Route the action
   const actionResult = routeFacadeAction(
     {
@@ -117,7 +146,7 @@ const handleSubmitBranchUpdate = (
       mode: request.mode,
       userId: request.userId,
       sessionId: request.sessionId,
-      updates: request.payload,
+      updates: writeNormalization.normalizedPayload,
     },
     context
   )
@@ -131,7 +160,7 @@ const handleSubmitBranchUpdate = (
   }
 
   // Extract updated fields from payload
-  const updatedFields = Object.keys(request.payload)
+  const updatedFields = Object.keys(writeNormalization.normalizedPayload)
 
   return {
     success: true,
@@ -140,6 +169,7 @@ const handleSubmitBranchUpdate = (
     metadata: {
       timestamp: context.timestamp,
       facadeId: `facade-${request.mode}-${request.sessionId}`,
+      notes: writeNormalization.notes,
     },
   }
 }

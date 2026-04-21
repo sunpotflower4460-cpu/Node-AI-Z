@@ -5,7 +5,12 @@
 
 import type { SessionBrainState } from '../brain/sessionBrainState'
 import type { CoreView, SharedTrunkState, PersonalBranchState } from '../core/coreTypes'
-import type { FacadeRequest, FacadeResponse, FacadeView } from '../core/facadeRuntime'
+import type {
+  FacadeRequest,
+  FacadeResponse,
+  FacadeView,
+  FacadeViewTranslation,
+} from '../core/facadeRuntime'
 import { runFacadeRuntime } from '../core/facadeRuntime'
 
 /**
@@ -18,7 +23,7 @@ export const getCrystallizedThinkingFacadeView = (
   branch: PersonalBranchState,
   sessionId: string,
   userId: string
-): { success: boolean; view?: FacadeView; error?: string } => {
+): { success: boolean; view?: FacadeView; rawView?: FacadeView; translation?: FacadeViewTranslation; error?: string } => {
   const request: FacadeRequest = {
     type: 'get_view',
     mode: 'crystallized_thinking',
@@ -32,6 +37,8 @@ export const getCrystallizedThinkingFacadeView = (
     return {
       success: true,
       view: response.view,
+      rawView: response.rawView ?? response.view,
+      translation: response.translation,
     }
   }
 
@@ -58,7 +65,7 @@ export const getObserverFacadeView = (
   branch: PersonalBranchState,
   sessionId: string,
   userId: string
-): { success: boolean; view?: FacadeView; error?: string } => {
+): { success: boolean; view?: FacadeView; rawView?: FacadeView; translation?: FacadeViewTranslation; error?: string } => {
   const request: FacadeRequest = {
     type: 'get_view',
     mode: 'observer',
@@ -72,6 +79,8 @@ export const getObserverFacadeView = (
     return {
       success: true,
       view: response.view,
+      rawView: response.rawView ?? response.view,
+      translation: response.translation,
     }
   }
 
@@ -150,7 +159,8 @@ export const attachFacadeViewToBrainState = (
  * Extract facade view metadata for tracking
  */
 export const extractFacadeViewMetadata = (
-  facadeView: FacadeView | undefined
+  facadeView: FacadeView | undefined,
+  translation?: FacadeViewTranslation
 ): Record<string, unknown> | undefined => {
   if (!facadeView) {
     return undefined
@@ -163,5 +173,7 @@ export const extractFacadeViewMetadata = (
     visibleSchemaCount: facadeView.visibleSchemas.length,
     visibleMixedNodeCount: facadeView.visibleMixedNodes.length,
     hasPromotionAccess: !!facadeView.promotionCandidates,
+    surfacePresentation: facadeView.surfacePresentation,
+    translation,
   }
 }

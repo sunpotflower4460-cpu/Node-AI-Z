@@ -793,6 +793,13 @@ Phase M16 では4つの mode を定義しています：
 
 これにより、「Mother Core は別アプリ接続前提へ進んだ。各アプリは facade runtime を通してのみ Mother Core にアクセスする」ことが実感できます。
 
+### Phase M17 — Surface Translator（最小版）
+
+* Mother Core は App Facade Runtime の上に Surface Translator を持ち、Core の意味内容を変えずに見せ方だけを変換します。
+* Surface Translator は mode ごとに **emphasis / ordering / explanation depth / metadata density / summary style** を切り替えます。
+* crystallized_thinking / observer / future_app は同じ core をそれぞれの presentation bias で観察します。
+* これにより、Mother Core はアプリごとに必要な強調と説明密度を持ちながら、コアの整合性を保った提示が可能になりました。
+
 ## 今後の実装ロードマップ
 
 次の機能追加は、原則としてこの順で積みます。

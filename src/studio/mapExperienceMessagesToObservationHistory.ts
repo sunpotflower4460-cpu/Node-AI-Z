@@ -37,6 +37,10 @@ export const mapExperienceMessagesToObservationHistory = (
       somaticInfluence: message.somaticInfluence,
       relevantSomaticMarkers: message.relevantSomaticMarkers,
       updatedTrunk: message.updatedTrunk,
+      facadeView: message.facadeView,
+      rawFacadeView: message.rawFacadeView,
+      facadeViewTranslation: message.facadeViewTranslation,
+      presentationBiasProfile: message.presentationBiasProfile,
     }))
 }
 
