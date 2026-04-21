@@ -5,6 +5,7 @@
  */
 
 import type { PromotionCandidate, SharedTrunkState } from '../coreTypes'
+import type { TrunkApplyRollbackMetadata } from '../trunkSafety/trunkSafetyTypes'
 
 /**
  * Promotion Status
@@ -125,4 +126,7 @@ export type PromotionApplyResult = {
 
   /** The updated trunk state (if successful) */
   nextTrunk: SharedTrunkState
+
+  /** Rollback metadata for safe trunk undo */
+  rollbackMetadata?: TrunkApplyRollbackMetadata
 }

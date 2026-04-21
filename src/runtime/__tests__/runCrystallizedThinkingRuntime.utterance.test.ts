@@ -1,16 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { runCrystallizedThinkingRuntime } from '../runCrystallizedThinkingRuntime'
-import type { PersonalLearningState } from '../../learning/types'
+import { createPersonalLearningState } from '../../learning/personalLearning'
 
 describe('runCrystallizedThinkingRuntime - utterance layer', () => {
-  const mockPersonalLearning: PersonalLearningState = {
-    somaticMarkers: [],
-    pathwayWeights: {},
-    lastUpdated: Date.now(),
-  }
+  const mockPersonalLearning = createPersonalLearningState()
 
-  it('generates utterance intent from internal state', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('generates utterance intent from internal state', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: '決めたいけど迷っている',
       personalLearning: mockPersonalLearning,
     })
@@ -21,8 +17,8 @@ describe('runCrystallizedThinkingRuntime - utterance layer', () => {
     expect(result.utteranceIntent?.emotionalDistance).toBeLessThanOrEqual(1)
   })
 
-  it('generates utterance shape from intent', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('generates utterance shape from intent', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: '重い気持ち',
       personalLearning: mockPersonalLearning,
     })
@@ -32,8 +28,8 @@ describe('runCrystallizedThinkingRuntime - utterance layer', () => {
     expect(result.utteranceShape?.maxSentences).toBeGreaterThan(0)
   })
 
-  it('generates lexical pulls from internal state', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('generates lexical pulls from internal state', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: 'どちらか選びたい',
       personalLearning: mockPersonalLearning,
     })
@@ -43,8 +39,8 @@ describe('runCrystallizedThinkingRuntime - utterance layer', () => {
     expect(result.lexicalPulls?.preferredMeaningPhrases).toBeDefined()
   })
 
-  it('generates crystallized sentence plan', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('generates crystallized sentence plan', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: '何か決めないと',
       personalLearning: mockPersonalLearning,
     })
@@ -52,8 +48,8 @@ describe('runCrystallizedThinkingRuntime - utterance layer', () => {
     expect(result.crystallizedSentencePlan).toBeDefined()
   })
 
-  it('generates final crystallized reply', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('generates final crystallized reply', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: 'どうしよう',
       personalLearning: mockPersonalLearning,
     })
@@ -64,8 +60,8 @@ describe('runCrystallizedThinkingRuntime - utterance layer', () => {
     expect(result.finalCrystallizedReply!.length).toBeGreaterThan(0)
   })
 
-  it('keeps previous utterance for comparison', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('keeps previous utterance for comparison', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: 'テスト入力',
       personalLearning: mockPersonalLearning,
     })
@@ -75,8 +71,8 @@ describe('runCrystallizedThinkingRuntime - utterance layer', () => {
     expect(result.finalCrystallizedReply).toBeDefined()
   })
 
-  it('derives option_compare intent when options are present', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('derives option_compare intent when options are present', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: 'AとBどちらも良い',
       personalLearning: mockPersonalLearning,
     })
@@ -87,8 +83,8 @@ describe('runCrystallizedThinkingRuntime - utterance layer', () => {
     }
   })
 
-  it('generates complete utterance pipeline', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('generates complete utterance pipeline', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: '重くて決められない',
       personalLearning: mockPersonalLearning,
     })

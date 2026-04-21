@@ -67,7 +67,7 @@ export const buildActiveSensingPolicy = ({
   // Override 3: High uncertainty + low decision confidence -> ask or explore
   if (uncertaintyState && confidenceState) {
     const highUncertainty = (uncertaintyState.sensoryUncertainty + uncertaintyState.modelUncertainty) / 2 > 0.6
-    const lowDecisionConfidence = !confidenceState.canCommit
+    const lowDecisionConfidence = confidenceState.shouldHold || confidenceState.decisionStrength < 0.45
 
     if (highUncertainty && lowDecisionConfidence && preferredAction === 'answer') {
       preferredAction = interoceptiveState.noveltyHunger > 0.5 ? 'explore' : 'ask'
@@ -91,7 +91,7 @@ export const buildActiveSensingPolicy = ({
   }
 
   // Boost 2: Should explore flag from confidence
-  if (confidenceState?.shouldExplore && preferredAction !== 'explore' && preferredAction !== 'ask') {
+  if (confidenceState?.shouldAsk && preferredAction !== 'explore' && preferredAction !== 'ask') {
     preferredAction = 'explore'
     confidence = Math.max(0.5, confidence * 1.1)
     reasons.push('Confidence meta-layer suggests explore')

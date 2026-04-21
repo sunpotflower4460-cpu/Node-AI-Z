@@ -9,10 +9,10 @@ import { createInitialBrainState } from '../../brain/createInitialBrainState'
 import { createPersonalLearningState } from '../../learning/personalLearning'
 
 describe('Session Brain State Continuity', () => {
-  it('should initialize brain state on first turn when not provided', () => {
+  it('should initialize brain state on first turn when not provided', async () => {
     const personalLearning = createPersonalLearningState()
 
-    const result = runCrystallizedThinkingRuntime({
+    const result = await runCrystallizedThinkingRuntime({
       text: 'こんにちは',
       personalLearning,
     })
@@ -22,11 +22,11 @@ describe('Session Brain State Continuity', () => {
     expect(result.nextBrainState?.sessionId).toBeDefined()
   })
 
-  it('should maintain brain state across multiple turns', () => {
+  it('should maintain brain state across multiple turns', async () => {
     const personalLearning = createPersonalLearningState()
 
     // Turn 1
-    const result1 = runCrystallizedThinkingRuntime({
+    const result1 = await runCrystallizedThinkingRuntime({
       text: 'こんにちは',
       personalLearning,
     })
@@ -37,7 +37,7 @@ describe('Session Brain State Continuity', () => {
     const sessionId1 = result1.nextBrainState?.sessionId
 
     // Turn 2 - pass brain state from turn 1
-    const result2 = runCrystallizedThinkingRuntime({
+    const result2 = await runCrystallizedThinkingRuntime({
       text: 'お元気ですか？',
       personalLearning,
       brainState: result1.nextBrainState,
@@ -48,7 +48,7 @@ describe('Session Brain State Continuity', () => {
     expect(result2.nextBrainState?.sessionId).toBe(sessionId1) // Same session
 
     // Turn 3 - pass brain state from turn 2
-    const result3 = runCrystallizedThinkingRuntime({
+    const result3 = await runCrystallizedThinkingRuntime({
       text: 'ありがとう',
       personalLearning,
       brainState: result2.nextBrainState,
@@ -59,10 +59,10 @@ describe('Session Brain State Continuity', () => {
     expect(result3.nextBrainState?.sessionId).toBe(sessionId1) // Same session
   })
 
-  it('should update temporal states across turns', () => {
+  it('should update temporal states across turns', async () => {
     const personalLearning = createPersonalLearningState()
 
-    const result1 = runCrystallizedThinkingRuntime({
+    const result1 = await runCrystallizedThinkingRuntime({
       text: 'こんにちは',
       personalLearning,
     })
@@ -70,7 +70,7 @@ describe('Session Brain State Continuity', () => {
     // Temporal states map should be defined (may be empty if no features fired)
     expect(result1.nextBrainState?.temporalStates).toBeDefined()
 
-    const result2 = runCrystallizedThinkingRuntime({
+    const result2 = await runCrystallizedThinkingRuntime({
       text: 'お元気ですか？',
       personalLearning,
       brainState: result1.nextBrainState,
@@ -80,10 +80,10 @@ describe('Session Brain State Continuity', () => {
     expect(result2.nextBrainState?.temporalStates).toBeDefined()
   })
 
-  it('should update prediction state across turns', () => {
+  it('should update prediction state across turns', async () => {
     const personalLearning = createPersonalLearningState()
 
-    const result1 = runCrystallizedThinkingRuntime({
+    const result1 = await runCrystallizedThinkingRuntime({
       text: 'こんにちは',
       personalLearning,
     })
@@ -91,7 +91,7 @@ describe('Session Brain State Continuity', () => {
     expect(result1.nextBrainState?.predictionState).toBeDefined()
     expect(result1.nextBrainState?.predictionState.basedOnTurn).toBe(0)
 
-    const result2 = runCrystallizedThinkingRuntime({
+    const result2 = await runCrystallizedThinkingRuntime({
       text: 'お元気ですか？',
       personalLearning,
       brainState: result1.nextBrainState,
@@ -101,10 +101,10 @@ describe('Session Brain State Continuity', () => {
     expect(result2.nextBrainState?.predictionState.basedOnTurn).toBe(1)
   })
 
-  it('should update afterglow across turns', () => {
+  it('should update afterglow across turns', async () => {
     const personalLearning = createPersonalLearningState()
 
-    const result1 = runCrystallizedThinkingRuntime({
+    const result1 = await runCrystallizedThinkingRuntime({
       text: 'こんにちは',
       personalLearning,
     })
@@ -113,11 +113,11 @@ describe('Session Brain State Continuity', () => {
     expect(result1.nextBrainState?.afterglow).toBeLessThanOrEqual(0.2)
   })
 
-  it('should maintain session ID across turns with explicit brain state', () => {
+  it('should maintain session ID across turns with explicit brain state', async () => {
     const personalLearning = createPersonalLearningState()
     const initialState = createInitialBrainState('test-session-123')
 
-    const result1 = runCrystallizedThinkingRuntime({
+    const result1 = await runCrystallizedThinkingRuntime({
       text: 'こんにちは',
       personalLearning,
       brainState: initialState,
@@ -125,7 +125,7 @@ describe('Session Brain State Continuity', () => {
 
     expect(result1.nextBrainState?.sessionId).toBe('test-session-123')
 
-    const result2 = runCrystallizedThinkingRuntime({
+    const result2 = await runCrystallizedThinkingRuntime({
       text: 'お元気ですか？',
       personalLearning,
       brainState: result1.nextBrainState,
@@ -134,10 +134,10 @@ describe('Session Brain State Continuity', () => {
     expect(result2.nextBrainState?.sessionId).toBe('test-session-123')
   })
 
-  it('should update micro-signal dimensions across turns', () => {
+  it('should update micro-signal dimensions across turns', async () => {
     const personalLearning = createPersonalLearningState()
 
-    const result = runCrystallizedThinkingRuntime({
+    const result = await runCrystallizedThinkingRuntime({
       text: 'こんにちは',
       personalLearning,
     })

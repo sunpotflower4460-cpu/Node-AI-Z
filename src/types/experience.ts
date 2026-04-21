@@ -64,6 +64,7 @@ export type ObservationRecord = {
   confidenceState?: ConfidenceState
   uncertaintyState?: UncertaintyState
   replaySummary?: ReplaySummary
+  updatedTrunk?: import('../core/coreTypes').SharedTrunkState
   guardianReviewRequests?: import('../core/guardian/guardianTypes').GuardianReviewRequest[]
   guardianReviewResults?: import('../core/guardian/guardianTypes').GuardianReviewResult[]
   guardianPolicy?: import('../core/guardian/guardianTypes').GuardianPolicy
@@ -101,6 +102,7 @@ export type ExperienceMessage = {
   confidenceState?: ConfidenceState
   uncertaintyState?: UncertaintyState
   replaySummary?: ReplaySummary
+  updatedTrunk?: import('../core/coreTypes').SharedTrunkState
   guardianReviewRequests?: import('../core/guardian/guardianTypes').GuardianReviewRequest[]
   guardianReviewResults?: import('../core/guardian/guardianTypes').GuardianReviewResult[]
   guardianPolicy?: import('../core/guardian/guardianTypes').GuardianPolicy

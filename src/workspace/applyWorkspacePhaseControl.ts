@@ -59,6 +59,7 @@ export const applyWorkspacePhaseControl = ({
     case 'encode': {
       // Admit new strong narrative meanings
       const strongNarratives = narrativeProtoMeanings.filter((m) => m.strength > 0.5)
+      const strongSensory = sensoryProtoMeanings.filter((m) => m.strength > 0.65)
       for (const narrative of strongNarratives) {
         const itemId = `narrative:${narrative.glossJa}`
         if (!updatedHeldItems.some((item) => item.id === itemId)) {
@@ -66,6 +67,19 @@ export const applyWorkspacePhaseControl = ({
             id: itemId,
             content: narrative.glossJa,
             strength: narrative.strength,
+            age: 0,
+          })
+          admittedItemIds.push(itemId)
+        }
+      }
+
+      for (const sensory of strongSensory) {
+        const itemId = `sensory:${sensory.glossJa}`
+        if (!updatedHeldItems.some((item) => item.id === itemId)) {
+          updatedHeldItems.push({
+            id: itemId,
+            content: sensory.glossJa,
+            strength: sensory.strength,
             age: 0,
           })
           admittedItemIds.push(itemId)

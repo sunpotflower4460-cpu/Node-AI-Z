@@ -1,6 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { runMainRuntime } from '../runMainRuntime'
-import type { ImplementationMode } from '../../types/experience'
 import { createPersonalLearningState } from '../../learning/personalLearning'
 
 describe('runMainRuntime mode dispatch', () => {

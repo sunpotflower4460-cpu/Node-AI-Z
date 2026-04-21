@@ -115,7 +115,7 @@ export const restoreFromSnapshot = async (
         },
       })
       notes.push('Restore recorded in journal')
-    } catch (error) {
+    } catch {
       notes.push('Warning: Failed to record restore in journal')
     }
 

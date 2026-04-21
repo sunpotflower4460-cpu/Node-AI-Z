@@ -1,6 +1,5 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { getModeStorageKey, loadModeData, saveModeData, clearModeData } from '../modeScopedStorage'
-import type { ImplementationMode } from '../../types/experience'
 
 // Mock localStorage
 const mockLocalStorage = (() => {

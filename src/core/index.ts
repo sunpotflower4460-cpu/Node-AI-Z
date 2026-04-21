@@ -19,6 +19,9 @@ export type {
 // Shared Trunk exports
 export {
   createEmptySharedTrunk,
+  loadSharedTrunkState,
+  saveSharedTrunkState,
+  clearSharedTrunkState,
   getTrunkSchemas,
   getTrunkMixedNodes,
   getTrunkBias,
@@ -127,6 +130,45 @@ export {
 export {
   applyApprovedPromotion,
 } from './promotion/applyApprovedPromotion'
+
+// Trunk Safety exports (Phase M14)
+export type {
+  TrunkApplyRecord,
+  TrunkRevertRecord,
+  TrunkConsistencyResult,
+  TrunkUndoResult,
+  TrunkSnapshotRecord,
+  TrunkApplyRollbackMetadata,
+} from './trunkSafety'
+
+export {
+  appendTrunkApplyRecord,
+  listTrunkApplyRecords,
+  findTrunkApplyRecord,
+  listApplyRecordsByCandidateId,
+  appendTrunkRevertRecord,
+  listTrunkRevertRecords,
+  findTrunkRevertRecord,
+  findRevertRecordByApplyRecordId,
+  saveTrunkSnapshot,
+  loadTrunkSnapshot,
+  listTrunkSnapshotRecords,
+  findTrunkSnapshotRecord,
+  setCurrentRevertSafetySnapshotId,
+  getCurrentRevertSafetySnapshotId,
+  setLastTrunkConsistencyCheck,
+  getLastTrunkConsistencyCheck,
+  setSafeUndoNotes,
+  getSafeUndoNotes,
+  getTrunkSafetyState,
+  restoreTrunkSafetyState,
+  attachTrunkSafetyState,
+  clearTrunkSafetyState,
+  buildTrunkDiffSummary,
+  runTrunkConsistencyCheck,
+  trunkRevert,
+  safeUndoTrunkApply,
+} from './trunkSafety'
 
 export {
   logCandidateQueued,

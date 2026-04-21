@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import type { PromotionCandidate, SharedTrunkState } from '../../coreTypes'
+import type { PromotionCandidate } from '../../coreTypes'
 import type { SchemaPattern } from '../../../memory/types'
 import type { MixedLatentNode } from '../../../node/mixedNodeTypes'
 import type { PromotionValidationResult } from '../promotionTypes'

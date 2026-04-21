@@ -25,7 +25,7 @@ export const localBrainPersistence: BrainPersistenceAdapter = {
    * Loads brain state from localStorage.
    * Note: sessionId is ignored since localStorage is session-agnostic.
    */
-  async load(_sessionId: string): Promise<SessionBrainState | undefined> {
+  async load(): Promise<SessionBrainState | undefined> {
     return loadSessionBrainState()
   },
 
@@ -40,7 +40,7 @@ export const localBrainPersistence: BrainPersistenceAdapter = {
    * Clears brain state from localStorage.
    * Note: sessionId is ignored since localStorage is session-agnostic.
    */
-  async clear(_sessionId: string): Promise<boolean> {
+  async clear(): Promise<boolean> {
     return clearSessionBrainState()
   },
 }

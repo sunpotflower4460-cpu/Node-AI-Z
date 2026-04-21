@@ -18,6 +18,7 @@ import {
   restorePromotionLogState,
 } from '../promotionLog'
 import type { PromotionQueueEntry, PromotionApprovalRecord, PromotionApplyResult } from '../promotionTypes'
+import { createEmptySharedTrunk } from '../../sharedTrunk'
 
 describe('Promotion Log', () => {
   beforeEach(() => {
@@ -30,7 +31,7 @@ describe('Promotion Log', () => {
       candidate: {
         id: 'candidate-1',
         type: 'schema',
-        sourceData: {} as any,
+        sourceData: {} as Record<string, number>,
         score: 0.8,
         reasons: [],
         firstIdentifiedAt: Date.now(),
@@ -118,7 +119,7 @@ describe('Promotion Log', () => {
       candidateId: 'candidate-4',
       trunkUpdated: true,
       notes: ['Added new schema to trunk'],
-      nextTrunk: {} as any,
+      nextTrunk: createEmptySharedTrunk(),
     }
 
     logCandidateApplied(applyResult)

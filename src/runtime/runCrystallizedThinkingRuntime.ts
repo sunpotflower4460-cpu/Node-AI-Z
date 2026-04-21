@@ -66,6 +66,8 @@ import {
 import type { MixedNodeInfluenceNote } from '../node/mixedNodeTypes'
 import {
   createEmptySharedTrunk,
+  loadSharedTrunkState,
+  saveSharedTrunkState,
   createEmptyPersonalBranch,
   createCrystallizedThinkingFacade,
   resolveCoreView,
@@ -86,6 +88,8 @@ import {
   logCandidateApplied,
   getPromotionQueueState,
   getPromotionLogState,
+  restorePromotionQueueState,
+  restorePromotionLogState,
   getGuardianPolicy,
   getAiSenseiConfig,
   resolveGuardianMode,
@@ -95,9 +99,16 @@ import {
   resolveGuardianReview,
   guardianDecisionResolver,
   getGuardianReviewQueueState,
+  restoreGuardianReviewQueueState,
   buildHumanReviewSummary,
   queueHumanReviewSummary,
   getHumanReviewState,
+  restoreHumanReviewState,
+  appendTrunkApplyRecord,
+  buildTrunkDiffSummary,
+  saveTrunkSnapshot,
+  restoreTrunkSafetyState,
+  attachTrunkSafetyState,
 } from '../core'
 import type { CoreInfluenceNote } from '../core/coreTypes'
 import type {
@@ -474,7 +485,7 @@ export const runCrystallizedThinkingRuntime = async ({
     const goalShift = chunkedResult.optionDecision?.preferredOptionId ? 0.3 : 0.0
 
     // Detect stance shift from option decision stance
-    const stanceShift = chunkedResult.optionDecision?.stance === 'ask' ? 0.4 : 0.0
+    const stanceShift = chunkedResult.optionDecision?.stance === 'observe' ? 0.4 : 0.0
 
     // Detect relation shift (simplified - could be enhanced)
     const relationShift = 0.0
@@ -502,7 +513,7 @@ export const runCrystallizedThinkingRuntime = async ({
   let confidenceState
   if (phase2Flags.confidenceEnabled) {
     // Compute decision strength
-    const fieldCoherence = 1.0 - (chunkedResult.stateVector.entropy ?? 0.5)
+    const fieldCoherence = chunkedResult.stateVector.stability ?? 0.5
     const decisionResult = computeDecisionStrength(
       personaModulatedOptions,
       preconditionModulatedFusedState,
@@ -754,7 +765,22 @@ export const runCrystallizedThinkingRuntime = async ({
 
   // ===== Phase M9: Trunk / Branch / Facade Integration =====
   // Initialize trunk, branch, and facade (in production, these would be loaded from storage)
-  const sharedTrunk = createEmptySharedTrunk()
+  const sharedTrunk = loadSharedTrunkState() ?? createEmptySharedTrunk()
+  restorePromotionQueueState(sharedTrunk.promotionQueue ?? [])
+  restorePromotionLogState(sharedTrunk.promotionLogs ?? [])
+  restoreGuardianReviewQueueState(sharedTrunk.guardianReviewQueue ?? [])
+  restoreHumanReviewState({
+    summaries: sharedTrunk.humanReviewSummaries,
+    records: sharedTrunk.humanReviewRecords,
+  })
+  restoreTrunkSafetyState({
+    applyRecords: sharedTrunk.trunkApplyRecords,
+    revertRecords: sharedTrunk.trunkRevertRecords,
+    snapshotRecords: sharedTrunk.trunkSnapshotRecords,
+    currentRevertSafetySnapshotId: sharedTrunk.currentRevertSafetySnapshotId,
+    lastTrunkConsistencyCheck: sharedTrunk.lastTrunkConsistencyCheck,
+    safeUndoNotes: sharedTrunk.safeUndoNotes,
+  })
   const personalBranch = createEmptyPersonalBranch('default-user')
 
   // Update branch with current session state
@@ -968,6 +994,13 @@ export const runCrystallizedThinkingRuntime = async ({
 
     // Step 3: Apply approved candidates to trunk
     if (finalStatus === 'approved') {
+      const trunkBeforeApply = updatedTrunk
+      const trunkBeforeSnapshot = saveTrunkSnapshot(trunkBeforeApply, {
+        kind: 'before_apply',
+        candidateId: entry.candidate.id,
+        label: `Before applying ${entry.candidate.id}`,
+      })
+
       const applyResult = applyApprovedPromotion(
         updatedTrunk,
         entry.candidate,
@@ -976,6 +1009,27 @@ export const runCrystallizedThinkingRuntime = async ({
 
       if (applyResult.success && applyResult.trunkUpdated) {
         updatedTrunk = applyResult.nextTrunk
+        const trunkAfterSnapshot = saveTrunkSnapshot(updatedTrunk, {
+          kind: 'after_apply',
+          candidateId: entry.candidate.id,
+          label: `After applying ${entry.candidate.id}`,
+        })
+        const trunkDiffSummary = buildTrunkDiffSummary({
+          before: trunkBeforeApply,
+          after: updatedTrunk,
+          candidate: entry.candidate,
+        })
+        appendTrunkApplyRecord({
+          id: `trunk-apply-${entry.candidate.id}-${Date.now()}`,
+          candidateId: entry.candidate.id,
+          promotionKind: entry.candidate.type,
+          appliedAt: Date.now(),
+          trunkBeforeSnapshotId: trunkBeforeSnapshot.id,
+          trunkAfterSnapshotId: trunkAfterSnapshot.id,
+          trunkDiffSummary,
+          appliedBy: guardianDecision.guardianActor ?? 'system',
+          rollbackMetadata: applyResult.rollbackMetadata,
+        })
         logCandidateApplied(applyResult)
         promotionPipelineResults.appliedCount++
 
@@ -988,7 +1042,7 @@ export const runCrystallizedThinkingRuntime = async ({
   }
 
   // Store promotion queue, logs, and guardian queue in trunk for persistence
-  updatedTrunk = {
+  updatedTrunk = attachTrunkSafetyState({
     ...updatedTrunk,
     promotionQueue: getPromotionQueueState(),
     promotionLogs: getPromotionLogState(),
@@ -996,7 +1050,8 @@ export const runCrystallizedThinkingRuntime = async ({
     guardianReviewQueue: getGuardianReviewQueueState(),
     humanReviewSummaries,
     humanReviewRecords,
-  }
+  })
+  saveSharedTrunkState(updatedTrunk)
 
   // Apply trunk influence (read-only, subtle)
   const trunkInfluenceResult = applyTrunkInfluence(

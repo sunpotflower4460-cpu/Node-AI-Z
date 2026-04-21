@@ -39,8 +39,8 @@ export const computeSensoryUncertainty = (
   const meaningAmbiguity = 1.0 - avgMeaningStrength
 
   // Field incoherence: entropy and polarization (inverted)
-  const entropy = stateVector.entropy ?? 0.5
-  const polarization = stateVector.polarization ?? 0.5
+  const entropy = stateVector.ambiguity ?? 0.5
+  const polarization = stateVector.stability ?? 0.5
   const fieldIncoherence = (entropy * 0.6 + (1 - polarization) * 0.4)
 
   // Input complexity: longer inputs are potentially more ambiguous

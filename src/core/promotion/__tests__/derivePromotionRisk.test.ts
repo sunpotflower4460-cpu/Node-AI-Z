@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import type { PromotionCandidate, PersonalBranchState, SharedTrunkState } from '../../coreTypes'
+import type { PromotionCandidate } from '../../coreTypes'
 import type { SchemaPattern } from '../../../memory/types'
 import { derivePromotionRisk } from '../derivePromotionRisk'
 import { createEmptyPersonalBranch } from '../../personalBranch'

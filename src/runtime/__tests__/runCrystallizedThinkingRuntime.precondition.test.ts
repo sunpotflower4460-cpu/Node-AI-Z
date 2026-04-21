@@ -1,16 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { runCrystallizedThinkingRuntime } from '../runCrystallizedThinkingRuntime'
-import type { PersonalLearningState } from '../../learning/types'
+import { createPersonalLearningState } from '../../learning/personalLearning'
 
 describe('runCrystallizedThinkingRuntime - precondition and persona (Pass 3)', () => {
-  const mockPersonalLearning: PersonalLearningState = {
-    somaticMarkers: [],
-    pathwayWeights: {},
-    lastUpdated: Date.now(),
-  }
+  const mockPersonalLearning = createPersonalLearningState()
 
-  it('includes precondition filter in result', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('includes precondition filter in result', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: '迷っている',
       personalLearning: mockPersonalLearning,
     })
@@ -21,8 +17,8 @@ describe('runCrystallizedThinkingRuntime - precondition and persona (Pass 3)', (
     expect(result.preconditionFilter?.belief).toBeDefined()
   })
 
-  it('includes persona weight vector in result', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('includes persona weight vector in result', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: '決めたい',
       personalLearning: mockPersonalLearning,
     })
@@ -33,8 +29,8 @@ describe('runCrystallizedThinkingRuntime - precondition and persona (Pass 3)', (
     expect(result.personaWeightVector?.meaningBias).toBeDefined()
   })
 
-  it('allows selecting a different persona', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('allows selecting a different persona', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: '重い気持ち',
       personalLearning: mockPersonalLearning,
       personaId: 'gentle',
@@ -44,8 +40,8 @@ describe('runCrystallizedThinkingRuntime - precondition and persona (Pass 3)', (
     expect(result.personaWeightVector?.label).toBe('Gentle Holder')
   })
 
-  it('applies precondition to fused state', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('applies precondition to fused state', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: 'もろくて不安',
       personalLearning: mockPersonalLearning,
     })
@@ -58,8 +54,8 @@ describe('runCrystallizedThinkingRuntime - precondition and persona (Pass 3)', (
     expect(hasPreconditionMarkers).toBe(true)
   })
 
-  it('applies persona to proto meanings', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('applies persona to proto meanings', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: '迷って探している',
       personalLearning: mockPersonalLearning,
       personaId: 'explorer',
@@ -71,8 +67,8 @@ describe('runCrystallizedThinkingRuntime - precondition and persona (Pass 3)', (
     expect(result.protoMeanings.sensory.length).toBeGreaterThan(0)
   })
 
-  it('precondition affects utterance intent', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('precondition affects utterance intent', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: '決めないと',
       personalLearning: mockPersonalLearning,
     })
@@ -85,8 +81,8 @@ describe('runCrystallizedThinkingRuntime - precondition and persona (Pass 3)', (
     expect(result.utteranceIntent?.ambiguityTolerance).toBeLessThanOrEqual(1)
   })
 
-  it('complete flow with precondition and persona', () => {
-    const result = runCrystallizedThinkingRuntime({
+  it('complete flow with precondition and persona', async () => {
+    const result = await runCrystallizedThinkingRuntime({
       text: 'AかBか迷っている',
       personalLearning: mockPersonalLearning,
       personaId: 'gentle',
