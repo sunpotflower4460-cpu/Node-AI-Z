@@ -58,6 +58,9 @@ export type SharedTrunkState = {
 
   /** Promotion event logs (Phase M10) */
   promotionLogs?: PromotionLogEntry[]
+
+  /** Guardian review queue (Phase M11) */
+  guardianReviewQueue?: import('./guardian/guardianTypes').GuardianReviewQueueEntry[]
 }
 
 /**

@@ -77,7 +77,6 @@ import {
   listPromotionQueue,
   updatePromotionQueueEntry,
   validatePromotionCandidate,
-  resolvePromotionDecision,
   applyApprovedPromotion,
   logCandidateQueued,
   logValidationFinished,
@@ -87,8 +86,20 @@ import {
   logCandidateApplied,
   getPromotionQueueState,
   getPromotionLogState,
+  getGuardianPolicy,
+  resolveGuardianMode,
+  buildGuardianReviewRequest,
+  enqueueGuardianReview,
+  resolveGuardianReview,
+  guardianDecisionResolver,
+  getGuardianReviewQueueState,
 } from '../core'
 import type { CoreInfluenceNote } from '../core/coreTypes'
+import type {
+  GuardianReviewRequest,
+  GuardianReviewResult,
+  GuardianReviewQueueEntry,
+} from '../core/guardian/guardianTypes'
 
 /**
  * Crystallized Thinking Runtime
@@ -116,8 +127,9 @@ export type CrystallizedThinkingRuntimeInput = {
  * Phase 1: Adds session brain state continuity across turns.
  * Phase 2: Adds event boundary, confidence meta-layer, uncertainty precision, and idle replay.
  * Phase 3: Adds interoceptive core, coalition formation, workspace phases, and active sensing.
+ * Phase M11: Adds guardian layer for promotion review (async).
  */
-export const runCrystallizedThinkingRuntime = ({
+export const runCrystallizedThinkingRuntime = async ({
   text,
   plasticity,
   personalLearning,
@@ -125,7 +137,7 @@ export const runCrystallizedThinkingRuntime = ({
   brainState: inputBrainState,
   phase2Flags = DEFAULT_PHASE2_FLAGS,
   phase3Flags = DEFAULT_PHASE3_FLAGS,
-}: CrystallizedThinkingRuntimeInput): CrystallizedThinkingResult => {
+}: CrystallizedThinkingRuntimeInput): Promise<CrystallizedThinkingResult> => {
   // ===== Phase 1: Initialize or use existing brain state =====
   const brainState = inputBrainState ?? createInitialBrainState()
 
@@ -751,11 +763,12 @@ export const runCrystallizedThinkingRuntime = ({
     nextBrainState.turnCount
   )
 
-  // ===== Phase M10: Promotion Pipeline =====
+  // ===== Phase M10 + M11: Promotion Pipeline with Guardian Layer =====
   // Process new candidates through the promotion pipeline
   const promotionPipelineResults: {
     queuedCount: number
     validatedCount: number
+    guardianReviewedCount: number
     approvedCount: number
     appliedCount: number
     quarantinedCount: number
@@ -763,6 +776,7 @@ export const runCrystallizedThinkingRuntime = ({
   } = {
     queuedCount: 0,
     validatedCount: 0,
+    guardianReviewedCount: 0,
     approvedCount: 0,
     appliedCount: 0,
     quarantinedCount: 0,
@@ -771,6 +785,14 @@ export const runCrystallizedThinkingRuntime = ({
 
   let updatedTrunk = sharedTrunk
 
+  // Get guardian policy
+  const guardianPolicy = getGuardianPolicy()
+
+  // Storage for guardian review requests and results
+  const guardianReviewRequests: GuardianReviewRequest[] = []
+  const guardianReviewResults: GuardianReviewResult[] = []
+  const guardianReviewQueueEntries: GuardianReviewQueueEntry[] = []
+
   // Step 1: Enqueue new promotion candidates
   for (const candidate of promotionCandidates) {
     const queueEntry = enqueuePromotionCandidate(candidate)
@@ -778,7 +800,7 @@ export const runCrystallizedThinkingRuntime = ({
     promotionPipelineResults.queuedCount++
   }
 
-  // Step 2: Process queued candidates through validation
+  // Step 2: Process queued candidates through validation and guardian review
   const queuedEntries = listPromotionQueue('queued')
   for (const entry of queuedEntries) {
     // Validate the candidate
@@ -802,13 +824,66 @@ export const runCrystallizedThinkingRuntime = ({
     )
     promotionPipelineResults.validatedCount++
 
-    // Resolve promotion decision
-    const { finalStatus, approvalRecord } = resolvePromotionDecision(validation)
+    // Phase M11: Guardian Review Step
+    // Determine guardian mode based on risk level
+    const guardianMode = resolveGuardianMode(validation.riskLevel, guardianPolicy)
+
+    // Build guardian review request
+    const guardianRequest = buildGuardianReviewRequest(
+      entry.candidate,
+      validation,
+      guardianMode
+    )
+    guardianReviewRequests.push(guardianRequest)
+
+    // Enqueue guardian review
+    const guardianQueueEntry = enqueueGuardianReview(guardianRequest)
+    guardianReviewQueueEntries.push(guardianQueueEntry)
+
+    // Resolve guardian review (for M11, guardian adapter is undefined)
+    const guardianResult = await resolveGuardianReview(
+      guardianRequest,
+      guardianPolicy,
+      undefined // No guardian adapter connected yet
+    )
+
+    if (guardianResult) {
+      guardianReviewResults.push(guardianResult)
+      promotionPipelineResults.guardianReviewedCount++
+    }
+
+    // Resolve final promotion decision with guardian result
+    const guardianDecision = guardianDecisionResolver(
+      validation,
+      guardianResult,
+      guardianMode
+    )
+
+    const finalStatus = guardianDecision.finalStatus
 
     // Update queue entry with final status
     updatePromotionQueueEntry(entry.id, {
       status: finalStatus,
     })
+
+    // Create approval record with guardian information
+    const approvalRecord = {
+      id: `approval-${entry.candidate.id}-${Date.now()}`,
+      candidateId: entry.candidate.id,
+      decision:
+        finalStatus === 'approved'
+          ? ('approve' as const)
+          : finalStatus === 'rejected'
+            ? ('reject' as const)
+            : ('quarantine' as const),
+      reason: guardianDecision.reasons.join('; '),
+      createdAt: Date.now(),
+      actor: 'system' as const,
+      // Phase M11: Guardian layer information
+      guardianMode,
+      guardianActor: guardianDecision.guardianActor,
+      validationRisk: validation.riskLevel,
+    }
 
     // Log decision
     if (finalStatus === 'approved') {
@@ -843,11 +918,13 @@ export const runCrystallizedThinkingRuntime = ({
     }
   }
 
-  // Store promotion queue and logs in trunk for persistence
+  // Store promotion queue, logs, and guardian queue in trunk for persistence
   updatedTrunk = {
     ...updatedTrunk,
     promotionQueue: getPromotionQueueState(),
     promotionLogs: getPromotionLogState(),
+    // Phase M11: Store guardian review queue
+    guardianReviewQueue: getGuardianReviewQueueState(),
   }
 
   // Apply trunk influence (read-only, subtle)
@@ -951,5 +1028,9 @@ export const runCrystallizedThinkingRuntime = ({
     // Phase M10: Promotion Pipeline
     promotionPipelineResults,
     updatedTrunk,
+    // Phase M11: Guardian Layer
+    guardianReviewRequests,
+    guardianReviewResults,
+    guardianPolicy,
   }
 }
