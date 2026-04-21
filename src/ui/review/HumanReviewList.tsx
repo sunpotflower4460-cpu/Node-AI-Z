@@ -48,6 +48,9 @@ export const HumanReviewList = ({ items, selectedId, onSelect, emptyLabel = 'No 
                   status: <span className="font-semibold text-slate-800">{item.promotionStatus}</span>
                 </div>
                 <div className="text-[11px] text-slate-500">
+                  support: {item.summary.crossBranchSupportCount}/{item.summary.comparedBranchCount} · consistency {item.summary.consistencyScore.toFixed(2)}
+                </div>
+                <div className="text-[11px] text-slate-500">
                   {formatTimestamp(item.summary.createdAt)}
                 </div>
               </div>

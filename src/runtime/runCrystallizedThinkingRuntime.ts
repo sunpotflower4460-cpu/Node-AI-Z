@@ -74,6 +74,8 @@ import {
   applyTrunkInfluence,
   applyBranchInfluence,
   derivePromotionCandidates,
+  buildComparableBranchSummary,
+  attachConsistencyToPromotionCandidate,
   updateBranchSessionState,
   enqueuePromotionCandidate,
   listPromotionQueue,
@@ -785,16 +787,42 @@ export const runCrystallizedThinkingRuntime = async ({
 
   // Update branch with current session state
   const updatedBranch = updateBranchSessionState(personalBranch, nextBrainState)
+  const currentBranchSummary = buildComparableBranchSummary(updatedBranch)
+  const comparableBranchSummaries = [
+    ...(sharedTrunk.comparableBranchSummaries ?? []).filter(
+      (summary) => summary.branchId !== currentBranchSummary.branchId
+    ),
+    currentBranchSummary,
+  ]
 
   // Create app facade for crystallized thinking
   const appFacade = createCrystallizedThinkingFacade()
 
   // Derive promotion candidates from branch patterns
-  const promotionCandidates = derivePromotionCandidates(
+  const rawPromotionCandidates = derivePromotionCandidates(
     updatedBranch,
     sharedTrunk,
     nextBrainState.turnCount
   )
+  const promotionConsistencyRecords = [
+    ...(sharedTrunk.promotionConsistencyRecords ?? []),
+  ]
+  const promotionCandidates = rawPromotionCandidates.map((candidate) => {
+    const attached = attachConsistencyToPromotionCandidate(
+      candidate,
+      updatedBranch.branchId,
+      comparableBranchSummaries
+    )
+    const existingIndex = promotionConsistencyRecords.findIndex(
+      (record) => record.candidateId === attached.record.candidateId
+    )
+    if (existingIndex >= 0) {
+      promotionConsistencyRecords[existingIndex] = attached.record
+    } else {
+      promotionConsistencyRecords.push(attached.record)
+    }
+    return attached.candidate
+  })
 
   // ===== Phase M10 + M11: Promotion Pipeline with Guardian Layer =====
   // Process new candidates through the promotion pipeline
@@ -1028,6 +1056,9 @@ export const runCrystallizedThinkingRuntime = async ({
           trunkAfterSnapshotId: trunkAfterSnapshot.id,
           trunkDiffSummary,
           appliedBy: guardianDecision.guardianActor ?? 'system',
+          supportCount: entry.candidate.crossBranchSupport?.supportCount,
+          comparedBranchCount: entry.candidate.crossBranchSupport?.comparedBranchCount,
+          consistencyScore: entry.candidate.crossBranchSupport?.consistencyScore,
           rollbackMetadata: applyResult.rollbackMetadata,
         })
         logCandidateApplied(applyResult)
@@ -1044,6 +1075,8 @@ export const runCrystallizedThinkingRuntime = async ({
   // Store promotion queue, logs, and guardian queue in trunk for persistence
   updatedTrunk = attachTrunkSafetyState({
     ...updatedTrunk,
+    comparableBranchSummaries,
+    promotionConsistencyRecords,
     promotionQueue: getPromotionQueueState(),
     promotionLogs: getPromotionLogState(),
     // Phase M11: Store guardian review queue

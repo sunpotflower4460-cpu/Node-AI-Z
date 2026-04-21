@@ -39,6 +39,9 @@ export type TrunkApplyRecord = {
   trunkAfterSnapshotId?: string
   trunkDiffSummary: string[]
   appliedBy: 'system' | 'ai_sensei' | 'human_reviewer'
+  supportCount?: number
+  comparedBranchCount?: number
+  consistencyScore?: number
   rollbackMetadata?: TrunkApplyRollbackMetadata
 }
 

@@ -61,6 +61,17 @@ export const TrunkUndoPanel = ({
                     <li key={line}>• {line}</li>
                   ))}
                 </ul>
+                <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                  <div className="rounded-lg bg-white px-2 py-1 text-[11px] text-slate-600">
+                    <span className="font-semibold text-slate-800">Support</span>: {record.supportCount ?? 0}
+                  </div>
+                  <div className="rounded-lg bg-white px-2 py-1 text-[11px] text-slate-600">
+                    <span className="font-semibold text-slate-800">Compared</span>: {record.comparedBranchCount ?? 0}
+                  </div>
+                  <div className="rounded-lg bg-white px-2 py-1 text-[11px] text-slate-600">
+                    <span className="font-semibold text-slate-800">Consistency</span>: {(record.consistencyScore ?? 0).toFixed(2)}
+                  </div>
+                </div>
                 <textarea
                   value={reason}
                   onChange={(event) => setReasons((previous) => ({ ...previous, [record.id]: event.target.value }))}

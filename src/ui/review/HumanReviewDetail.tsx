@@ -31,6 +31,21 @@ export const HumanReviewDetail = ({ entry }: HumanReviewDetailProps) => {
       </div>
 
       <div className="mt-3 space-y-3 overflow-y-auto">
+        <div className="grid gap-2 sm:grid-cols-3">
+          <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
+            <div className="font-semibold text-slate-800">Cross-Branch Support</div>
+            <div className="mt-1">{summary.crossBranchSupportCount}</div>
+          </div>
+          <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
+            <div className="font-semibold text-slate-800">Compared Branches</div>
+            <div className="mt-1">{summary.comparedBranchCount}</div>
+          </div>
+          <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-700">
+            <div className="font-semibold text-slate-800">Consistency Score</div>
+            <div className="mt-1">{summary.consistencyScore.toFixed(2)}</div>
+          </div>
+        </div>
+
         <div>
           <h4 className="text-xs font-bold uppercase tracking-wide text-slate-500">Summary</h4>
           <ul className="mt-2 space-y-1">
@@ -48,6 +63,19 @@ export const HumanReviewDetail = ({ entry }: HumanReviewDetailProps) => {
             <ul className="mt-2 space-y-1">
               {summary.cautionNotes.map((note, index) => (
                 <li key={index} className="rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 border border-amber-100">
+                  {note}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {summary.consistencyNotes.length > 0 ? (
+          <div>
+            <h4 className="text-xs font-bold uppercase tracking-wide text-indigo-600">Consistency Notes</h4>
+            <ul className="mt-2 space-y-1">
+              {summary.consistencyNotes.map((note, index) => (
+                <li key={index} className="rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2 text-xs font-medium text-indigo-800">
                   {note}
                 </li>
               ))}

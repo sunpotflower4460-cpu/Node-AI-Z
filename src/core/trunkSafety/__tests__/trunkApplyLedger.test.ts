@@ -23,10 +23,14 @@ describe('trunkApplyLedger', () => {
       appliedAt: 10,
       trunkDiffSummary: ['schemaPatterns +1: calm-bridge'],
       appliedBy: 'system',
+      supportCount: 2,
+      comparedBranchCount: 3,
+      consistencyScore: 0.7,
     })
 
     expect(listTrunkApplyRecords()).toHaveLength(1)
     expect(findTrunkApplyRecord('apply-1')?.candidateId).toBe('candidate-1')
+    expect(findTrunkApplyRecord('apply-1')?.supportCount).toBe(2)
     expect(listApplyRecordsByCandidateId('candidate-1')).toHaveLength(1)
   })
 

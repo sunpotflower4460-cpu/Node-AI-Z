@@ -33,6 +33,8 @@ export const createEmptySharedTrunk = (): SharedTrunkState => {
     trunkRevertRecords: [], // Phase M14: Initialize trunk revert ledger
     trunkSnapshotRecords: [], // Phase M14: Initialize trunk snapshot metadata
     safeUndoNotes: [],
+    comparableBranchSummaries: [], // Phase M15: Cross-branch comparison cache
+    promotionConsistencyRecords: [], // Phase M15: Cross-branch consistency history
   }
 }
 

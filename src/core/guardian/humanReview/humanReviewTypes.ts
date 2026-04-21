@@ -5,8 +5,12 @@ export type HumanReviewSummary = {
   candidateKind: string
   confidenceScore: number
   riskLevel: 'low' | 'medium' | 'high'
+  crossBranchSupportCount: number
+  comparedBranchCount: number
+  consistencyScore: number
   summary: string[]
   cautionNotes: string[]
+  consistencyNotes: string[]
   sourceBranchId: string
   createdAt: number
 }

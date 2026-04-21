@@ -95,6 +95,8 @@ describe('runCrystallizedThinkingRuntime shared trunk apply ledger', () => {
 
     expect(result.updatedTrunk?.trunkApplyRecords?.length).toBeGreaterThan(0)
     expect(result.updatedTrunk?.trunkApplyRecords?.[0]?.trunkDiffSummary.length).toBeGreaterThan(0)
+    expect(result.updatedTrunk?.trunkApplyRecords?.[0]?.supportCount).toBeDefined()
+    expect(result.updatedTrunk?.trunkApplyRecords?.[0]?.consistencyScore).toBeDefined()
     expect(result.updatedTrunk?.trunkSnapshotRecords?.length).toBeGreaterThanOrEqual(2)
     expect(mockState.savedTrunk).toBeDefined()
   })
