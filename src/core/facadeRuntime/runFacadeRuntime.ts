@@ -66,7 +66,7 @@ export const runFacadeRuntime = (
     }
 
     // Register or update facade
-    const facade = getOrCreateFacade(request.mode, request.sessionId, request.userId)
+    getOrCreateFacade(request.mode, request.sessionId, request.userId)
 
     // Resolve the request
     const response = resolveFacadeRequest(request, coreView, trunk, branch)
@@ -159,7 +159,12 @@ export const createTestRequest = (
  */
 export const checkFacadeRuntimeHealth = (): {
   healthy: boolean
-  statistics: ReturnType<typeof getFacadeRegistry>['getStatistics']
+  statistics: {
+    totalFacades: number
+    facadesByMode: Record<AppFacadeMode, number>
+    totalRequests: number
+    successRate: number
+  }
   notes: string[]
 } => {
   const registry = getFacadeRegistry()
@@ -216,7 +221,7 @@ export const shutdownFacadeRuntime = (): void => {
  * Helper: Create error response
  */
 const createErrorResponse = (
-  errorCode: FacadeResponse['errorCode'],
+  errorCode: 'PERMISSION_DENIED' | 'INVALID_REQUEST' | 'INTERNAL_ERROR' | 'NOT_FOUND',
   error: string
 ): Extract<FacadeResponse, { success: false }> => {
   return {

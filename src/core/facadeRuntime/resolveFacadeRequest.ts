@@ -10,8 +10,8 @@ import type {
   FacadeObservableState,
 } from './facadeRuntimeTypes'
 import type { CoreView, SharedTrunkState, PersonalBranchState } from '../coreTypes'
-import { getFacadeCapabilityPolicy, getAllPoliciesSummary } from './facadeCapabilityPolicy'
-import { buildFacadeView, createEmptyFacadeView } from './buildFacadeView'
+import { getFacadeCapabilityPolicy } from './facadeCapabilityPolicy'
+import { buildFacadeView } from './buildFacadeView'
 import { routeFacadeAction } from './facadeActionRouter'
 
 /**
@@ -98,7 +98,7 @@ const handleGetView = (
  */
 const handleSubmitBranchUpdate = (
   request: Extract<FacadeRequest, { type: 'submit_branch_update' }>,
-  branch: PersonalBranchState,
+  _branch: PersonalBranchState,
   context: FacadeRuntimeContext
 ): FacadeResponse => {
   // Check write permission
@@ -218,16 +218,16 @@ const handleQueryPromotionStatus = (
 
   // Filter by candidate ID if provided
   const candidates = request.candidateId
-    ? promotionQueue.filter((entry) => entry.candidateId === request.candidateId)
+    ? promotionQueue.filter((entry) => entry.candidate.id === request.candidateId)
     : promotionQueue
 
   return {
     success: true,
     type: 'promotion_status',
     candidates: candidates.map((entry) => ({
-      id: entry.candidateId,
+      id: entry.candidate.id,
       status: entry.status,
-      score: entry.validationResult?.risk?.overallRisk ?? 0,
+      score: entry.validation?.confidenceScore ?? 0,
     })),
     metadata: {
       timestamp: context.timestamp,
@@ -284,7 +284,7 @@ const handleObserveFacadeState = (
  * Create an error response
  */
 const createErrorResponse = (
-  errorCode: FacadeResponse['errorCode'],
+  errorCode: 'PERMISSION_DENIED' | 'INVALID_REQUEST' | 'INTERNAL_ERROR' | 'NOT_FOUND',
   error: string,
   mode: string
 ): Extract<FacadeResponse, { success: false }> => {

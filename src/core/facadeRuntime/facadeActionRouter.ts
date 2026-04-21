@@ -47,7 +47,7 @@ export const routeFacadeAction = (
  * Handle read_view action
  */
 const handleReadViewAction = (
-  action: Extract<FacadeAction, { type: 'read_view' }>,
+  _action: Extract<FacadeAction, { type: 'read_view' }>,
   context: FacadeRuntimeContext
 ): FacadeActionResult => {
   // Validate read permissions
@@ -202,15 +202,17 @@ export const summarizeAction = (action: FacadeAction): string => {
     case 'read_view':
       return `Read view request from ${action.mode}`
 
-    case 'write_branch':
-      return `Write branch request from ${action.mode} (${
-        Object.keys(action.updates).length
-      } updates)`
+    case 'write_branch': {
+      const updateKeys = Object.keys(action.updates)
+      return `Write branch request from ${action.mode} (${updateKeys.length} updates)`
+    }
 
     case 'propose_promotion':
       return `Promotion proposal from ${action.mode} (${action.reasons.length} reasons)`
 
-    default:
-      return `Unknown action from ${action.mode}`
+    default: {
+      const exhaustiveCheck: never = action
+      return `Unknown action from ${(exhaustiveCheck as FacadeAction).mode}`
+    }
   }
 }
