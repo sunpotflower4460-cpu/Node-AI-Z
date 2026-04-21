@@ -8,7 +8,7 @@
 
 import type { CoreNode } from '../types/nodeStudio'
 import type { ProtoMeaning } from '../meaning/types'
-import type { OptionNode, OptionField } from '../option/types'
+import type { OptionField } from '../option/types'
 import type { InteroceptiveState } from '../interoception/interoceptiveState'
 
 export type CoalitionField = {

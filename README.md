@@ -30,6 +30,11 @@ Node-AI-Z には二つの独立した実装方式があります。
   - `human_required` の candidate は human reviewer により approve / reject / quarantine / hold_for_review される
   - human review result は guardian pipeline に接続され、shared trunk への適用前に参照される
   - これにより trunk 昇格の安全性が一段上がる
+* **Shared trunk apply ledger / safe undo (Phase M14)**:
+  - Mother Core は shared trunk apply ledger を持つ
+  - trunk への apply は diff summary と before / after snapshot を伴って記録される
+  - trunk apply は safe undo / revert 可能であり、revert 前には safety snapshot が作られる
+  - これにより shared trunk は慎重に育てつつ、誤昇格からも戻せる
 
 **発話層の深化**:
 - 結晶思考方式は、内部で結晶化した状態（FusedState / ProtoMeaning / OptionAwareness / Somatic）から発話を段階的に生成します

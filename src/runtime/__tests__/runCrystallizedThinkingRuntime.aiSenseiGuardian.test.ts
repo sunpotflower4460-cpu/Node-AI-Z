@@ -162,14 +162,11 @@ vi.mock('../../core', async (importOriginal) => {
 describe('runCrystallizedThinkingRuntime - AI sensei guardian lane', () => {
   it('records AI sensei review traces and final decisions for crystallized thinking promotions', async () => {
     const { runCrystallizedThinkingRuntime } = await import('../runCrystallizedThinkingRuntime')
+    const { createPersonalLearningState } = await import('../../learning/personalLearning')
 
     const result = await runCrystallizedThinkingRuntime({
       text: 'ゆっくり繰り返し考えている',
-      personalLearning: {
-        somaticMarkers: [],
-        pathwayWeights: {},
-        lastUpdated: 1,
-      },
+      personalLearning: createPersonalLearningState(),
     })
 
     expect(result.aiSenseiConfig?.mode).toBe('mock')

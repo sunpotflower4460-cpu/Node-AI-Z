@@ -24,7 +24,7 @@ describe('Promotion Queue', () => {
     const candidate: PromotionCandidate = {
       id: 'test-candidate-1',
       type: 'schema',
-      sourceData: { key: 'test-schema' } as any,
+        sourceData: { key: 'test-schema' } as Record<string, number>,
       score: 0.8,
       reasons: ['High confidence'],
       firstIdentifiedAt: Date.now(),
@@ -44,7 +44,7 @@ describe('Promotion Queue', () => {
     const candidate1: PromotionCandidate = {
       id: 'test-1',
       type: 'schema',
-      sourceData: {} as any,
+      sourceData: {} as Record<string, number>,
       score: 0.7,
       reasons: [],
       firstIdentifiedAt: Date.now(),
@@ -56,7 +56,7 @@ describe('Promotion Queue', () => {
     const candidate2: PromotionCandidate = {
       id: 'test-2',
       type: 'mixed_node',
-      sourceData: {} as any,
+      sourceData: {} as Record<string, number>,
       score: 0.9,
       reasons: [],
       firstIdentifiedAt: Date.now(),
@@ -76,7 +76,7 @@ describe('Promotion Queue', () => {
     const candidate: PromotionCandidate = {
       id: 'test-1',
       type: 'schema',
-      sourceData: {} as any,
+      sourceData: {} as Record<string, number>,
       score: 0.8,
       reasons: [],
       firstIdentifiedAt: Date.now(),
@@ -99,7 +99,7 @@ describe('Promotion Queue', () => {
     const candidate: PromotionCandidate = {
       id: 'test-1',
       type: 'schema',
-      sourceData: {} as any,
+      sourceData: {} as Record<string, number>,
       score: 0.8,
       reasons: [],
       firstIdentifiedAt: Date.now(),
@@ -129,7 +129,7 @@ describe('Promotion Queue', () => {
     const candidate: PromotionCandidate = {
       id: 'findable-candidate',
       type: 'schema',
-      sourceData: {} as any,
+      sourceData: {} as Record<string, number>,
       score: 0.8,
       reasons: [],
       firstIdentifiedAt: Date.now(),
@@ -149,7 +149,7 @@ describe('Promotion Queue', () => {
     const candidate1: PromotionCandidate = {
       id: 'test-1',
       type: 'schema',
-      sourceData: {} as any,
+      sourceData: {} as Record<string, number>,
       score: 0.8,
       reasons: [],
       firstIdentifiedAt: Date.now(),
@@ -161,7 +161,7 @@ describe('Promotion Queue', () => {
     const candidate2: PromotionCandidate = {
       id: 'test-2',
       type: 'schema',
-      sourceData: {} as any,
+      sourceData: {} as Record<string, number>,
       score: 0.9,
       reasons: [],
       firstIdentifiedAt: Date.now(),
@@ -188,7 +188,7 @@ describe('Promotion Queue', () => {
     const candidate: PromotionCandidate = {
       id: 'test-1',
       type: 'schema',
-      sourceData: {} as any,
+      sourceData: {} as Record<string, number>,
       score: 0.8,
       reasons: ['Test'],
       firstIdentifiedAt: Date.now(),

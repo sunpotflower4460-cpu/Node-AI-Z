@@ -57,7 +57,7 @@ export const updateInteroceptiveState = ({
 
   // Overload: increases with high activity and low confidence
   const activityPressure = recentActivityScore > 0.7 ? 0.15 : 0
-  const confidencePressure = confidenceState && !confidenceState.canCommit ? 0.1 : 0
+  const confidencePressure = confidenceState && confidenceState.shouldHold ? 0.1 : 0
   const overloadRelief = 0.08 // gradual relief
   let overload = previousState.overload + activityPressure + confidencePressure - overloadRelief
   overload = Math.max(0.0, Math.min(1.0, overload))
@@ -78,7 +78,7 @@ export const updateInteroceptiveState = ({
   socialSafety = Math.max(0.0, Math.min(1.0, socialSafety))
 
   // Novelty hunger: increases over time, decreases when surprise is satisfied
-  const hungerIncrease = 0.03 // gradual increase
+  const hungerIncrease = 0.03 + (currentTurn > 0 ? 0.005 : 0) // gradual increase
   const surpriseSatisfaction = surpriseMagnitude > 0.5 ? 0.2 : 0
   let noveltyHunger = previousState.noveltyHunger + hungerIncrease - surpriseSatisfaction
   noveltyHunger = Math.max(0.0, Math.min(1.0, noveltyHunger))
@@ -87,7 +87,7 @@ export const updateInteroceptiveState = ({
   const somaticOpennessSignal = somaticInfluence
     ? somaticInfluence.averageOutcome.openness * 0.15
     : 0
-  const confidenceBoost = confidenceState?.shouldExplore ? 0.1 : 0
+  const confidenceBoost = confidenceState?.shouldAsk ? 0.1 : 0
   const toleranceDecay = 0.05 // gradual decay toward neutral
   let uncertaintyTolerance = previousState.uncertaintyTolerance + somaticOpennessSignal + confidenceBoost - toleranceDecay
   uncertaintyTolerance = Math.max(0.0, Math.min(1.0, uncertaintyTolerance))

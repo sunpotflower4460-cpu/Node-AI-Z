@@ -32,7 +32,6 @@ export const buildTrunkDiffSummary = ({
   const summary: string[] = []
 
   const beforeSchemaMap = new Map(before.schemaPatterns.map((pattern) => [pattern.key, pattern]))
-  const afterSchemaMap = new Map(after.schemaPatterns.map((pattern) => [pattern.key, pattern]))
   const addedSchemas = after.schemaPatterns
     .filter((pattern) => !beforeSchemaMap.has(pattern.key))
     .slice(0, MAX_ITEMS)

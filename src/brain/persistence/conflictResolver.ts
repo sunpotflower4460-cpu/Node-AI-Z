@@ -42,7 +42,7 @@ export const resolveConflict = async (
   try {
     localState = await localBrainPersistence.load(sessionId)
     notes.push(`Local state: ${localState ? 'found' : 'not found'}`)
-  } catch (error) {
+  } catch {
     notes.push('Failed to load local state')
   }
 
@@ -53,7 +53,7 @@ export const resolveConflict = async (
     } else {
       notes.push('Remote persistence not enabled')
     }
-  } catch (error) {
+  } catch {
     notes.push('Failed to load remote state')
   }
 
@@ -61,7 +61,7 @@ export const resolveConflict = async (
     const snapshot = getLatestSnapshot(sessionId)
     snapshotState = snapshot?.state
     notes.push(`Latest snapshot: ${snapshotState ? 'found' : 'not found'}`)
-  } catch (error) {
+  } catch {
     notes.push('Failed to load snapshot')
   }
 
@@ -70,7 +70,7 @@ export const resolveConflict = async (
   try {
     journalViable = await isJournalReplayViable(sessionId)
     notes.push(`Journal replay: ${journalViable ? 'viable' : 'not viable'}`)
-  } catch (error) {
+  } catch {
     notes.push('Failed to check journal viability')
   }
 

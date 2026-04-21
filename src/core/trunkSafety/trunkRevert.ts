@@ -21,7 +21,7 @@ export const trunkRevert = ({
 }): { undoResult: TrunkUndoResult; revertRecord: TrunkRevertRecord } => {
   const rollbackMetadata = targetApplyRecord.rollbackMetadata
   const notes: string[] = []
-  let nextTrunk: SharedTrunkState = {
+  const nextTrunk: SharedTrunkState = {
     ...currentTrunk,
     schemaPatterns: [...currentTrunk.schemaPatterns],
     promotedMixedNodes: [...currentTrunk.promotedMixedNodes],

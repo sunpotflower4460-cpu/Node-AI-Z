@@ -148,14 +148,11 @@ beforeEach(() => {
 describe('runCrystallizedThinkingRuntime - human review flow', () => {
   it('queues human_required candidates as pending human reviews', async () => {
     const { runCrystallizedThinkingRuntime } = await import('../runCrystallizedThinkingRuntime')
+    const { createPersonalLearningState } = await import('../../learning/personalLearning')
 
     const result = await runCrystallizedThinkingRuntime({
       text: 'steady pattern candidate',
-      personalLearning: {
-        somaticMarkers: [],
-        pathwayWeights: {},
-        lastUpdated: 1,
-      },
+      personalLearning: createPersonalLearningState(),
     })
 
     expect(result.humanReviewSummaries?.length).toBe(1)
@@ -177,14 +174,11 @@ describe('runCrystallizedThinkingRuntime - human review flow', () => {
       },
     ]
     const { runCrystallizedThinkingRuntime } = await import('../runCrystallizedThinkingRuntime')
+    const { createPersonalLearningState } = await import('../../learning/personalLearning')
 
     const result = await runCrystallizedThinkingRuntime({
       text: 'apply after human decision',
-      personalLearning: {
-        somaticMarkers: [],
-        pathwayWeights: {},
-        lastUpdated: 1,
-      },
+      personalLearning: createPersonalLearningState(),
     })
 
     expect(result.guardianReviewResults?.[0]?.decision).toBe('approve')

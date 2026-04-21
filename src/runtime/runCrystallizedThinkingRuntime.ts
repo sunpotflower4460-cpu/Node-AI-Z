@@ -485,7 +485,7 @@ export const runCrystallizedThinkingRuntime = async ({
     const goalShift = chunkedResult.optionDecision?.preferredOptionId ? 0.3 : 0.0
 
     // Detect stance shift from option decision stance
-    const stanceShift = chunkedResult.optionDecision?.stance === 'ask' ? 0.4 : 0.0
+    const stanceShift = chunkedResult.optionDecision?.stance === 'observe' ? 0.4 : 0.0
 
     // Detect relation shift (simplified - could be enhanced)
     const relationShift = 0.0
@@ -513,7 +513,7 @@ export const runCrystallizedThinkingRuntime = async ({
   let confidenceState
   if (phase2Flags.confidenceEnabled) {
     // Compute decision strength
-    const fieldCoherence = 1.0 - (chunkedResult.stateVector.entropy ?? 0.5)
+    const fieldCoherence = chunkedResult.stateVector.stability ?? 0.5
     const decisionResult = computeDecisionStrength(
       personaModulatedOptions,
       preconditionModulatedFusedState,
