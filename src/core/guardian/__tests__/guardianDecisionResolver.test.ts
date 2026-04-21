@@ -144,9 +144,8 @@ describe('Guardian Decision Resolver', () => {
         'human_required'
       )
 
-      expect(result.finalStatus).toBe('approved')
-      // Note: In current implementation, non-human approval in human_required
-      // still goes through. This could be made stricter if needed.
+      expect(result.finalStatus).toBe('quarantined')
+      expect(result.guardianDecision).toBe('hold_for_review')
     })
   })
 

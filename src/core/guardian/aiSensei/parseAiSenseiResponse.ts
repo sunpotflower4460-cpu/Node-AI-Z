@@ -79,12 +79,13 @@ export const coerceAiSenseiRawResponse = (
           ? record.text
           : undefined
 
-    const decision =
-      isGuardianDecision(record.decision) ||
-      isGuardianDecision(record.result) ||
-      isGuardianDecision(record.verdict)
-        ? (record.decision ?? record.result ?? record.verdict)
-        : extractDecisionFromText(rawText ?? '')
+    const decision = isGuardianDecision(record.decision)
+      ? record.decision
+      : isGuardianDecision(record.result)
+        ? record.result
+        : isGuardianDecision(record.verdict)
+          ? record.verdict
+          : extractDecisionFromText(rawText ?? '')
 
     const confidenceCandidate =
       typeof record.confidence === 'number'

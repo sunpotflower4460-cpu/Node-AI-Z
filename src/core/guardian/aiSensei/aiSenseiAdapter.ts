@@ -11,8 +11,14 @@ const getEnvironmentValue = (key: string | undefined): string | undefined => {
     return undefined
   }
 
-  if (typeof process !== 'undefined' && process.env) {
-    return process.env[key]
+  const processEnv = (
+    globalThis as typeof globalThis & {
+      process?: { env?: Record<string, string | undefined> }
+    }
+  ).process?.env
+
+  if (processEnv) {
+    return processEnv[key]
   }
 
   return undefined

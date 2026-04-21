@@ -688,9 +688,8 @@ export const runCrystallizedThinkingRuntime = async ({
     )
 
     // Run idle replay (consolidation)
-    const replayResult = runIdleReplay(replayQueue, personalLearning)
-    replaySummary = replayResult.summary
-    void replayResult.updatedLearning
+    const { summary: nextReplaySummary } = runIdleReplay(replayQueue, personalLearning)
+    replaySummary = nextReplaySummary
   }
 
   // ===== Phase 1: Update brain state for next turn =====

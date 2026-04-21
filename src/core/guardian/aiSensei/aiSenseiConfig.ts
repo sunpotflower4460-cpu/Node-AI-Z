@@ -13,8 +13,14 @@ const DEFAULT_API_KEY_ENV_NAME = 'AI_SENSEI_API_KEY'
 const VALID_MODES: AiSenseiMode[] = ['disabled', 'mock', 'remote']
 
 const getEnvironment = (): Record<string, string | undefined> => {
-  if (typeof process !== 'undefined' && process.env) {
-    return process.env
+  const processEnv = (
+    globalThis as typeof globalThis & {
+      process?: { env?: Record<string, string | undefined> }
+    }
+  ).process?.env
+
+  if (processEnv) {
+    return processEnv
   }
 
   return {}
