@@ -22,7 +22,9 @@ Node-AI-Z には二つの独立した実装方式があります。
 * **Session Continuity (Phase 1)**: ターン間で内部状態を保持し、残響・予測・内受容・作業場が次ターンへ持ち越される
 * **Precision / Uncertainty Control (Phase M2)**: prediction error を一律に扱わず、内部状態・不確実性・interoception に応じて重みづけが変化する。同じズレでも、今日の状態によって「重く学ぶ」「少し流す」「新規性を重視」「防御的に鈍くなる」を切り替える生き物っぽい受け取り方を持つ
 * **Workspace Gate (Phase M3)**: 入力をすべて同じ重みで流すのではなく、何を保持し、何を更新し、何を遮断し、何を流すかを決める作業場ゲートを持つ。hold / update / shield / flush により、大事な糸を残しながら過負荷を防ぐ
-* **将来 AI sensei**: LLM は外側のガイドとして関わる（本PRでは未実装）
+* **AI sensei guardian adapter**: Guardian Layer は shared trunk 昇格候補の reviewer として AI sensei adapter を差し込める
+* **guardian lane 専用**: AI sensei は会話本文ではなく、shared trunk 昇格候補の guardian reviewer としてだけ働く
+* **mode 整合**: guardian mode に応じて AI sensei review は補助または決定に使われ、`human_required` では AI sensei だけで trunk apply しない
 
 **発話層の深化**:
 - 結晶思考方式は、内部で結晶化した状態（FusedState / ProtoMeaning / OptionAwareness / Somatic）から発話を段階的に生成します

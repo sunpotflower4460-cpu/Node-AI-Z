@@ -162,11 +162,29 @@ export type {
   GuardianAdapter,
 } from './guardian/resolveGuardianReview'
 
+export type {
+  AiSenseiMode,
+  AiSenseiReviewPayload,
+  AiSenseiReviewRawResponse,
+  AiSenseiParsedReview,
+  AiSenseiConfig,
+} from './guardian/aiSensei'
+
 export {
   defaultGuardianPolicy,
   resolveGuardianMode,
   getGuardianPolicy,
 } from './guardian/guardianPolicy'
+
+export {
+  defaultAiSenseiConfig,
+  getAiSenseiConfig,
+  buildAiSenseiPayload,
+  coerceAiSenseiRawResponse,
+  parseAiSenseiResponse,
+  buildAiSenseiFallbackReview,
+  reviewWithAiSensei,
+} from './guardian/aiSensei'
 
 export {
   buildGuardianReviewRequest,

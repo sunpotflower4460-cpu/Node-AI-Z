@@ -8,6 +8,19 @@ import type {
   GuardianReviewResult,
   GuardianPolicy,
 } from './guardianTypes'
+import type { AiSenseiConfig } from './aiSensei/aiSenseiConfig'
+import {
+  getAiSenseiConfig,
+} from './aiSensei/aiSenseiConfig'
+import { buildAiSenseiPayload } from './aiSensei/buildAiSenseiPayload'
+import { reviewWithAiSensei } from './aiSensei/aiSenseiAdapter'
+import {
+  buildAiSenseiFallbackReview,
+} from './aiSensei/aiSenseiFallback'
+import {
+  coerceAiSenseiRawResponse,
+  parseAiSenseiResponse,
+} from './aiSensei/parseAiSenseiResponse'
 
 /**
  * Guardian Adapter
@@ -29,7 +42,8 @@ export type GuardianAdapter = {
 export const resolveGuardianReview = async (
   request: GuardianReviewRequest,
   policy: GuardianPolicy,
-  guardianAdapter?: GuardianAdapter
+  guardianAdapter?: GuardianAdapter,
+  aiSenseiConfig: AiSenseiConfig = getAiSenseiConfig()
 ): Promise<GuardianReviewResult | null> => {
   const { guardianMode } = request
 
@@ -38,32 +52,75 @@ export const resolveGuardianReview = async (
     return createSystemGuardianResult(request, policy)
   }
 
-  // Guardian-assisted mode: Try guardian, fallback to hold
-  if (guardianMode === 'guardian_assisted') {
-    // If guardian adapter is available, use it
-    if (guardianAdapter) {
-      const result = await guardianAdapter.requestReview(request)
-      if (result) {
-        return result
-      }
+  if (guardianAdapter) {
+    const result = await guardianAdapter.requestReview(request)
+    if (result && (guardianMode === 'guardian_assisted' || result.actor === 'human_reviewer')) {
+      return result
     }
-
-    // Guardian not available: hold for review
-    return createHoldForReviewResult(request)
   }
 
-  // Human-required mode: Hold until human can review
-  if (guardianMode === 'human_required') {
-    // If guardian adapter is available and can handle human review, use it
-    if (guardianAdapter) {
-      const result = await guardianAdapter.requestReview(request)
-      if (result && result.actor === 'human_reviewer') {
-        return result
+  if (guardianMode === 'guardian_assisted' || guardianMode === 'human_required') {
+    const payload = buildAiSenseiPayload(request)
+    const fallbackNotes: string[] = []
+    let rawResponse: Awaited<ReturnType<typeof reviewWithAiSensei>> = null
+    let parsedReview: ReturnType<typeof parseAiSenseiResponse> | null = null
+
+    try {
+      rawResponse = await reviewWithAiSensei(payload, aiSenseiConfig)
+      if (rawResponse == null) {
+        fallbackNotes.push(`AI sensei mode "${aiSenseiConfig.mode}" returned no review response`)
+      } else {
+        parsedReview = parseAiSenseiResponse(rawResponse)
+      }
+    } catch (error) {
+      fallbackNotes.push(
+        error instanceof Error ? error.message : 'Unknown AI sensei adapter failure'
+      )
+    }
+
+    if (!parsedReview?.success) {
+      if (parsedReview) {
+        fallbackNotes.push(...parsedReview.parseNotes)
+      }
+
+      const fallbackReview = buildAiSenseiFallbackReview(request, fallbackNotes)
+
+      return {
+        requestId: request.id,
+        actor: 'ai_sensei',
+        decision: fallbackReview.decision,
+        confidence: fallbackReview.confidence,
+        reasons: fallbackReview.reasons,
+        cautionNotes: fallbackReview.cautionNotes,
+        createdAt: Date.now(),
+        aiSensei: {
+          mode: aiSenseiConfig.mode,
+          payload,
+          rawResponse: coerceAiSenseiRawResponse(rawResponse),
+          parsedReview,
+          fallbackNotes: fallbackReview.fallbackNotes,
+        },
       }
     }
 
-    // Human not available: hold for review
-    return createHoldForReviewResult(request)
+    return {
+      requestId: request.id,
+      actor: 'ai_sensei',
+      decision: parsedReview.decision,
+      confidence: parsedReview.confidence,
+      reasons: parsedReview.reasons.length > 0
+        ? parsedReview.reasons
+        : ['AI sensei review completed successfully'],
+      cautionNotes: parsedReview.cautionNotes,
+      createdAt: Date.now(),
+      aiSensei: {
+        mode: aiSenseiConfig.mode,
+        payload,
+        rawResponse: coerceAiSenseiRawResponse(rawResponse),
+        parsedReview,
+        fallbackNotes,
+      },
+    }
   }
 
   // Default: hold for review
