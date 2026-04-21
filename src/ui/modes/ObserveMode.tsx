@@ -162,6 +162,7 @@ export const ObserveMode = ({
   const humanReviewPending = listPendingHumanReviews()
   const humanReviewResolved = listResolvedHumanReviews()
   const trunkState = loadSharedTrunkState() ?? currentObservation?.updatedTrunk ?? null
+  const promotionCandidates = currentObservation?.promotionCandidates ?? []
 
   const handleHumanDecision = (input: HumanReviewDecisionInput) => {
     submitHumanReviewDecision(input)
@@ -1166,6 +1167,65 @@ export const ObserveMode = ({
               {activeTab === 'History' ? <HistoryTab history={history} restoreHistory={handleRestore} /> : null}
               {activeTab === 'Revision' ? <RevisionTab revisionState={revisionState} currentEntry={currentRevisionEntry} onTuningAction={onTuningAction} onClearAll={onClearRevision} /> : null}
             </div>
+          </div>
+
+          <div className="mt-6">
+            {promotionCandidates.length > 0 ? (
+              <section className="rounded-3xl border border-indigo-200 bg-white shadow-sm">
+                <div className="border-b border-indigo-100 px-4 py-3">
+                  <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-indigo-700">
+                    Cross-Branch Consistency
+                  </div>
+                  <p className="mt-1 text-sm font-medium text-slate-600">
+                    Promotion candidates are checked against comparable branch summaries before shared trunk apply.
+                  </p>
+                </div>
+                <div className="grid gap-3 p-4 lg:grid-cols-2">
+                  {promotionCandidates.map((candidate) => (
+                    <div key={candidate.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">{candidate.type}</div>
+                          <div className="text-[11px] text-slate-500">{candidate.id}</div>
+                        </div>
+                        <span className="rounded-full bg-indigo-100 px-2 py-1 text-[10px] font-bold text-indigo-700">
+                          score {candidate.crossBranchSupport?.consistencyScore.toFixed(2) ?? '0.00'}
+                        </span>
+                      </div>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                        <div className="rounded-lg bg-white px-2 py-1 text-[11px] text-slate-600">
+                          <span className="font-semibold text-slate-800">Comparable Branch Count</span>: {candidate.crossBranchSupport?.comparedBranchCount ?? 0}
+                        </div>
+                        <div className="rounded-lg bg-white px-2 py-1 text-[11px] text-slate-600">
+                          <span className="font-semibold text-slate-800">Cross-Branch Support</span>: {candidate.crossBranchSupport?.supportCount ?? 0}
+                        </div>
+                        <div className="rounded-lg bg-white px-2 py-1 text-[11px] text-slate-600">
+                          <span className="font-semibold text-slate-800">Cross-Branch Matches</span>: {candidate.crossBranchSupport?.matches?.length ?? 0}
+                        </div>
+                      </div>
+                      {candidate.crossBranchSupport?.matches?.length ? (
+                        <ul className="mt-3 space-y-1 text-xs text-slate-600">
+                          {candidate.crossBranchSupport.matches.map((match) => (
+                            <li key={`${candidate.id}-${match.branchId}`} className="rounded-lg bg-white px-3 py-2">
+                              {match.branchId} · {(match.similarityScore * 100).toFixed(0)}% · {match.matchedKeys.join(', ') || 'abstract match'}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      {candidate.crossBranchSupport?.notes?.length ? (
+                        <ul className="mt-3 space-y-1 text-xs text-indigo-800">
+                          {candidate.crossBranchSupport.notes.map((note) => (
+                            <li key={note} className="rounded-lg border border-indigo-100 bg-indigo-50 px-3 py-2">
+                              {note}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
           </div>
 
           <div className="mt-6">

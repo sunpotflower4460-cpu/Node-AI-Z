@@ -13,6 +13,11 @@ import type { MixedLatentNode } from '../node/mixedNodeTypes'
 import type { SessionBrainState } from '../brain/sessionBrainState'
 import type { PromotionQueueEntry } from './promotion/promotionTypes'
 import type { PromotionLogEntry } from './promotion/promotionLog'
+import type {
+  BranchComparisonMatch,
+  ComparableBranchSummary,
+  PromotionConsistencyRecord,
+} from './comparison/comparisonTypes'
 
 /**
  * Core Layer Scope
@@ -85,6 +90,12 @@ export type SharedTrunkState = {
 
   /** Safe undo notes (Phase M14) */
   safeUndoNotes?: string[]
+
+  /** Comparable branch summaries used for privacy-safe cross-branch checks (Phase M15) */
+  comparableBranchSummaries?: ComparableBranchSummary[]
+
+  /** Promotion consistency records for cross-branch support history (Phase M15) */
+  promotionConsistencyRecords?: PromotionConsistencyRecord[]
 }
 
 /**
@@ -205,6 +216,15 @@ export type PromotionCandidate = {
 
   /** Whether this candidate has been rejected */
   rejected: boolean
+
+  /** Cross-branch support snapshot for shared trunk promotion checks (Phase M15) */
+  crossBranchSupport?: {
+    supportCount: number
+    comparedBranchCount: number
+    consistencyScore: number
+    matches?: BranchComparisonMatch[]
+    notes: string[]
+  }
 }
 
 /**

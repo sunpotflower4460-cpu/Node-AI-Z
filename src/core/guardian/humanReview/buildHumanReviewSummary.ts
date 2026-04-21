@@ -36,12 +36,21 @@ export const buildHumanReviewSummary = ({
   aiSenseiReview,
   sourceBranchId,
 }: BuildHumanReviewSummaryInput): HumanReviewSummary => {
+  const crossBranchSupport = candidate.crossBranchSupport ?? {
+    supportCount: 0,
+    comparedBranchCount: 0,
+    consistencyScore: 0,
+    notes: [],
+  }
   const topReasons = validation.reasons.slice(0, 3)
   const summary: string[] = [
     `Kind: ${candidate.type}`,
     `Promotion score: ${candidate.score.toFixed(2)} (reinforced ${candidate.reinforcementCount}x)`,
     `Validation: ${validation.status} @ ${(validation.confidenceScore * 100).toFixed(0)}%`,
     `Risk: ${validation.riskLevel}`,
+    `Cross-Branch Support Count: ${crossBranchSupport.supportCount}`,
+    `Compared Branch Count: ${crossBranchSupport.comparedBranchCount}`,
+    `Consistency Score: ${crossBranchSupport.consistencyScore.toFixed(2)}`,
     ...topReasons.map((reason) => `Reason: ${reason}`),
     describeTrunkImpact(candidate),
   ]
@@ -56,9 +65,22 @@ export const buildHumanReviewSummary = ({
     )
   }
 
+  if (crossBranchSupport.notes.length > 0) {
+    summary.push(
+      `Cross-Branch Pattern: ${
+        crossBranchSupport.supportCount >= 2
+          ? 'cross-branch recurring pattern'
+          : crossBranchSupport.comparedBranchCount === 0
+            ? 'comparison pending'
+            : 'single-branch pattern'
+      }`
+    )
+  }
+
   const cautionNotes = Array.from(
     new Set([
       ...validation.cautionNotes.slice(0, 3),
+      ...crossBranchSupport.notes.slice(0, 2),
       ...(aiSenseiReview?.cautionNotes?.slice(0, 2) ?? []),
       validation.riskLevel === 'high'
         ? 'High risk candidate - human review required'
@@ -73,8 +95,12 @@ export const buildHumanReviewSummary = ({
     candidateKind: candidate.type,
     confidenceScore: validation.confidenceScore,
     riskLevel: validation.riskLevel,
+    crossBranchSupportCount: crossBranchSupport.supportCount,
+    comparedBranchCount: crossBranchSupport.comparedBranchCount,
+    consistencyScore: crossBranchSupport.consistencyScore,
     summary,
     cautionNotes,
+    consistencyNotes: [...crossBranchSupport.notes],
     sourceBranchId,
     createdAt: guardianRequest?.requestedAt ?? Date.now(),
   }

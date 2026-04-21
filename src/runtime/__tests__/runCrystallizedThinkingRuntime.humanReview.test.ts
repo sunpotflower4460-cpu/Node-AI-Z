@@ -13,7 +13,20 @@ vi.mock('../../core', async (importOriginal) => {
   const mockCandidate = {
     id: 'candidate-hr',
     type: 'schema' as const,
-    sourceData: {},
+    sourceData: {
+      id: 'schema-hr',
+      key: 'review-pattern',
+      dominantProtoMeaningIds: ['meaning-1'],
+      dominantTextureTags: ['steady'],
+      optionTendencyKeys: ['hold'],
+      somaticSignatureKeys: ['grounded'],
+      recurrenceCount: 5,
+      strength: 0.82,
+      confidence: 0.8,
+      supportingTraceIds: ['trace-1'],
+      firstSeenTurn: 1,
+      lastReinforcedTurn: 8,
+    },
     score: 0.91,
     reasons: ['Stable pattern'],
     firstIdentifiedAt: 1,
@@ -156,6 +169,7 @@ describe('runCrystallizedThinkingRuntime - human review flow', () => {
     })
 
     expect(result.humanReviewSummaries?.length).toBe(1)
+    expect(result.humanReviewSummaries?.[0]?.summary.some((line) => line.includes('Consistency Score'))).toBe(true)
     expect(result.guardianReviewResults?.length ?? 0).toBe(0)
     expect(result.updatedTrunk?.promotionQueue?.[0]?.status).toBe('quarantined')
     expect(result.updatedTrunk?.guardianReviewQueue?.[0]?.status).toBe('queued')

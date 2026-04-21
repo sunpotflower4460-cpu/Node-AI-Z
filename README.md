@@ -35,6 +35,10 @@ Node-AI-Z には二つの独立した実装方式があります。
   - trunk への apply は diff summary と before / after snapshot を伴って記録される
   - trunk apply は safe undo / revert 可能であり、revert 前には safety snapshot が作られる
   - これにより shared trunk は慎重に育てつつ、誤昇格からも戻せる
+* **Minimal branch-to-branch comparison (Phase M15)**:
+  - Mother Core は shared trunk 昇格候補に対して privacy-safe な branch-to-branch comparison の最小版を持つ
+  - shared trunk への昇格候補は、他 personal branch にも類似した schema / mixed pattern / option tendency / metaphor-like structure があるかを軽く照合できる
+  - cross-branch consistency は trunk 昇格の一般性確認に使われ、個人的な強い学びと shared trunk 候補を分けやすくする
 
 **発話層の深化**:
 - 結晶思考方式は、内部で結晶化した状態（FusedState / ProtoMeaning / OptionAwareness / Somatic）から発話を段階的に生成します

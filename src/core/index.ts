@@ -16,6 +16,15 @@ export type {
   BranchInfluenceResult,
 } from './coreTypes'
 
+export type {
+  ComparableBranchSummary,
+  BranchComparisonMatch,
+  CrossBranchSupport,
+  PromotionConsistencyRecord,
+  PromotionCandidateComparisonProfile,
+  BranchConsistencyScoreResult,
+} from './comparison'
+
 // Shared Trunk exports
 export {
   createEmptySharedTrunk,
@@ -84,6 +93,15 @@ export {
   deriveSchemaPromotionCandidates,
   deriveMixedNodePromotionCandidates,
 } from './derivePromotionCandidates'
+
+export {
+  buildComparableBranchSummary,
+  comparePromotionCandidateAcrossBranches,
+  computeBranchConsistencyScore,
+  summarizeBranchConsistency,
+  deriveCrossBranchSupport,
+  attachConsistencyToPromotionCandidate,
+} from './comparison'
 
 // Promotion Pipeline exports (Phase M10)
 export type {

@@ -7,6 +7,9 @@ import type { PromotionCandidate, PersonalBranchState, SharedTrunkState } from '
 import type { PromotionValidationResult, PromotionStatus } from './promotionTypes'
 import { derivePromotionRisk } from './derivePromotionRisk'
 
+// Below this level, cross-branch support is too sparse/noisy to justify shared trunk promotion.
+const MIN_CONSISTENCY_SCORE_FOR_SHARED_READINESS = 0.25
+
 /**
  * Validate a promotion candidate.
  * Returns a validation result with status, risk level, and reasoning.
@@ -27,6 +30,7 @@ export const validatePromotionCandidate = (
 
   // Determine initial status based on risk and confidence
   const status = deriveValidationStatus(
+    candidate,
     riskAssessment.riskScore,
     confidenceScore
   )
@@ -75,6 +79,14 @@ const calculateValidationConfidence = (
   const reasonFactor = Math.min(1.0, candidate.reasons.length / 4)
   confidence += reasonFactor * 0.2
 
+  const crossBranchSupport = candidate.crossBranchSupport
+  if (crossBranchSupport && crossBranchSupport.comparedBranchCount > 0) {
+    confidence += crossBranchSupport.consistencyScore * 0.2
+    if (crossBranchSupport.supportCount >= 2) {
+      confidence += 0.05
+    }
+  }
+
   return Math.max(0.0, Math.min(1.0, confidence))
 }
 
@@ -82,9 +94,14 @@ const calculateValidationConfidence = (
  * Determine validation status based on risk and confidence.
  */
 const deriveValidationStatus = (
+  candidate: PromotionCandidate,
   riskScore: number,
   confidenceScore: number
 ): PromotionStatus => {
+  const crossBranchSupport = candidate.crossBranchSupport
+  const hasComparisonContext =
+    !!crossBranchSupport && crossBranchSupport.comparedBranchCount > 0
+
   // High risk → reject or quarantine
   if (riskScore > 0.7) {
     return 'rejected'
@@ -93,6 +110,26 @@ const deriveValidationStatus = (
   // Medium-high risk → quarantine
   if (riskScore > 0.5) {
     return 'quarantined'
+  }
+
+  if (
+    hasComparisonContext
+    && (
+      crossBranchSupport.supportCount === 0
+      || crossBranchSupport.consistencyScore < MIN_CONSISTENCY_SCORE_FOR_SHARED_READINESS
+    )
+  ) {
+    return 'quarantined'
+  }
+
+  if (
+    hasComparisonContext
+    && crossBranchSupport.supportCount >= 2
+    && crossBranchSupport.consistencyScore >= 0.65
+    && riskScore < 0.45
+    && confidenceScore > 0.68
+  ) {
+    return 'approved'
   }
 
   // Low risk + high confidence → approve
@@ -152,6 +189,21 @@ const buildValidationReasons = (
     reasons.push('Limited recurrence (< 3 times)')
   }
 
+  const crossBranchSupport = candidate.crossBranchSupport
+  if (crossBranchSupport && crossBranchSupport.comparedBranchCount > 0) {
+    reasons.push(
+      `Cross-branch support: ${crossBranchSupport.supportCount}/${crossBranchSupport.comparedBranchCount}`
+    )
+    reasons.push(
+      `Consistency score: ${crossBranchSupport.consistencyScore.toFixed(2)}`
+    )
+    if (crossBranchSupport.supportCount >= 2) {
+      reasons.push('Recurring across multiple branches')
+    } else if (crossBranchSupport.supportCount === 0) {
+      reasons.push('No cross-branch support yet')
+    }
+  }
+
   return reasons
 }
 
@@ -183,6 +235,19 @@ const buildCautionNotes = (
   // Low support warning
   if (candidate.reasons.length < 2) {
     cautionNotes.push('Limited supporting evidence')
+  }
+
+  const crossBranchSupport = candidate.crossBranchSupport
+  if (crossBranchSupport && crossBranchSupport.comparedBranchCount > 0) {
+    if (crossBranchSupport.supportCount === 0) {
+      cautionNotes.push('Shared trunk may be early: no cross-branch support yet')
+    } else if (crossBranchSupport.supportCount === 1) {
+      cautionNotes.push('Cross-branch support is still limited to one branch')
+    }
+
+    if (crossBranchSupport.consistencyScore < 0.4) {
+      cautionNotes.push('Cross-branch consistency is still weak')
+    }
   }
 
   // Recent pattern warning

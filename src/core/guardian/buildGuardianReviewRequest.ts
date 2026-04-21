@@ -38,6 +38,7 @@ const buildSummary = (
   validation: PromotionValidationResult
 ): string[] => {
   const summary: string[] = []
+  const crossBranchSupport = candidate.crossBranchSupport
 
   // Candidate type and confidence
   summary.push(`Type: ${candidate.type}`)
@@ -59,6 +60,24 @@ const buildSummary = (
     summary.push(`Validation: ${validation.reasons.slice(0, 2).join(', ')}`)
   }
 
+  if (crossBranchSupport) {
+    summary.push(
+      `Cross-branch support: ${crossBranchSupport.supportCount}/${crossBranchSupport.comparedBranchCount}`
+    )
+    summary.push(
+      `Consistency score: ${crossBranchSupport.consistencyScore.toFixed(2)}`
+    )
+    summary.push(
+      `Pattern class: ${
+        crossBranchSupport.comparedBranchCount === 0
+          ? 'comparison pending'
+          : crossBranchSupport.supportCount >= 2
+            ? 'cross-branch recurring pattern'
+            : 'single-branch pattern'
+      }`
+    )
+  }
+
   return summary
 }
 
@@ -70,6 +89,7 @@ const buildCautionNotes = (
   validation: PromotionValidationResult
 ): string[] => {
   const cautionNotes: string[] = []
+  const crossBranchSupport = candidate.crossBranchSupport
 
   // Add validation caution notes
   if (validation.cautionNotes.length > 0) {
@@ -91,6 +111,18 @@ const buildCautionNotes = (
   // Add confidence cautions
   if (validation.confidenceScore < 0.6) {
     cautionNotes.push('Low validation confidence')
+  }
+
+  if (crossBranchSupport && crossBranchSupport.comparedBranchCount > 0) {
+    if (crossBranchSupport.supportCount === 0) {
+      cautionNotes.push('Single-branch pattern so far')
+    } else if (crossBranchSupport.supportCount === 1) {
+      cautionNotes.push('Cross-branch support remains narrow')
+    }
+
+    if (crossBranchSupport.consistencyScore < 0.4) {
+      cautionNotes.push('Weak cross-branch consistency')
+    }
   }
 
   return cautionNotes
