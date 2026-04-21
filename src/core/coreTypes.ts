@@ -26,6 +26,16 @@ import type {
 export type CoreLayerScope = 'shared_trunk' | 'personal_branch' | 'app_facade'
 
 /**
+ * App Facade Mode - Phase M16
+ * Identifies which app is connecting to Mother Core through facade runtime
+ */
+export type AppFacadeMode =
+  | 'crystallized_thinking'
+  | 'jibun_kaigi'
+  | 'observer'
+  | 'future_app'
+
+/**
  * Shared Trunk State
  * Read-mostly repository of universal patterns, concepts, and biases.
  * Shared across all users and apps. Updated rarely, through promotion.
