@@ -5,6 +5,39 @@
 
 import type { AppFacadeMode, CoreView } from '../coreTypes'
 
+export type SurfacePresentationMeta = {
+  summary: string
+  summaryStyle: 'plain' | 'observe' | 'thinking'
+  explanationDepth: 'minimal' | 'medium' | 'deep'
+  metadataDensity: 'minimal' | 'balanced' | 'rich'
+  ordering: string[]
+  highlightKeys: string[]
+  notes?: string[]
+  biasProfileMode?: AppFacadeMode
+}
+
+export type FacadeViewTranslation = {
+  mode: AppFacadeMode
+  highlightKeys: string[]
+  orderingNotes: string[]
+  summaryNotes: string[]
+  biasProfile?: {
+    mode: AppFacadeMode
+    emphasis: {
+      branch: number
+      trunk: number
+      promotion: number
+      guardian: number
+      persistence: number
+    }
+    explanationDepth: 'minimal' | 'medium' | 'deep'
+    metadataDensity: 'minimal' | 'balanced' | 'rich'
+    ordering: 'branch_first' | 'trunk_first' | 'review_first' | 'persistence_first'
+    summaryStyle: 'plain' | 'observe' | 'thinking'
+    highlightTopN: number
+  }
+}
+
 /**
  * Facade Scope - identifies which layer a facade can access
  */
@@ -85,6 +118,8 @@ export type FacadeResponse =
       success: true
       type: 'view'
       view: FacadeView
+      rawView?: FacadeView
+      translation?: FacadeViewTranslation
       metadata: {
         timestamp: number
         facadeId: string
@@ -98,6 +133,7 @@ export type FacadeResponse =
       metadata: {
         timestamp: number
         facadeId: string
+        notes?: string[]
       }
     }
   | {
@@ -192,6 +228,9 @@ export type FacadeView = {
     timestamp: number
     notes: string[]
   }
+
+  /** Presentation metadata applied on top of raw facade view */
+  surfacePresentation?: SurfacePresentationMeta
 }
 
 /**

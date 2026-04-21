@@ -30,6 +30,8 @@ import type { MixedNodeSelectionResult, MixedNodeInfluenceNote } from '../node/m
 import type { ProtoMeaning } from '../meaning/types'
 import type { OptionAwareness } from '../option/types'
 import type { CoreView, CoreInfluenceNote, PromotionCandidate, SharedTrunkState } from '../core/coreTypes'
+import type { FacadeView, FacadeViewTranslation } from '../core/facadeRuntime'
+import type { PresentationBiasProfile } from '../core/facadePresentation'
 import type {
   HumanReviewRecord,
   HumanReviewSummary,
@@ -123,6 +125,10 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   coreView?: CoreView
   coreInfluenceNotes?: CoreInfluenceNote[]
   promotionCandidates?: PromotionCandidate[]
+  facadeView?: FacadeView
+  rawFacadeView?: FacadeView
+  facadeViewTranslation?: FacadeViewTranslation
+  presentationBiasProfile?: PresentationBiasProfile
   // Phase M10: Promotion Pipeline
   promotionPipelineResults?: {
     queuedCount: number

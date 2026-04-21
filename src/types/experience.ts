@@ -13,6 +13,8 @@ import type { EventBoundary } from '../boundary/boundaryTypes'
 import type { ConfidenceState } from '../meta/computeInterpretationConfidence'
 import type { UncertaintyState } from '../predictive/uncertaintyTypes'
 import type { ReplaySummary } from '../replay/runIdleReplay'
+import type { FacadeView, FacadeViewTranslation } from '../core/facadeRuntime'
+import type { PresentationBiasProfile } from '../core/facadePresentation'
 
 /**
  * UI mode: observe (research) vs experience (conversation)
@@ -72,6 +74,10 @@ export type ObservationRecord = {
   aiSenseiConfig?: import('../core/guardian/aiSensei').AiSenseiConfig
   humanReviewSummaries?: import('../core/guardian/humanReview/humanReviewTypes').HumanReviewSummary[]
   humanReviewRecords?: import('../core/guardian/humanReview/humanReviewTypes').HumanReviewRecord[]
+  facadeView?: FacadeView
+  rawFacadeView?: FacadeView
+  facadeViewTranslation?: FacadeViewTranslation
+  presentationBiasProfile?: PresentationBiasProfile
 }
 
 export type ExperienceMessage = {
@@ -111,4 +117,8 @@ export type ExperienceMessage = {
   aiSenseiConfig?: import('../core/guardian/aiSensei').AiSenseiConfig
   humanReviewSummaries?: import('../core/guardian/humanReview/humanReviewTypes').HumanReviewSummary[]
   humanReviewRecords?: import('../core/guardian/humanReview/humanReviewTypes').HumanReviewRecord[]
+  facadeView?: FacadeView
+  rawFacadeView?: FacadeView
+  facadeViewTranslation?: FacadeViewTranslation
+  presentationBiasProfile?: PresentationBiasProfile
 }

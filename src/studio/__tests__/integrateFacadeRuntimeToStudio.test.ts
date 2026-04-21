@@ -35,6 +35,7 @@ describe('Observer Facade Integration - Phase M16', () => {
     if (result.view) {
       expect(result.view.viewMetadata.mode).toBe('observer')
     }
+    expect(result.translation).toBeDefined()
   })
 
   it('should summarize facade view for studio display', () => {

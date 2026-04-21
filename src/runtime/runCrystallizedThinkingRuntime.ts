@@ -1126,6 +1126,11 @@ export const runCrystallizedThinkingRuntime = async ({
     brainState.sessionId,
     updatedBranch.branchId || 'anonymous'
   )
+  const translatedFacadeView = facadeViewResult.success ? facadeViewResult.view : undefined
+  const rawFacadeView = facadeViewResult.success
+    ? facadeViewResult.rawView ?? facadeViewResult.view
+    : undefined
+  const facadeViewTranslation = facadeViewResult.translation
 
   // Update brain state with core influence notes and facade view
   nextBrainState = {
@@ -1134,8 +1139,8 @@ export const runCrystallizedThinkingRuntime = async ({
   }
 
   // Attach facade view if available
-  if (facadeViewResult.success && facadeViewResult.view) {
-    nextBrainState = attachFacadeViewToBrainState(nextBrainState, facadeViewResult.view)
+  if (facadeViewResult.success && translatedFacadeView) {
+    nextBrainState = attachFacadeViewToBrainState(nextBrainState, translatedFacadeView)
   }
 
   return {
@@ -1200,6 +1205,10 @@ export const runCrystallizedThinkingRuntime = async ({
     coreView,
     coreInfluenceNotes: allCoreInfluenceNotes,
     promotionCandidates,
+    facadeView: translatedFacadeView,
+    rawFacadeView,
+    facadeViewTranslation,
+    presentationBiasProfile: facadeViewTranslation?.biasProfile,
     // Phase M10: Promotion Pipeline
     promotionPipelineResults,
     updatedTrunk,

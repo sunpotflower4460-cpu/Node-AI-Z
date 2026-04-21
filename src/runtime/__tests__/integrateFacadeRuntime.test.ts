@@ -31,24 +31,25 @@ describe('Facade Runtime Integration - Phase M16', () => {
 
   describe('Crystallized Thinking Integration', () => {
     it('should get facade view for crystallized_thinking', () => {
-      const result = getCrystallizedThinkingFacadeView(
-        coreView,
-        trunk,
-        branch,
-        'session-crystal-1',
-        'user-1'
-      )
+    const result = getCrystallizedThinkingFacadeView(
+      coreView,
+      trunk,
+      branch,
+      'session-crystal-1',
+      'user-1'
+    )
 
-      expect(result.success).toBe(true)
-      expect(result.view).toBeDefined()
-      if (result.view) {
-        expect(result.view.viewMetadata.mode).toBe('crystallized_thinking')
-        expect(result.view.viewMetadata.readableScopes).toContain('shared_trunk')
-        expect(result.view.viewMetadata.readableScopes).toContain('personal_branch')
-        expect(result.view.visibleSchemas).toBeDefined()
-        expect(result.view.visibleMixedNodes).toBeDefined()
-      }
-    })
+    expect(result.success).toBe(true)
+    expect(result.view).toBeDefined()
+    if (result.view) {
+      expect(result.view.viewMetadata.mode).toBe('crystallized_thinking')
+      expect(result.view.viewMetadata.readableScopes).toContain('shared_trunk')
+      expect(result.view.viewMetadata.readableScopes).toContain('personal_branch')
+      expect(result.view.visibleSchemas).toBeDefined()
+      expect(result.view.visibleMixedNodes).toBeDefined()
+    }
+    expect(result.translation?.mode).toBe('crystallized_thinking')
+  })
 
     it('should have write access to personal branch', () => {
       const result = getCrystallizedThinkingFacadeView(
@@ -103,24 +104,25 @@ describe('Facade Runtime Integration - Phase M16', () => {
 
   describe('Observer Integration', () => {
     it('should get facade view for observer (read-only)', () => {
-      const result = getObserverFacadeView(
-        coreView,
-        trunk,
-        branch,
-        'session-observer-1',
-        'user-2'
-      )
+    const result = getObserverFacadeView(
+      coreView,
+      trunk,
+      branch,
+      'session-observer-1',
+      'user-2'
+    )
 
-      expect(result.success).toBe(true)
-      expect(result.view).toBeDefined()
-      if (result.view) {
-        expect(result.view.viewMetadata.mode).toBe('observer')
-        expect(result.view.viewMetadata.readableScopes).toContain('shared_trunk')
-        expect(result.view.viewMetadata.readableScopes).toContain('personal_branch')
-        expect(result.view.visibleSchemas).toBeDefined()
-        expect(result.view.visibleMixedNodes).toBeDefined()
-      }
-    })
+    expect(result.success).toBe(true)
+    expect(result.view).toBeDefined()
+    if (result.view) {
+      expect(result.view.viewMetadata.mode).toBe('observer')
+      expect(result.view.viewMetadata.readableScopes).toContain('shared_trunk')
+      expect(result.view.viewMetadata.readableScopes).toContain('personal_branch')
+      expect(result.view.visibleSchemas).toBeDefined()
+      expect(result.view.visibleMixedNodes).toBeDefined()
+    }
+    expect(result.translation?.mode).toBe('observer')
+  })
 
     it('should have read-only access (no write to branch)', () => {
       const result = getObserverFacadeView(

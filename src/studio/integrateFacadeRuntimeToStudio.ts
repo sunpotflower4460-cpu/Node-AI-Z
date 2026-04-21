@@ -4,7 +4,7 @@
  */
 
 import type { CoreView, SharedTrunkState, PersonalBranchState } from '../core/coreTypes'
-import type { FacadeView } from '../core/facadeRuntime'
+import type { FacadeView, FacadeViewTranslation } from '../core/facadeRuntime'
 import { getObserverFacadeView } from '../runtime/integrateFacadeRuntime'
 
 /**
@@ -20,6 +20,8 @@ export const getStudioFacadeView = (
 ): {
   success: boolean
   view?: FacadeView
+  rawView?: FacadeView
+  translation?: FacadeViewTranslation
   error?: string
   notes: string[]
 } => {
@@ -33,6 +35,9 @@ export const getStudioFacadeView = (
   if (result.success && result.view) {
     notes.push(`Facade view retrieved: ${result.view.visibleSchemas.length} schemas visible`)
     notes.push(`Read-only access to ${result.view.viewMetadata.readableScopes.join(', ')}`)
+    if (result.translation) {
+      notes.push(`Surface translator highlights: ${result.translation.highlightKeys.join(', ')}`)
+    }
   } else if (!result.success) {
     notes.push(`Facade runtime error: ${result.error}`)
   }
@@ -53,6 +58,9 @@ export const summarizeFacadeViewForStudio = (facadeView: FacadeView): string[] =
   summary.push(`Readable scopes: ${facadeView.viewMetadata.readableScopes.join(', ')}`)
   summary.push(`Visible schemas: ${facadeView.visibleSchemas.length}`)
   summary.push(`Visible mixed nodes: ${facadeView.visibleMixedNodes.length}`)
+  if (facadeView.surfacePresentation?.highlightKeys?.length) {
+    summary.push(`Highlights: ${facadeView.surfacePresentation.highlightKeys.join(', ')}`)
+  }
 
   if (facadeView.promotionCandidates) {
     summary.push(`Promotion candidates: ${facadeView.promotionCandidates.length}`)

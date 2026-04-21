@@ -120,6 +120,10 @@ export const createObservationRecord = async ({
     aiSenseiConfig: runtimeResult.aiSenseiConfig,
     humanReviewSummaries: runtimeResult.humanReviewSummaries,
     humanReviewRecords: runtimeResult.humanReviewRecords,
+    facadeView: runtimeResult.facadeView,
+    rawFacadeView: runtimeResult.rawFacadeView,
+    facadeViewTranslation: runtimeResult.facadeViewTranslation,
+    presentationBiasProfile: runtimeResult.presentationBiasProfile,
   }
 }
 
@@ -163,6 +167,10 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       aiSenseiConfig: record.aiSenseiConfig,
       humanReviewSummaries: record.humanReviewSummaries,
       humanReviewRecords: record.humanReviewRecords,
+      facadeView: record.facadeView,
+      rawFacadeView: record.rawFacadeView,
+      facadeViewTranslation: record.facadeViewTranslation,
+      presentationBiasProfile: record.presentationBiasProfile,
     },
     {
       id: createObservationId('exp_assistant'),
@@ -200,6 +208,10 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       aiSenseiConfig: record.aiSenseiConfig,
       humanReviewSummaries: record.humanReviewSummaries,
       humanReviewRecords: record.humanReviewRecords,
+      facadeView: record.facadeView,
+      rawFacadeView: record.rawFacadeView,
+      facadeViewTranslation: record.facadeViewTranslation,
+      presentationBiasProfile: record.presentationBiasProfile,
     },
   ]
 }

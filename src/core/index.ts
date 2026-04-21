@@ -344,3 +344,20 @@ export {
   shutdownFacadeRuntime,
   getFacadeRuntimeSummary,
 } from './facadeRuntime'
+
+// Facade Surface Presentation (Phase M17)
+export type {
+  PresentationBiasProfile,
+  SurfaceTranslationInput,
+  SurfaceTranslationOutput,
+} from './facadePresentation'
+
+export {
+  getPresentationBiasProfile,
+  listPresentationBiasProfiles,
+  buildSurfaceHighlights,
+  buildSurfaceOrdering,
+  buildSurfaceSummary,
+  translateFacadeView,
+  translateFacadeWriteIntent,
+} from './facadePresentation'
