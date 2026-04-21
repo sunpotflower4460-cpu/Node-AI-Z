@@ -123,12 +123,17 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   promotionPipelineResults?: {
     queuedCount: number
     validatedCount: number
+    guardianReviewedCount: number
     approvedCount: number
     appliedCount: number
     quarantinedCount: number
     rejectedCount: number
   }
   updatedTrunk?: SharedTrunkState
+  // Phase M11: Guardian Layer
+  guardianReviewRequests?: import('../core/guardian/guardianTypes').GuardianReviewRequest[]
+  guardianReviewResults?: import('../core/guardian/guardianTypes').GuardianReviewResult[]
+  guardianPolicy?: import('../core/guardian/guardianTypes').GuardianPolicy
 }
 
 /**

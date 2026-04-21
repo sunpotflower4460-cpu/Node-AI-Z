@@ -142,3 +142,52 @@ export {
   getPromotionLogState,
   restorePromotionLogState,
 } from './promotion/promotionLog'
+
+// Guardian Layer exports (Phase M11)
+export type {
+  GuardianMode,
+  GuardianActor,
+  GuardianDecision,
+  GuardianReviewRequest,
+  GuardianReviewResult,
+  GuardianReviewQueueEntry,
+  GuardianPolicy,
+} from './guardian/guardianTypes'
+
+export type {
+  GuardianDecisionResult,
+} from './guardian/guardianDecisionResolver'
+
+export type {
+  GuardianAdapter,
+} from './guardian/resolveGuardianReview'
+
+export {
+  defaultGuardianPolicy,
+  resolveGuardianMode,
+  getGuardianPolicy,
+} from './guardian/guardianPolicy'
+
+export {
+  buildGuardianReviewRequest,
+} from './guardian/buildGuardianReviewRequest'
+
+export {
+  enqueueGuardianReview,
+  listGuardianReviewQueue,
+  updateGuardianReviewQueueEntry,
+  resolveGuardianReviewQueueEntry,
+  findGuardianReviewQueueEntry,
+  clearResolvedGuardianEntries,
+  getGuardianReviewQueueState,
+  restoreGuardianReviewQueueState,
+  clearGuardianReviewQueue,
+} from './guardian/guardianReviewQueue'
+
+export {
+  resolveGuardianReview,
+} from './guardian/resolveGuardianReview'
+
+export {
+  guardianDecisionResolver,
+} from './guardian/guardianDecisionResolver'

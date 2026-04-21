@@ -75,6 +75,7 @@ export type PromotionQueueEntry = {
 /**
  * Promotion Approval Record
  * Records the decision made about a promotion candidate.
+ * Phase M11: Extended with guardian layer information.
  */
 export type PromotionApprovalRecord = {
   /** Unique identifier for this approval record */
@@ -94,6 +95,15 @@ export type PromotionApprovalRecord = {
 
   /** Who/what made this decision (system auto, future guardian, future human) */
   actor: 'system' | 'future_guardian' | 'future_human_review'
+
+  /** Phase M11: Guardian mode used for this decision */
+  guardianMode?: 'system_only' | 'guardian_assisted' | 'human_required'
+
+  /** Phase M11: Guardian actor who made the decision */
+  guardianActor?: 'system' | 'ai_sensei' | 'human_reviewer'
+
+  /** Phase M11: Risk level at time of validation */
+  validationRisk?: 'low' | 'medium' | 'high'
 }
 
 /**
