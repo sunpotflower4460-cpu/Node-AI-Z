@@ -58,6 +58,9 @@ export type BranchConsistencyScoreResult = {
 
 const normalizeKey = (value: string): string => value.trim().toLowerCase()
 
+export const clampComparisonScore = (value: number): number =>
+  Math.max(0, Math.min(1, value))
+
 export const uniqueKeys = (values: Array<string | undefined | null>): string[] => {
   return Array.from(
     new Set(
@@ -72,6 +75,13 @@ export const tokenizeComparisonKey = (value: string): string[] => {
   return uniqueKeys(value.split(/[^a-z0-9]+/i)).filter((token) => token.length >= 3)
 }
 
+/**
+ * Create a stable non-cryptographic hash for comparison summaries.
+ * This avoids surfacing raw user/branch identifiers in review-facing summaries
+ * while keeping a deterministic handle for local persistence/debug use.
+ * It is suitable only for deterministic local identifiers, not for security-
+ * sensitive anonymity guarantees or collision-resistant identity handling.
+ */
 export const hashComparisonId = (value: string): string => {
   let hash = 2166136261
   for (const char of value) {

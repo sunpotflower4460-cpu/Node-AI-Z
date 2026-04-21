@@ -7,6 +7,9 @@ import type { PromotionCandidate, PersonalBranchState, SharedTrunkState } from '
 import type { PromotionValidationResult, PromotionStatus } from './promotionTypes'
 import { derivePromotionRisk } from './derivePromotionRisk'
 
+// Below this level, cross-branch support is too sparse/noisy to justify shared trunk promotion.
+const MIN_CONSISTENCY_SCORE_FOR_SHARED_READINESS = 0.25
+
 /**
  * Validate a promotion candidate.
  * Returns a validation result with status, risk level, and reasoning.
@@ -113,7 +116,7 @@ const deriveValidationStatus = (
     hasComparisonContext
     && (
       crossBranchSupport.supportCount === 0
-      || crossBranchSupport.consistencyScore < 0.25
+      || crossBranchSupport.consistencyScore < MIN_CONSISTENCY_SCORE_FOR_SHARED_READINESS
     )
   ) {
     return 'quarantined'

@@ -4,9 +4,19 @@ import type {
   BranchConsistencyScoreResult,
   ComparableBranchSummary,
 } from './comparisonTypes'
+import { clampComparisonScore } from './comparisonTypes'
 import { comparePromotionCandidateAcrossBranches } from './comparePromotionCandidateAcrossBranches'
 
-const clamp = (value: number): number => Math.max(0, Math.min(1, value))
+// At ~0.45 the match has either one strong exact signal or multiple aligned weak signals.
+const MIN_SUPPORT_MATCH_SCORE = 0.45
+// Support ratio and average similarity carry most of the score; bonuses/penalties only nudge it.
+const SUPPORT_RATIO_WEIGHT = 0.45
+const AVERAGE_SIMILARITY_WEIGHT = 0.45
+const EXACT_SUPPORT_BONUS_PER_BRANCH = 0.05
+const MAX_EXACT_SUPPORT_BONUS = 0.15
+const MULTI_BRANCH_RECURRENCE_BONUS = 0.1
+const NO_SUPPORT_PENALTY = 0.2
+const SINGLE_BRANCH_ONLY_PENALTY = 0.05
 
 export const summarizeBranchConsistency = (
   candidate: PromotionCandidate,
@@ -24,7 +34,9 @@ export const summarizeBranchConsistency = (
     }
   }
 
-  const supportMatches = matches.filter((match) => match.similarityScore >= 0.45)
+  const supportMatches = matches.filter(
+    (match) => match.similarityScore >= MIN_SUPPORT_MATCH_SCORE
+  )
   const exactSupportCount = supportMatches.filter((match) =>
     match.reasons.some((reason) => reason.startsWith('exact '))
   ).length
@@ -34,16 +46,25 @@ export const summarizeBranchConsistency = (
     supportMatches.reduce((sum, match) => sum + match.similarityScore, 0)
     / comparedBranchCount
 
-  const exactBonus = Math.min(0.15, exactSupportCount * 0.05)
-  const recurrenceBonus = supportMatches.length >= 2 ? 0.1 : 0
+  const exactBonus = Math.min(
+    MAX_EXACT_SUPPORT_BONUS,
+    exactSupportCount * EXACT_SUPPORT_BONUS_PER_BRANCH
+  )
+  const recurrenceBonus = supportMatches.length >= 2
+    ? MULTI_BRANCH_RECURRENCE_BONUS
+    : 0
   const weakPenalty = supportMatches.length === 0
-    ? 0.2
+    ? NO_SUPPORT_PENALTY
     : supportMatches.length === 1 && comparedBranchCount > 1
-      ? 0.05
+      ? SINGLE_BRANCH_ONLY_PENALTY
       : 0
 
-  const consistencyScore = clamp(
-    supportRatio * 0.45 + averageSimilarity * 0.45 + exactBonus + recurrenceBonus - weakPenalty
+  const consistencyScore = clampComparisonScore(
+    supportRatio * SUPPORT_RATIO_WEIGHT
+    + averageSimilarity * AVERAGE_SIMILARITY_WEIGHT
+    + exactBonus
+    + recurrenceBonus
+    - weakPenalty
   )
 
   const notes: string[] = []

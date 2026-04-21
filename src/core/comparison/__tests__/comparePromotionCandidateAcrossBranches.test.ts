@@ -51,7 +51,7 @@ describe('comparePromotionCandidateAcrossBranches', () => {
         schemaKeys: ['other-pattern'],
         mixedPatternKeys: [],
         optionTendencyKeys: ['bridge'],
-        metaphorKeys: [],
+        metaphorKeys: ['calm'],
         updatedAt: 1,
       },
     ])

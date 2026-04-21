@@ -4,11 +4,13 @@ import type {
   ComparableBranchSummary,
 } from './comparisonTypes'
 import {
+  clampComparisonScore,
   getPromotionCandidateComparisonProfile,
   uniqueKeys,
 } from './comparisonTypes'
 
-const clamp = (value: number): number => Math.max(0, Math.min(1, value))
+// Ignore ultra-weak overlaps so review surfaces only meaningful abstract matches.
+const MIN_MEANINGFUL_MATCH_SCORE = 0.15
 
 const intersect = (left: string[], right: string[]): string[] => {
   const rightSet = new Set(right)
@@ -101,10 +103,10 @@ export const comparePromotionCandidateAcrossBranches = (
         branchId: summary.branchId,
         candidateKey: profile.candidateKey,
         matchedKeys: uniqueKeys(matchedKeys),
-        similarityScore: clamp(similarityScore),
+        similarityScore: clampComparisonScore(similarityScore),
         reasons,
       }
     })
-    .filter((match) => match.similarityScore >= 0.15)
+    .filter((match) => match.similarityScore >= MIN_MEANINGFUL_MATCH_SCORE)
     .sort((left, right) => right.similarityScore - left.similarityScore)
 }
