@@ -61,6 +61,12 @@ export type SharedTrunkState = {
 
   /** Guardian review queue (Phase M11) */
   guardianReviewQueue?: import('./guardian/guardianTypes').GuardianReviewQueueEntry[]
+
+  /** Human review summaries (Phase M13) */
+  humanReviewSummaries?: import('./guardian/humanReview/humanReviewTypes').HumanReviewSummary[]
+
+  /** Human review decision records (Phase M13) */
+  humanReviewRecords?: import('./guardian/humanReview/humanReviewTypes').HumanReviewRecord[]
 }
 
 /**

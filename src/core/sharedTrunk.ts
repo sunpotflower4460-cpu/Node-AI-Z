@@ -25,6 +25,8 @@ export const createEmptySharedTrunk = (): SharedTrunkState => {
     notes: ['Empty shared trunk initialized'],
     promotionQueue: [], // Phase M10: Initialize promotion queue
     promotionLogs: [], // Phase M10: Initialize promotion logs
+    humanReviewSummaries: [], // Phase M13: Initialize human review state
+    humanReviewRecords: [], // Phase M13: Initialize human review records
   }
 }
 

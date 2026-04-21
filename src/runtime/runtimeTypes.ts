@@ -30,6 +30,10 @@ import type { MixedNodeSelectionResult, MixedNodeInfluenceNote } from '../node/m
 import type { ProtoMeaning } from '../meaning/types'
 import type { OptionAwareness } from '../option/types'
 import type { CoreView, CoreInfluenceNote, PromotionCandidate, SharedTrunkState } from '../core/coreTypes'
+import type {
+  HumanReviewRecord,
+  HumanReviewSummary,
+} from '../core/guardian/humanReview/humanReviewTypes'
 
 /**
  * Base runtime result shared by both modes
@@ -135,6 +139,8 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   guardianReviewResults?: import('../core/guardian/guardianTypes').GuardianReviewResult[]
   guardianPolicy?: import('../core/guardian/guardianTypes').GuardianPolicy
   aiSenseiConfig?: import('../core/guardian/aiSensei').AiSenseiConfig
+  humanReviewSummaries?: HumanReviewSummary[]
+  humanReviewRecords?: HumanReviewRecord[]
 }
 
 /**
