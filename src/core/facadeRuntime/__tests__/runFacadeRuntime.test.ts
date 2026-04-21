@@ -106,6 +106,7 @@ describe('Facade Runtime - Phase M16', () => {
       mode: 'crystallized_thinking',
       sessionId: 'session-1',
       userId: 'user-1',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any
 
     const response = runFacadeRuntime(invalidRequest, coreView, trunk, branch)

@@ -6,6 +6,7 @@ import { generateSurfaceReply } from '../surface/generateSurfaceReply'
 import type { ApiProviderId } from '../types/apiProvider'
 import type { RuntimeMode } from '../types/experience'
 import type { PlasticityState } from '../types/nodeStudio'
+import type { SessionBrainState } from '../brain/sessionBrainState'
 import { runLegacyNodePipeline } from './runLegacyNodePipeline'
 import { runChunkedNodePipeline } from './runChunkedNodePipeline'
 import type { DualStreamRuntimeResult } from './runDualStreamRuntime'
@@ -21,6 +22,7 @@ export type SignalIntelligenceRuntimeInput = {
   provider: ApiProviderId
   runtimeMode: RuntimeMode
   personalLearning: PersonalLearningState
+  brainState?: SessionBrainState
 }
 
 export type SignalIntelligenceRuntimeResult = {
@@ -42,16 +44,17 @@ const runSignalCenteredRoute = (
   plasticity: PlasticityState | undefined,
   personalLearning: PersonalLearningState,
   legacySnapshot: ReturnType<typeof runLegacyNodePipeline>,
+  brainState?: SessionBrainState,
 ): SignalIntelligenceRuntimeResult => {
   const chunkedResult = runChunkedNodePipeline(
     text,
     plasticity,
-    0.5,
-    0,
-    undefined,
-    undefined,
-    0,
-    undefined,
+    brainState?.recentActivityAverage ?? 0.5,
+    brainState?.turnCount ?? 0,
+    brainState?.temporalStates,
+    personalLearning.pathwayStrengths,
+    brainState?.afterglow ?? 0,
+    brainState?.predictionState,
     personalLearning.somaticMarkers,
   )
   const signalResult = runSignalRuntime(text, {
@@ -85,18 +88,19 @@ const runSignalAssistedNodeRoute = async ({
   provider,
   personalLearning,
   legacySnapshot,
+  brainState,
 }: Omit<SignalIntelligenceRuntimeInput, 'runtimeMode'> & {
   legacySnapshot: ReturnType<typeof runLegacyNodePipeline>
 }): Promise<SignalIntelligenceRuntimeResult> => {
   const chunkedResult = runChunkedNodePipeline(
     text,
     plasticity,
-    0.5,
-    0,
-    undefined,
-    undefined,
-    0,
-    undefined,
+    brainState?.recentActivityAverage ?? 0.5,
+    brainState?.turnCount ?? 0,
+    brainState?.temporalStates,
+    personalLearning.pathwayStrengths,
+    brainState?.afterglow ?? 0,
+    brainState?.predictionState,
     personalLearning.somaticMarkers,
   )
   const assistantReply = await generateSurfaceReply({ provider, studioView: legacySnapshot.studioView })
@@ -126,11 +130,12 @@ export const runSignalIntelligenceRuntime = async ({
   provider,
   runtimeMode,
   personalLearning,
+  brainState,
 }: SignalIntelligenceRuntimeInput): Promise<SignalIntelligenceRuntimeResult> => {
   const legacySnapshot = runLegacyNodePipeline(text, plasticity)
 
   if (runtimeMode === 'signal') {
-    return runSignalCenteredRoute(text, plasticity, personalLearning, legacySnapshot)
+    return runSignalCenteredRoute(text, plasticity, personalLearning, legacySnapshot, brainState)
   }
 
   return runSignalAssistedNodeRoute({
@@ -139,5 +144,6 @@ export const runSignalIntelligenceRuntime = async ({
     provider,
     personalLearning,
     legacySnapshot,
+    brainState,
   })
 }

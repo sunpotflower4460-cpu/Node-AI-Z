@@ -2,6 +2,31 @@
 
 Node-AI-Z は、Observe / Experience / Revision / Memory を往復しながら、CPU ベースで育つ知性の背骨と脳寄り拡張を同じ runtime で観察する実験アプリです。
 
+## リポジトリの責務境界
+
+**Node-AI-Z は結晶思考 (crystallized thinking) / growing-intelligence 系のリポジトリです。**
+
+この repo の責務範囲:
+* 外刺激 → signal / proto / option / memory / trunk/branch の流れ
+* Dual Stream (Lexical Stream / Micro-Signal Stream) による内部表現
+* Precision / Uncertainty Control による適応的学習
+* Workspace Gate による情報制御
+* Episodic / Schema Memory による記憶システム
+* Mixed-Selective Latent Pool による潜在表現
+* Shared Trunk / Personal Branch による知識共有
+
+この repo の責務外（別リポジトリに属する）:
+* torus field simulator - 場の物理シミュレーション
+* physical disk - ディスク物理層
+* touch memory organism - タッチベース生命シミュレーション
+* plasma / tokamak field runtime - プラズマ/トカマク場ランタイム
+* schumann lock - シューマン共鳴ロック機構
+* ergodicity organism metrics - エルゴード性生命体メトリクス
+
+**重要**: AETERNA 系の実験的構造は Node-AI-Z の責務範囲外です。それらは独立したリポジトリで管理されるべきです。
+
+詳細な境界定義は [`docs/architecture-boundary.md`](./docs/architecture-boundary.md) を参照してください。
+
 ## 二つの実装方式
 
 Node-AI-Z には二つの独立した実装方式があります。
