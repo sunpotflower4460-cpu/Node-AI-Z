@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Sparkles, Terminal, TrendingUp, Zap, Brain } from 'lucide-react'
 import type { ObservationRecord } from '../../types/experience'
 import type { AppliedBoostEntry, RevisionState, UserTuningAction } from '../../types/nodeStudio'
+import type { HumanReviewDecisionInput } from '../../core'
 import { describeProposedChange, formatRevisionDelta, getRevisionStatusMeta } from '../../revision/statusMeta'
 import { summarizePromotion } from '../../revision/promotionRules'
 import { HistoryTab } from '../tabs/HistoryTab'
@@ -13,6 +14,8 @@ import { StatesTab } from '../tabs/StatesTab'
 import { RevisionTab } from '../tabs/RevisionTab'
 import { SessionBrainTab } from '../tabs/SessionBrainTab'
 import { Badge } from '../components/CommonUI'
+import { HumanReviewPanel } from '../review/HumanReviewPanel'
+import { listPendingHumanReviews, listResolvedHumanReviews, submitHumanReviewDecision } from '../../core'
 
 const SAMPLE_INPUTS = [
   '仕事に対する意欲が湧かなくて、転職すべきか悩んでいる',
@@ -147,6 +150,14 @@ export const ObserveMode = ({
   const [isRawOpen, setIsRawOpen] = useState(false)
   const [rawViewMode, setRawViewMode] = useState<RawViewMode>('pipeline')
   const [isProcessOpen, setIsProcessOpen] = useState(true)
+  const [, forceHumanReviewRefresh] = useState(0)
+  const humanReviewPending = listPendingHumanReviews()
+  const humanReviewResolved = listResolvedHumanReviews()
+
+  const handleHumanDecision = (input: HumanReviewDecisionInput) => {
+    submitHumanReviewDecision(input)
+    forceHumanReviewRefresh((value) => value + 1)
+  }
 
   const handleAnalyze = () => {
     const trimmed = inputText.trim()
@@ -1136,6 +1147,14 @@ export const ObserveMode = ({
               {activeTab === 'History' ? <HistoryTab history={history} restoreHistory={handleRestore} /> : null}
               {activeTab === 'Revision' ? <RevisionTab revisionState={revisionState} currentEntry={currentRevisionEntry} onTuningAction={onTuningAction} onClearAll={onClearRevision} /> : null}
             </div>
+          </div>
+
+          <div className="mt-6">
+            <HumanReviewPanel
+              pending={humanReviewPending}
+              resolved={humanReviewResolved}
+              onDecision={handleHumanDecision}
+            />
           </div>
 
           <div className="mb-8 mt-8 flex shrink-0 flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-sm">

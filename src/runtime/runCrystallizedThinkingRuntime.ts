@@ -95,6 +95,9 @@ import {
   resolveGuardianReview,
   guardianDecisionResolver,
   getGuardianReviewQueueState,
+  buildHumanReviewSummary,
+  queueHumanReviewSummary,
+  getHumanReviewState,
 } from '../core'
 import type { CoreInfluenceNote } from '../core/coreTypes'
 import type {
@@ -102,6 +105,10 @@ import type {
   GuardianReviewResult,
   GuardianReviewQueueEntry,
 } from '../core/guardian/guardianTypes'
+import type {
+  HumanReviewRecord,
+  HumanReviewSummary,
+} from '../core/guardian/humanReview/humanReviewTypes'
 
 /**
  * Crystallized Thinking Runtime
@@ -793,6 +800,9 @@ export const runCrystallizedThinkingRuntime = async ({
   const guardianReviewRequests: GuardianReviewRequest[] = []
   const guardianReviewResults: GuardianReviewResult[] = []
   const guardianReviewQueueEntries: GuardianReviewQueueEntry[] = []
+  const humanReviewState = getHumanReviewState()
+  const humanReviewSummaries: HumanReviewSummary[] = [...humanReviewState.summaries]
+  const humanReviewRecords: HumanReviewRecord[] = [...humanReviewState.records]
 
   // Step 1: Enqueue new promotion candidates
   for (const candidate of promotionCandidates) {
@@ -841,15 +851,63 @@ export const runCrystallizedThinkingRuntime = async ({
     const guardianQueueEntry = enqueueGuardianReview(guardianRequest)
     guardianReviewQueueEntries.push(guardianQueueEntry)
 
-    // Resolve guardian review (for M11, guardian adapter is undefined)
-    const guardianResult = await resolveGuardianReview(
-      guardianRequest,
-      guardianPolicy,
-      undefined,
-      aiSenseiConfig
+    // Optional: check if a human reviewer already made a decision
+    const existingHumanRecord = humanReviewRecords.find(
+      (record) => record.candidateId === entry.candidate.id
     )
 
-    // Resolve final promotion decision with guardian result
+    // Resolve guardian review (AI sensei or system). For human-required, we only use this as context.
+    let aiSenseiResult: GuardianReviewResult | null = null
+    let guardianResult: GuardianReviewResult | null = null
+
+    if (existingHumanRecord) {
+      guardianResult = {
+        requestId: guardianRequest.id,
+        actor: 'human_reviewer',
+        decision: existingHumanRecord.decision,
+        confidence: validation.confidenceScore,
+        reasons: [existingHumanRecord.reason],
+        cautionNotes: validation.cautionNotes,
+        createdAt: existingHumanRecord.createdAt,
+      }
+    } else if (guardianMode === 'system_only' || guardianMode === 'guardian_assisted') {
+      guardianResult = await resolveGuardianReview(
+        guardianRequest,
+        guardianPolicy,
+        undefined,
+        aiSenseiConfig
+      )
+      aiSenseiResult = guardianResult
+    } else if (guardianMode === 'human_required') {
+      aiSenseiResult = await resolveGuardianReview(
+        guardianRequest,
+        guardianPolicy,
+        undefined,
+        aiSenseiConfig
+      )
+    }
+
+    // Build human-facing summary (only for guardian-assisted / human-required)
+    if (guardianMode !== 'system_only') {
+      const humanSummary = buildHumanReviewSummary({
+        candidate: entry.candidate,
+        validation,
+        guardianRequest,
+        aiSenseiReview: aiSenseiResult ?? undefined,
+        sourceBranchId: updatedBranch.branchId,
+      })
+      queueHumanReviewSummary(humanSummary)
+      const existingSummaryIndex = humanReviewSummaries.findIndex(
+        (item) => item.candidateId === humanSummary.candidateId
+      )
+      if (existingSummaryIndex >= 0) {
+        humanReviewSummaries[existingSummaryIndex] = humanSummary
+      } else {
+        humanReviewSummaries.push(humanSummary)
+      }
+    }
+
+    // Resolve final promotion decision with guardian result (human beats AI/system)
     const guardianDecision = guardianDecisionResolver(
       validation,
       guardianResult,
@@ -936,6 +994,8 @@ export const runCrystallizedThinkingRuntime = async ({
     promotionLogs: getPromotionLogState(),
     // Phase M11: Store guardian review queue
     guardianReviewQueue: getGuardianReviewQueueState(),
+    humanReviewSummaries,
+    humanReviewRecords,
   }
 
   // Apply trunk influence (read-only, subtle)
@@ -1044,5 +1104,7 @@ export const runCrystallizedThinkingRuntime = async ({
     guardianReviewResults,
     guardianPolicy,
     aiSenseiConfig,
+    humanReviewSummaries,
+    humanReviewRecords,
   }
 }

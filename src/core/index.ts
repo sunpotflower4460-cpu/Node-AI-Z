@@ -155,6 +155,12 @@ export type {
 } from './guardian/guardianTypes'
 
 export type {
+  HumanReviewSummary,
+  HumanReviewRecord,
+  HumanReviewDecisionInput,
+} from './guardian/humanReview/humanReviewTypes'
+
+export type {
   GuardianDecisionResult,
 } from './guardian/guardianDecisionResolver'
 
@@ -209,3 +215,22 @@ export {
 export {
   guardianDecisionResolver,
 } from './guardian/guardianDecisionResolver'
+
+export {
+  buildHumanReviewSummary,
+} from './guardian/humanReview/buildHumanReviewSummary'
+
+export {
+  queueHumanReviewSummary,
+  listPendingHumanReviews,
+  listResolvedHumanReviews,
+  submitHumanReviewDecision,
+  getHumanReviewState,
+  restoreHumanReviewState,
+  clearHumanReviewState,
+  resolvePendingWithRecordedDecisions,
+} from './guardian/humanReview/humanReviewActions'
+
+export type {
+  HumanReviewEntry,
+} from './guardian/humanReview/humanReviewActions'

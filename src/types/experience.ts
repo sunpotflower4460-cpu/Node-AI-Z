@@ -68,6 +68,8 @@ export type ObservationRecord = {
   guardianReviewResults?: import('../core/guardian/guardianTypes').GuardianReviewResult[]
   guardianPolicy?: import('../core/guardian/guardianTypes').GuardianPolicy
   aiSenseiConfig?: import('../core/guardian/aiSensei').AiSenseiConfig
+  humanReviewSummaries?: import('../core/guardian/humanReview/humanReviewTypes').HumanReviewSummary[]
+  humanReviewRecords?: import('../core/guardian/humanReview/humanReviewTypes').HumanReviewRecord[]
 }
 
 export type ExperienceMessage = {
@@ -103,4 +105,6 @@ export type ExperienceMessage = {
   guardianReviewResults?: import('../core/guardian/guardianTypes').GuardianReviewResult[]
   guardianPolicy?: import('../core/guardian/guardianTypes').GuardianPolicy
   aiSenseiConfig?: import('../core/guardian/aiSensei').AiSenseiConfig
+  humanReviewSummaries?: import('../core/guardian/humanReview/humanReviewTypes').HumanReviewSummary[]
+  humanReviewRecords?: import('../core/guardian/humanReview/humanReviewTypes').HumanReviewRecord[]
 }

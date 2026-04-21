@@ -25,6 +25,11 @@ Node-AI-Z には二つの独立した実装方式があります。
 * **AI sensei guardian adapter**: Guardian Layer は shared trunk 昇格候補の reviewer として AI sensei adapter を差し込める
 * **guardian lane 専用**: AI sensei は会話本文ではなく、shared trunk 昇格候補の guardian reviewer としてだけ働く
 * **mode 整合**: guardian mode に応じて AI sensei review は補助または決定に使われ、`human_required` では AI sensei だけで trunk apply しない
+* **Human Review Panel (Phase M13)**:
+  - Mother Core は Human Review Panel の最小版を持つ
+  - `human_required` の candidate は human reviewer により approve / reject / quarantine / hold_for_review される
+  - human review result は guardian pipeline に接続され、shared trunk への適用前に参照される
+  - これにより trunk 昇格の安全性が一段上がる
 
 **発話層の深化**:
 - 結晶思考方式は、内部で結晶化した状態（FusedState / ProtoMeaning / OptionAwareness / Somatic）から発話を段階的に生成します

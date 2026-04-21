@@ -116,6 +116,8 @@ export const createObservationRecord = async ({
     guardianReviewResults: runtimeResult.guardianReviewResults,
     guardianPolicy: runtimeResult.guardianPolicy,
     aiSenseiConfig: runtimeResult.aiSenseiConfig,
+    humanReviewSummaries: runtimeResult.humanReviewSummaries,
+    humanReviewRecords: runtimeResult.humanReviewRecords,
   }
 }
 
@@ -155,6 +157,8 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       guardianReviewResults: record.guardianReviewResults,
       guardianPolicy: record.guardianPolicy,
       aiSenseiConfig: record.aiSenseiConfig,
+      humanReviewSummaries: record.humanReviewSummaries,
+      humanReviewRecords: record.humanReviewRecords,
     },
     {
       id: createObservationId('exp_assistant'),
@@ -188,6 +192,8 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       guardianReviewResults: record.guardianReviewResults,
       guardianPolicy: record.guardianPolicy,
       aiSenseiConfig: record.aiSenseiConfig,
+      humanReviewSummaries: record.humanReviewSummaries,
+      humanReviewRecords: record.humanReviewRecords,
     },
   ]
 }
