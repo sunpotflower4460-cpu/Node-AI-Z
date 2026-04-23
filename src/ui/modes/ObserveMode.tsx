@@ -286,13 +286,16 @@ export const ObserveMode = ({
         <div className="flex flex-col gap-3.5">
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
                 value={inputText}
                 onChange={(event) => setInputText(event.target.value)}
                 placeholder="テキストを入力して内部パイプラインを観察する..."
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 text-[15px] font-medium text-slate-800 transition-all focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                aria-label="観察対象のテキスト"
+                inputMode="text"
+                enterKeyHint="search"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-4 pl-12 pr-4 text-base font-medium text-slate-800 transition-all focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 md:py-3.5 md:text-[15px]"
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
                     handleAnalyze()
@@ -305,23 +308,23 @@ export const ObserveMode = ({
               onClick={handleAnalyze}
               disabled={isAnalyzing || !inputText.trim()}
               aria-label={isAnalyzing ? '分析中' : '分析する'}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-[15px] font-bold text-white shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md disabled:opacity-50 sm:w-auto"
+              className="tap-target flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-[15px] font-bold text-white shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md active:scale-[0.98] disabled:opacity-50 sm:w-auto"
             >
-              {isAnalyzing ? <RefreshCw className="h-4.5 w-4.5 animate-spin" /> : <Activity className="h-4.5 w-4.5" />}
+              {isAnalyzing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
               Analyze
             </button>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-xs font-medium text-slate-500">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-xs font-medium leading-relaxed text-slate-500">
             1. テキストを入力 → 2. Analyze → 3. 下のタブで Reply / States / History などを確認
           </div>
-          <div className="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-1">
+          <div className="scrollbar-hide -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1">
             <span className="mr-0.5 flex shrink-0 items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400"><Terminal className="h-3.5 w-3.5" /> Samples</span>
             {SAMPLE_INPUTS.map((sample) => (
               <button
                 key={sample}
                 type="button"
                 onClick={() => handleSampleClick(sample)}
-                className="shrink-0 rounded-lg border border-slate-200/60 bg-slate-100 px-3.5 py-2 text-left text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200"
+                className="shrink-0 rounded-lg border border-slate-200/60 bg-slate-100 px-3.5 py-2.5 text-left text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200 active:scale-[0.98]"
               >
                 {sample.length > 20 ? `${sample.substring(0, 20)}...` : sample}
               </button>
@@ -1239,13 +1242,15 @@ export const ObserveMode = ({
                 </div>
               </section>
             ) : null}
-            <div className="scrollbar-hide sticky top-2 z-10 -mx-1 flex gap-1 overflow-x-auto bg-[#F8FAFC] px-1 pb-2 pt-1 md:top-[84px]">
+            <div className="scrollbar-hide sticky top-2 z-10 -mx-1 flex gap-1 overflow-x-auto bg-[#F8FAFC] px-1 pb-2 pt-1 md:top-[84px]" role="tablist" aria-label="観察ビュー">
               {(['Reply', 'SessionBrain', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
                 <button
                   key={tab}
                   type="button"
+                  role="tab"
+                  aria-selected={activeTab === tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-bold transition-all duration-150 ${
+                  className={`tap-target flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-bold transition-all duration-150 ${
                     activeTab === tab
                       ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-black/5'
                       : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'

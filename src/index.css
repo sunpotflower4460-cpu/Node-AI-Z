@@ -23,12 +23,43 @@ body,
 body {
   margin: 0;
   min-width: 320px;
+  /* Disable pull-to-refresh bounce jank on mobile composers */
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 button,
 input,
 textarea {
   font: inherit;
+}
+
+/* Increase tap targets and prevent iOS auto-zoom on focused inputs (requires >=16px) */
+@media (max-width: 640px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
+/* Respect the iPhone home indicator / notch when rendering sticky composers or nav */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-area-pt {
+  padding-top: env(safe-area-inset-top);
+}
+.safe-area-px {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Consistent minimum tap target on primary controls (WCAG 2.5.5) */
+.tap-target {
+  min-height: 44px;
 }
 
 /* Focus rings */

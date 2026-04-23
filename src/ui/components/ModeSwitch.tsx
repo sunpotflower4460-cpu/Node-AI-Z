@@ -21,7 +21,8 @@ export const ModeSwitch = ({ mode, onChange }: ModeSwitchProps) => (
           key={key}
           type="button"
           onClick={() => onChange(key)}
-          className={`inline-flex min-w-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200 ${
+          aria-pressed={isActive}
+          className={`tap-target inline-flex min-w-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200 active:scale-[0.98] ${
             isActive
               ? 'bg-white text-slate-900 shadow-md ring-1 ring-black/5'
               : 'text-slate-500 hover:text-slate-800 hover:bg-white/60'
