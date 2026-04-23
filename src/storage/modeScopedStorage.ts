@@ -6,6 +6,7 @@ import type { ImplementationMode } from '../types/experience'
 const MODE_STORAGE_PREFIX = {
   llm_mode: 'nodeaiz:llm',
   crystallized_thinking: 'nodeaiz:crystal',
+  layered_thinking: 'nodeaiz:layered',
 } as const
 
 /**

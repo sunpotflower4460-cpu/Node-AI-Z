@@ -6,6 +6,7 @@ import type { RuntimeResult } from './runtimeTypes'
 import type { SessionBrainState } from '../brain/sessionBrainState'
 import { runLlmModeRuntime } from './runLlmModeRuntime'
 import { runCrystallizedThinkingRuntime } from './runCrystallizedThinkingRuntime'
+import { runLayeredThinkingRuntime } from './runLayeredThinkingRuntime'
 
 /**
  * Main runtime dispatcher.
@@ -48,6 +49,14 @@ export const runMainRuntime = async ({
     })
   }
 
+  if (implementationMode === 'layered_thinking') {
+    return runLayeredThinkingRuntime({
+      text,
+      plasticity,
+      personalLearning,
+    })
+  }
+
   // crystallized_thinking mode
   return runCrystallizedThinkingRuntime({
     text,
@@ -56,4 +65,3 @@ export const runMainRuntime = async ({
     brainState,
   })
 }
-

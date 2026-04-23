@@ -75,6 +75,26 @@ export const createObservationRecord = async ({
     }
   }
 
+  if (runtimeResult.implementationMode === 'layered_thinking') {
+    const legacySnapshot = runLegacyNodePipeline(text, plasticity)
+    const revisionEntry = buildRevisionEntry(legacySnapshot.pipelineResult, legacySnapshot.studioView)
+
+    return {
+      id: createObservationId(type),
+      type,
+      runtimeMode,
+      implementationMode: 'layered_thinking',
+      text,
+      timestamp,
+      time: formatObservationTime(timestamp),
+      pipelineResult: legacySnapshot.pipelineResult,
+      studioView: legacySnapshot.studioView,
+      revisionEntry,
+      assistantReply: runtimeResult.utterance,
+      layeredThinkingTrace: runtimeResult.trace,
+    }
+  }
+
   // Crystallized thinking mode
   // Need to provide backward-compatible fields for UI
   const legacySnapshot = runLegacyNodePipeline(text, plasticity)
@@ -171,6 +191,7 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       rawFacadeView: record.rawFacadeView,
       facadeViewTranslation: record.facadeViewTranslation,
       presentationBiasProfile: record.presentationBiasProfile,
+      layeredThinkingTrace: record.layeredThinkingTrace,
     },
     {
       id: createObservationId('exp_assistant'),
@@ -212,6 +233,7 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       rawFacadeView: record.rawFacadeView,
       facadeViewTranslation: record.facadeViewTranslation,
       presentationBiasProfile: record.presentationBiasProfile,
+      layeredThinkingTrace: record.layeredThinkingTrace,
     },
   ]
 }
