@@ -120,18 +120,18 @@ describe('NodeStudioPage Runtime Integration', () => {
   })
 
   describe('Jibun Kaigi API Mode', () => {
-    it('should route through runMainRuntime for jibun_kaigi_api mode', async () => {
+    it('should route through runMainRuntime for llm_mode mode', async () => {
       const record = await createObservationRecord({
         type: 'observe',
         text: 'Test input',
         provider: 'openai',
         runtimeMode: 'node',
-        implementationMode: 'jibun_kaigi_api',
+        implementationMode: 'llm_mode',
         personalLearning,
       })
 
-      // Verify it used jibun_kaigi_api mode
-      expect(record.implementationMode).toBe('jibun_kaigi_api')
+      // Verify it used llm_mode mode
+      expect(record.implementationMode).toBe('llm_mode')
 
       // Should have basic fields
       expect(record.assistantReply).toBeDefined()
@@ -139,21 +139,21 @@ describe('NodeStudioPage Runtime Integration', () => {
       expect(record.revisionEntry).toBeDefined()
     })
 
-    it('should not require brainState for jibun_kaigi_api mode', async () => {
+    it('should not require brainState for llm_mode mode', async () => {
       const record = await createObservationRecord({
         type: 'observe',
         text: 'Test input',
         provider: 'openai',
         runtimeMode: 'node',
-        implementationMode: 'jibun_kaigi_api',
+        implementationMode: 'llm_mode',
         personalLearning,
         // No brainState provided
       })
 
-      expect(record.implementationMode).toBe('jibun_kaigi_api')
+      expect(record.implementationMode).toBe('llm_mode')
       expect(record.assistantReply).toBeDefined()
 
-      // Should not have nextBrainState in jibun_kaigi_api mode
+      // Should not have nextBrainState in llm_mode mode
       expect(record.nextBrainState).toBeUndefined()
     })
   })
@@ -177,7 +177,7 @@ describe('NodeStudioPage Runtime Integration', () => {
   })
 
   describe('Runtime Mode Independence', () => {
-    it('should keep jibun_kaigi_api and crystallized_thinking independent', async () => {
+    it('should keep llm_mode and crystallized_thinking independent', async () => {
       const crystallizedRecord = await createObservationRecord({
         type: 'observe',
         text: 'Test',
@@ -193,13 +193,13 @@ describe('NodeStudioPage Runtime Integration', () => {
         text: 'Test',
         provider: 'openai',
         runtimeMode: 'node',
-        implementationMode: 'jibun_kaigi_api',
+        implementationMode: 'llm_mode',
         personalLearning,
       })
 
       // Different implementation modes should produce different result shapes
       expect(crystallizedRecord.implementationMode).toBe('crystallized_thinking')
-      expect(jibunRecord.implementationMode).toBe('jibun_kaigi_api')
+      expect(jibunRecord.implementationMode).toBe('llm_mode')
 
       // Crystallized should have brain state, jibun should not
       expect(crystallizedRecord.nextBrainState).toBeDefined()

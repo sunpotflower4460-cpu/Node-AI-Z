@@ -9,13 +9,13 @@ describe('runMainRuntime mode dispatch', () => {
     personalLearning: createPersonalLearningState(),
   }
 
-  it('should dispatch to jibun_kaigi_api mode', async () => {
+  it('should dispatch to llm_mode mode', async () => {
     const result = await runMainRuntime({
       ...baseInput,
-      implementationMode: 'jibun_kaigi_api',
+      implementationMode: 'llm_mode',
     })
 
-    expect(result.implementationMode).toBe('jibun_kaigi_api')
+    expect(result.implementationMode).toBe('llm_mode')
     expect('provider' in result).toBe(true)
     expect('pipelineResult' in result).toBe(true)
     expect('studioView' in result).toBe(true)
@@ -38,10 +38,10 @@ describe('runMainRuntime mode dispatch', () => {
     expect('utterance' in result).toBe(true)
   })
 
-  it('should only call jibun_kaigi_api runtime when mode is jibun_kaigi_api', async () => {
+  it('should only call llm_mode runtime when mode is llm_mode', async () => {
     const result = await runMainRuntime({
       ...baseInput,
-      implementationMode: 'jibun_kaigi_api',
+      implementationMode: 'llm_mode',
     })
 
     // Verify it doesn't have crystallized thinking specific fields
@@ -62,7 +62,7 @@ describe('runMainRuntime mode dispatch', () => {
   it('should handle different implementation modes with same input', async () => {
     const apiResult = await runMainRuntime({
       ...baseInput,
-      implementationMode: 'jibun_kaigi_api',
+      implementationMode: 'llm_mode',
     })
 
     const crystalResult = await runMainRuntime({
@@ -71,7 +71,7 @@ describe('runMainRuntime mode dispatch', () => {
     })
 
     expect(apiResult.implementationMode).not.toBe(crystalResult.implementationMode)
-    expect(apiResult.implementationMode).toBe('jibun_kaigi_api')
+    expect(apiResult.implementationMode).toBe('llm_mode')
     expect(crystalResult.implementationMode).toBe('crystallized_thinking')
   })
 })

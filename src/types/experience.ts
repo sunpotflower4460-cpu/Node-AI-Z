@@ -24,10 +24,10 @@ export type ObservationSource = AppMode
 
 /**
  * Implementation mode: which architectural approach to use
- * - jibun_kaigi_api: API-driven, provider-based, character/dialogue focused
+ * - llm_mode: API-driven, provider-based, character/dialogue focused
  * - crystallized_thinking: API-independent, Dual Stream/Signal/ProtoMeaning core
  */
-export type ImplementationMode = 'jibun_kaigi_api' | 'crystallized_thinking'
+export type ImplementationMode = 'llm_mode' | 'crystallized_thinking'
 
 /**
  * Legacy runtime mode (to be deprecated in favor of ImplementationMode)

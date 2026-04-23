@@ -31,7 +31,7 @@ export type CoreLayerScope = 'shared_trunk' | 'personal_branch' | 'app_facade'
  */
 export type AppFacadeMode =
   | 'crystallized_thinking'
-  | 'jibun_kaigi'
+  | 'llm_mode'
   | 'observer'
   | 'future_app'
 
@@ -157,7 +157,7 @@ export type AppFacadeConfig = {
   /** Unique identifier for this app facade */
   facadeId: string
 
-  /** Application name (e.g., 'jibun_kaigi', 'crystallized_thinking') */
+  /** Application name (e.g., 'llm_mode', 'crystallized_thinking') */
   appName: string
 
   /** Whether this app can read from shared trunk */

@@ -45,11 +45,11 @@ export type RuntimeResultBase = {
 }
 
 /**
- * Jibun Kaigi API mode result
+ * LLM Mode result
  * API-driven, provider-based approach with character/dialogue focus
  */
-export type JibunKaigiApiResult = RuntimeResultBase & {
-  implementationMode: 'jibun_kaigi_api'
+export type LlmModeResult = RuntimeResultBase & {
+  implementationMode: 'llm_mode'
   provider: ApiProviderId
   pipelineResult: NodePipelineResult
   studioView: StudioViewModel
@@ -152,4 +152,4 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
 /**
  * Discriminated union of all runtime results
  */
-export type RuntimeResult = JibunKaigiApiResult | CrystallizedThinkingResult
+export type RuntimeResult = LlmModeResult | CrystallizedThinkingResult

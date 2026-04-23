@@ -4,7 +4,7 @@ import type { ExperienceMessage } from '../../types/experience'
 import type { RuntimeMode } from '../../types/experience'
 import type { UserTuningAction, UserTuningState } from '../../types/nodeStudio'
 import { describeProposedChange } from '../../revision/statusMeta'
-import { HelpIcon, StatusIndicator } from '../components/CommonUI'
+import { HelpIcon } from '../components/CommonUI'
 
 type ExperienceModeProps = {
   messages: ExperienceMessage[]

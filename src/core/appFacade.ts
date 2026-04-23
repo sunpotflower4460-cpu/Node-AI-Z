@@ -30,25 +30,25 @@ export const createCrystallizedThinkingFacade = (): AppFacadeConfig => {
 }
 
 /**
- * Create a default app facade for Jibun Kaigi mode.
+ * Create a default app facade for LLM Mode.
  * Future: Will have different access patterns.
  */
-export const createJibunKaigiFacade = (): AppFacadeConfig => {
+export const createLlmModeFacade = (): AppFacadeConfig => {
   return {
-    facadeId: 'facade-jibun-kaigi',
-    appName: 'jibun_kaigi',
+    facadeId: 'facade-llm-mode',
+    appName: 'llm_mode',
     canReadTrunk: true,
     canReadBranch: true,
     canWriteBranch: true,
-    canProposePromotions: false, // Jibun Kaigi doesn't propose promotions yet
+    canProposePromotions: false, // LLM Mode doesn't propose promotions yet
     trunkInfluenceWeight: 0.3,
     branchInfluenceWeight: 0.7,
     displayPreferences: {
-      showTrunkOrigin: false, // Simpler view for Jibun Kaigi
+      showTrunkOrigin: false, // Simpler view for LLM Mode
       showBranchOrigin: false,
       showPromotionCandidates: false,
     },
-    notes: ['Jibun Kaigi facade with read/write access'],
+    notes: ['LLM Mode facade with read/write access'],
   }
 }
 

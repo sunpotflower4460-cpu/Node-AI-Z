@@ -4,7 +4,7 @@ import type { ImplementationMode } from '../types/experience'
 import type { PlasticityState } from '../types/nodeStudio'
 import type { RuntimeResult } from './runtimeTypes'
 import type { SessionBrainState } from '../brain/sessionBrainState'
-import { runJibunKaigiApiRuntime } from './runJibunKaigiApiRuntime'
+import { runLlmModeRuntime } from './runLlmModeRuntime'
 import { runCrystallizedThinkingRuntime } from './runCrystallizedThinkingRuntime'
 
 /**
@@ -26,7 +26,7 @@ export type MainRuntimeInput = {
 /**
  * Run the main runtime based on implementation mode.
  *
- * - jibun_kaigi_api: API-driven with provider selection
+ * - llm_mode: API-driven with provider selection
  * - crystallized_thinking: API-independent with Dual Stream/Signal/ProtoMeaning
  *
  * Phase 1: Supports session brain state continuity for crystallized_thinking mode.
@@ -39,8 +39,8 @@ export const runMainRuntime = async ({
   personalLearning,
   brainState,
 }: MainRuntimeInput): Promise<RuntimeResult> => {
-  if (implementationMode === 'jibun_kaigi_api') {
-    return runJibunKaigiApiRuntime({
+  if (implementationMode === 'llm_mode') {
+    return runLlmModeRuntime({
       text,
       plasticity,
       provider,
