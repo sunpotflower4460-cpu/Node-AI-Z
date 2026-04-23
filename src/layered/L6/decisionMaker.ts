@@ -2,6 +2,7 @@ import type { BrainState } from '../brainState'
 import type { L4Result } from '../L4/types'
 import type { L5Result } from '../L5/types'
 import type { ActionType, Decision, L6Result, WarmthBand } from './types'
+import type { PredictionError } from '../prediction/types'
 
 /**
  * Chooses the next conversational action from semantic and reaction layers.
@@ -9,9 +10,15 @@ import type { ActionType, Decision, L6Result, WarmthBand } from './types'
  * @param l4Result - Semantic-layer result.
  * @param l5Result - Reaction-layer result.
  * @param brainState - Current brain state.
+ * @param predictionError - Prediction error from previous turn (null on first turn).
  * @returns Decision-layer result.
  */
-export function runL6(l4Result: L4Result, l5Result: L5Result, brainState: BrainState): L6Result {
+export function runL6(
+  l4Result: L4Result,
+  l5Result: L5Result,
+  brainState: BrainState,
+  predictionError: PredictionError | null,
+): L6Result {
   const { frame } = l4Result
   const { reaction } = l5Result
   const topic = deriveTopic(frame.gist, brainState.recentTopics)
@@ -95,12 +102,27 @@ export function runL6(l4Result: L4Result, l5Result: L5Result, brainState: BrainS
       break
   }
 
+  // Apply prediction error adjustments
+  if (predictionError !== null) {
+    if (predictionError.topicShift && action !== 'wait' && action !== 'deflect' && confidence < 0.75) {
+      action = 'ask_back'
+      length = 'short'
+      askBack = true
+      reasoning = `${reasoning} (話題が変わったので確認する)`
+    }
+  }
+
   if (action === 'ask_back') {
     askBack = true
   }
 
-  const showUncertainty =
+  let showUncertainty =
     !reaction.feelsSafe || reaction.snag !== null || !reaction.wantToRespond || confidence < 0.6
+
+  // Apply prediction error adjustments for showUncertainty
+  if (predictionError !== null && predictionError.surprise > 0.5) {
+    showUncertainty = true
+  }
 
   return {
     decision: {

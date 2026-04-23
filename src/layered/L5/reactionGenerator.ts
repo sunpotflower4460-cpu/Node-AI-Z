@@ -1,6 +1,7 @@
 import type { BrainState } from '../brainState'
 import type { L4Result, NeedType } from '../L4/types'
 import type { L5Result } from './types'
+import type { PredictionError } from '../prediction/types'
 
 const NEED_WARMTH_BASE: Record<NeedType, number> = {
   connection: 0.6,
@@ -24,17 +25,33 @@ const MOOD_WARMTH_ADJUSTMENT: Record<BrainState['mood'], number> = {
  *
  * @param l4Result - Semantic-layer result.
  * @param brainState - Current brain state.
+ * @param predictionError - Prediction error from previous turn (null on first turn).
  * @returns Reaction-layer result.
  */
-export function runL5(l4Result: L4Result, brainState: BrainState): L5Result {
+export function runL5(
+  l4Result: L4Result,
+  brainState: BrainState,
+  predictionError: PredictionError | null,
+): L5Result {
   const { need, relation, contextModifier, gist } = l4Result.frame
   const wantToRespond = !(need === 'unclear' && brainState.mood === 'heavy')
   const feelsSafe = !(brainState.mood === 'heavy' && need === 'expression')
   const feelsRelevant = determineRelevance(l4Result)
   const feelsUrgent = need === 'action'
-  const warmth = clampWarmth(NEED_WARMTH_BASE[need] + MOOD_WARMTH_ADJUSTMENT[brainState.mood])
+  let warmth = clampWarmth(NEED_WARMTH_BASE[need] + MOOD_WARMTH_ADJUSTMENT[brainState.mood])
   const reactedTo = buildReactedTo(need, brainState, contextModifier)
-  const snag = determineSnag(need, gist, relation)
+  let snag = determineSnag(need, gist, relation)
+
+  // Apply prediction error adjustments
+  if (predictionError !== null) {
+    if (predictionError.surprise > 0.5) {
+      snag = snag !== null ? snag : '予想と違う展開になった'
+    }
+    if (predictionError.surprise > 0.3) {
+      warmth -= 0.1
+      warmth = clampWarmth(warmth)
+    }
+  }
 
   return {
     reaction: {
