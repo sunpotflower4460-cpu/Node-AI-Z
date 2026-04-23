@@ -4,6 +4,7 @@ import type { ExperienceMessage } from '../../types/experience'
 import type { RuntimeMode } from '../../types/experience'
 import type { UserTuningAction, UserTuningState } from '../../types/nodeStudio'
 import { describeProposedChange } from '../../revision/statusMeta'
+import { HelpIcon, StatusIndicator } from '../components/CommonUI'
 
 type ExperienceModeProps = {
   messages: ExperienceMessage[]
@@ -57,6 +58,7 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtime
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700">
               <MessageCircleHeart className="h-4 w-4" />
               体験モード
+              <HelpIcon content="実際にAIと会話するモードです。自然な対話を楽しみながら、裏ではAIが学習・成長しています。" />
             </div>
             <h2 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl md:text-2xl">自然に話しながら、裏では観察が積み上がる入口</h2>
             <p className="mt-3 hidden max-w-xl text-sm font-medium leading-relaxed text-slate-500 sm:block md:text-[15px]">
@@ -65,7 +67,10 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtime
           </div>
           <div className="grid gap-3 sm:grid-cols-2 md:min-w-[320px]">
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Surface Provider</div>
+              <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 inline-flex items-center gap-1">
+                Surface Provider
+                <HelpIcon content="返答の表面的な表現を生成するAIプロバイダーです。" />
+              </div>
               <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500">
                 <Sparkles className="h-3.5 w-3.5 text-indigo-500" />
                 {surfaceProviderLabel}
@@ -73,12 +78,16 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtime
               <p className="mt-2 text-xs font-medium leading-relaxed text-slate-500">会話は自然に見せつつ、内部では観察記録が残ります。</p>
             </div>
             <div className="flex flex-col gap-1.5 rounded-2xl border border-slate-200 bg-slate-50 p-3">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Runtime</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 inline-flex items-center gap-1">
+                Runtime
+                <HelpIcon content="内部の処理方式を選択できます。Nodeは従来型、Signalは信号ベースの処理です。" />
+              </span>
               <div className="grid grid-cols-2 gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1">
                 <button
                   type="button"
                   onClick={() => onRuntimeModeChange('node')}
                   aria-pressed={runtimeMode === 'node'}
+                  title="従来型のノードベース処理。Node / Relation / Pattern を使用します。"
                   className={`tap-target inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all duration-150 ${runtimeMode === 'node' ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/60'}`}
                 >
                   Node
@@ -87,6 +96,7 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtime
                   type="button"
                   onClick={() => onRuntimeModeChange('signal')}
                   aria-pressed={runtimeMode === 'signal'}
+                  title="信号ベースの処理。微細な信号やパターンを捉えます。"
                   className={`tap-target inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all duration-150 ${runtimeMode === 'signal' ? 'bg-white text-rose-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/60'}`}
                 >
                   <Activity className="h-3 w-3" />
@@ -107,8 +117,17 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtime
               </div>
                <h3 className="mt-4 text-lg font-bold text-slate-800">ここから話し始められます</h3>
                <p className="mt-2 max-w-md text-sm font-medium leading-relaxed text-slate-500">
-                 返答は runMainRuntime から legacy backbone または signal-centered route を通って生成されます。詳しい内部観察はあとから研究モードで開けます。
+                 下の入力欄にメッセージを入力してください。AIが返答を生成し、その過程で内部状態を学習・更新していきます。
                </p>
+               <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-left">
+                 <p className="text-xs font-semibold text-blue-900 mb-1 inline-flex items-center gap-1">
+                   💡 ヒント
+                   <HelpIcon content="会話の内容は自由です。AIは対話を通じて、あなたの話し方や好みを徐々に学習していきます。" />
+                 </p>
+                 <p className="text-xs text-blue-700">
+                   気軽な雑談でも、深い相談でもOKです。AIとの対話を楽しんでください。
+                 </p>
+               </div>
              </div>
           ) : (
             messages.map((message) => {

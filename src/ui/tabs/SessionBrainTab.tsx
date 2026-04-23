@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react'
+import { HelpIcon } from '../components/CommonUI'
 import type { ObservationRecord } from '../../types/experience'
 import {
   loadPersistenceConfig,
@@ -133,23 +134,56 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
 
   return (
     <div className="space-y-4">
+      {/* Overview explanation for beginners */}
+      <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+        <h3 className="text-sm font-bold text-blue-900 mb-2 inline-flex items-center gap-1">
+          セッション脳の状態とは？
+          <HelpIcon content="AIが会話を通じて「覚えている」内部状態です。前回の会話の余韻、予測、学習した傾向などが保存されています。" />
+        </h3>
+        <p className="text-xs text-blue-700 leading-relaxed">
+          このタブでは、AIが会話のターン間でどのように記憶を保持し、学習しているかを確認できます。
+          ブラウザを閉じても、これらの内部状態は保存され、次回の会話で引き継がれます。
+        </p>
+      </div>
+
       {/* Session Overview */}
       <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-4">
-        <h3 className="text-sm font-bold text-indigo-900 mb-2">Session Continuity</h3>
+        <h3 className="text-sm font-bold text-indigo-900 mb-2 inline-flex items-center gap-1">
+          セッションの連続性
+          <HelpIcon content="現在のセッションの基本情報です。ターン数が増えるほど、AIはあなたとの会話パターンを学習していきます。" />
+        </h3>
         <div className="space-y-1 text-xs text-indigo-700">
-          <div>Session ID: <span className="font-mono">{nextBrainState.sessionId.slice(0, 16)}...</span></div>
-          <div>Turn Count: <span className="font-bold">{nextBrainState.turnCount}</span></div>
-          <div>Afterglow: <span className="font-bold">{(nextBrainState.afterglow * 100).toFixed(1)}%</span> (residual activation from previous turn)</div>
-          <div>Recent Activity: <span className="font-bold">{(nextBrainState.recentActivityAverage * 100).toFixed(1)}%</span></div>
-          <div>Field Intensity: <span className="font-bold">{(nextBrainState.recentFieldIntensity * 100).toFixed(1)}%</span></div>
+          <div className="inline-flex items-center gap-1">
+            Session ID: <span className="font-mono">{nextBrainState.sessionId.slice(0, 16)}...</span>
+            <HelpIcon content="このセッションを識別するための一意なIDです。" />
+          </div>
+          <div className="inline-flex items-center gap-1">
+            Turn Count: <span className="font-bold">{nextBrainState.turnCount}</span>
+            <HelpIcon content="これまでの会話のやり取りの回数です。数が多いほど、AIはこのセッションでの経験を積んでいます。" />
+          </div>
+          <div className="inline-flex items-center gap-1">
+            Afterglow: <span className="font-bold">{(nextBrainState.afterglow * 100).toFixed(1)}%</span> (前ターンの残響)
+            <HelpIcon content="前回の会話の余韻・影響がどれだけ残っているかを示します。高いほど、直前の話題が現在に影響しています。" />
+          </div>
+          <div className="inline-flex items-center gap-1">
+            Recent Activity: <span className="font-bold">{(nextBrainState.recentActivityAverage * 100).toFixed(1)}%</span>
+            <HelpIcon content="最近の会話の活発度の平均です。会話が活発だと高くなります。" />
+          </div>
+          <div className="inline-flex items-center gap-1">
+            Field Intensity: <span className="font-bold">{(nextBrainState.recentFieldIntensity * 100).toFixed(1)}%</span>
+            <HelpIcon content="会話の場の強さを示します。感情的な話題や重要な内容では高くなる傾向があります。" />
+          </div>
         </div>
       </div>
 
       {/* Temporal States */}
       <div className="rounded-lg border border-purple-200 bg-purple-50 p-4">
-        <h3 className="text-sm font-bold text-purple-900 mb-2">Temporal Feature States</h3>
+        <h3 className="text-sm font-bold text-purple-900 mb-2 inline-flex items-center gap-1">
+          時間的特徴の状態
+          <HelpIcon content="会話で出てきた特徴（キーワードや概念）の時間的な履歴です。どの特徴がいつ活性化したかを記録しています。" />
+        </h3>
         <div className="text-xs text-purple-700 mb-2">
-          {nextBrainState.temporalStates.size} features with temporal history
+          {nextBrainState.temporalStates.size} 個の特徴が記録されています
         </div>
         {nextBrainState.temporalStates.size > 0 && (
           <div className="space-y-1 max-h-32 overflow-y-auto">
@@ -169,11 +203,23 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
 
       {/* Micro Signal Dimensions */}
       <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-        <h3 className="text-sm font-bold text-blue-900 mb-2">Micro Signal Dimensions</h3>
+        <h3 className="text-sm font-bold text-blue-900 mb-2 inline-flex items-center gap-1">
+          微細信号の次元
+          <HelpIcon content="会話の微妙なニュアンスや雰囲気を捉えるための信号です。言葉にならない「空気感」を数値化しています。" />
+        </h3>
         <div className="space-y-1 text-xs text-blue-700">
-          <div>Field Tone: <span className="font-bold">{nextBrainState.microSignalDimensions.fieldTone}</span></div>
-          <div>Active Cue Count: <span className="font-bold">{nextBrainState.microSignalDimensions.activeCueCount}</span></div>
-          <div>Fused Confidence: <span className="font-bold">{(nextBrainState.microSignalDimensions.fusedConfidence * 100).toFixed(1)}%</span></div>
+          <div className="inline-flex items-center gap-1">
+            Field Tone: <span className="font-bold">{nextBrainState.microSignalDimensions.fieldTone}</span>
+            <HelpIcon content="会話の場の雰囲気・トーンです（例：warm、tense、neutral等）。" />
+          </div>
+          <div className="inline-flex items-center gap-1">
+            Active Cue Count: <span className="font-bold">{nextBrainState.microSignalDimensions.activeCueCount}</span>
+            <HelpIcon content="現在活性化している手がかりの数です。多いほど、AIが様々な側面に注意を向けています。" />
+          </div>
+          <div className="inline-flex items-center gap-1">
+            Fused Confidence: <span className="font-bold">{(nextBrainState.microSignalDimensions.fusedConfidence * 100).toFixed(1)}%</span>
+            <HelpIcon content="言語的理解と感覚的理解を統合した全体の確信度です。低い場合、AIは慎重になります。" />
+          </div>
         </div>
         {dualStreamResult && (
           <div className="mt-2 pt-2 border-t border-blue-200">
@@ -186,10 +232,19 @@ export const SessionBrainTab = ({ observation }: SessionBrainTabProps) => {
 
       {/* Prediction State */}
       <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-        <h3 className="text-sm font-bold text-green-900 mb-2">Prediction Prior (carried to next turn)</h3>
+        <h3 className="text-sm font-bold text-green-900 mb-2 inline-flex items-center gap-1">
+          予測状態（次ターンへの持ち越し）
+          <HelpIcon content="AIが次の会話で何が起こるかを予測している状態です。この予測と実際の会話のズレから学習します。" />
+        </h3>
         <div className="space-y-1 text-xs text-green-700">
-          <div>Confidence: <span className="font-bold">{(nextBrainState.predictionState.confidence * 100).toFixed(1)}%</span></div>
-          <div>Expected Features: <span className="font-bold">{nextBrainState.predictionState.expectedFeatureIds.length}</span></div>
+          <div className="inline-flex items-center gap-1">
+            Confidence: <span className="font-bold">{(nextBrainState.predictionState.confidence * 100).toFixed(1)}%</span>
+            <HelpIcon content="予測の確信度です。高いほど、AIは次の展開を確信しています。" />
+          </div>
+          <div className="inline-flex items-center gap-1">
+            Expected Features: <span className="font-bold">{nextBrainState.predictionState.expectedFeatureIds.length}</span>
+            <HelpIcon content="次のターンで現れると予測している特徴の数です。会話の流れから推測しています。" />
+          </div>
           {nextBrainState.predictionState.expectedFeatureIds.length > 0 && (
             <div className="font-mono text-xs text-green-600">
               {nextBrainState.predictionState.expectedFeatureIds.slice(0, 5).join(', ')}

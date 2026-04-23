@@ -21,6 +21,7 @@ import { mapExperienceMessagesToObservationHistory, mergeObservationHistories } 
 import { ModeSwitch } from '../ui/components/ModeSwitch'
 import { ExperienceMode } from '../ui/modes/ExperienceMode'
 import { ObserveMode } from '../ui/modes/ObserveMode'
+import { HelpIcon, StatusIndicator } from '../ui/components/CommonUI'
 
 export default function NodeStudioPage() {
   const [mode, setMode] = useState<AppMode>('observe')
@@ -33,6 +34,7 @@ export default function NodeStudioPage() {
   const [revisionState, setRevisionState] = useState<RevisionState>(() => loadRevisionState())
   const [isApiPanelOpen, setIsApiPanelOpen] = useState(false)
   const [isHeaderDetailsOpen, setIsHeaderDetailsOpen] = useState(false)
+  const [isSending, setIsSending] = useState(false)
   const [personalLearning, setPersonalLearning] = useState<PersonalLearningState>(() => createPersonalLearningState())
   // Phase 1: Session brain state for crystallized_thinking mode
   const [brainState, setBrainState] = useState<SessionBrainState | undefined>(() => {
@@ -118,8 +120,13 @@ export default function NodeStudioPage() {
   }, [addRevisionEntryToMemory, applyObservationLearning])
 
   const handleObservationSubmit = useCallback(async (text: string, type: ObservationRecord['type']) => {
-    const record = await createObservation(text, type, apiSelection.baseProvider, runtimeMode, implementationMode, personalLearning, brainState)
-    commitObservationRecord(record, type)
+    setIsSending(true)
+    try {
+      const record = await createObservation(text, type, apiSelection.baseProvider, runtimeMode, implementationMode, personalLearning, brainState)
+      commitObservationRecord(record, type)
+    } finally {
+      setIsSending(false)
+    }
   }, [apiSelection.baseProvider, commitObservationRecord, createObservation, personalLearning, runtimeMode, implementationMode, brainState])
 
   const handleObserveAnalyze = useCallback(async (text: string) => {
@@ -199,6 +206,7 @@ export default function NodeStudioPage() {
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-lg font-extrabold tracking-tight text-slate-900">Node-AI-Z</h1>
                   <span className="hidden rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 sm:inline-block">SRM-3 / CPU Runtime</span>
+                  <HelpIcon content="Node-AI-Zは、会話を通じて学習・成長するAIシステムです。観察モードで内部の仕組みを研究したり、体験モードで実際に会話したりできます。" />
                 </div>
                 <p className="mt-0.5 hidden max-w-2xl text-xs font-medium leading-relaxed text-slate-500 sm:block">
                   研究するための観察ビューと、実際に話すための体験ビューを往復しながら、育つ知性を見ていく実験アプリ。
@@ -231,12 +239,16 @@ export default function NodeStudioPage() {
             className={`flex-col gap-2.5 lg:flex lg:flex-col lg:items-end ${isHeaderDetailsOpen ? 'flex' : 'hidden'}`}
           >
             <div className="flex flex-col gap-1.5 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">実装方式</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 inline-flex items-center gap-1">
+                実装方式
+                <HelpIcon content="AIの動作方式を選択できます。じぶん会議方式はAPIを使った対話型、結晶思考方式はAPI不要の独立した推論システムです。" />
+              </span>
               <div className="grid grid-cols-1 gap-1 rounded-lg border border-slate-200 bg-slate-100/80 p-1 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={() => setImplementationMode('jibun_kaigi_api')}
                   aria-pressed={implementationMode === 'jibun_kaigi_api'}
+                  title="外部APIを使った対話型の実装方式。OpenAI、Anthropic等のプロバイダーを利用します。"
                   className={`tap-target inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all duration-150 ${implementationMode === 'jibun_kaigi_api' ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'}`}
                 >
                   じぶん会議(API方式)
@@ -245,6 +257,7 @@ export default function NodeStudioPage() {
                   type="button"
                   onClick={() => setImplementationMode('crystallized_thinking')}
                   aria-pressed={implementationMode === 'crystallized_thinking'}
+                  title="外部API不要の独立した推論システム。内部状態を持ち続け、学習しながら成長します。"
                   className={`tap-target inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all duration-150 ${implementationMode === 'crystallized_thinking' ? 'bg-white text-violet-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'}`}
                 >
                   結晶思考(API非依存)
@@ -252,11 +265,14 @@ export default function NodeStudioPage() {
               </div>
             </div>
             <div className="relative flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600 inline-flex items-center gap-1">
+                <StatusIndicator status={isSending ? 'processing' : 'idle'} />
                 Surface Provider: {implementationMode === 'jibun_kaigi_api' ? currentProviderConfig.label : '未使用 (将来AI sensei用)'}
+                <HelpIcon content="表面的な返答の生成に使用するAIプロバイダーです。内部の推論は共通で、表現だけが変わります。" />
               </span>
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 inline-flex items-center gap-1">
                 Internal reasoning: shared
+                <HelpIcon content="どの方式を選んでも、内部の推論エンジン（Node/Relation/Pattern等）は共通です。" />
               </span>
               <button
                 type="button"
