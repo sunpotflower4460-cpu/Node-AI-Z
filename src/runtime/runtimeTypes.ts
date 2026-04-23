@@ -36,6 +36,7 @@ import type {
   HumanReviewRecord,
   HumanReviewSummary,
 } from '../core/guardian/humanReview/humanReviewTypes'
+import type { LayeredThinkingTrace } from './layeredThinkingTypes'
 
 /**
  * Base runtime result shared by both modes
@@ -149,7 +150,13 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   humanReviewRecords?: HumanReviewRecord[]
 }
 
+export type LayeredThinkingResult = RuntimeResultBase & {
+  implementationMode: 'layered_thinking'
+  utterance: string
+  trace: LayeredThinkingTrace
+}
+
 /**
  * Discriminated union of all runtime results
  */
-export type RuntimeResult = LlmModeResult | CrystallizedThinkingResult
+export type RuntimeResult = LlmModeResult | CrystallizedThinkingResult | LayeredThinkingResult

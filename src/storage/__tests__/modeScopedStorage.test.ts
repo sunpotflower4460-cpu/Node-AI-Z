@@ -41,6 +41,11 @@ describe('modeScopedStorage', () => {
       expect(key).toBe('nodeaiz:crystal:test-key')
     })
 
+    it('should generate correct key for layered_thinking mode', () => {
+      const key = getModeStorageKey('layered_thinking', 'test-key')
+      expect(key).toBe('nodeaiz:layered:test-key')
+    })
+
     it('should generate different keys for different modes with same key name', () => {
       const llmKey = getModeStorageKey('llm_mode', 'data')
       const crystalKey = getModeStorageKey('crystallized_thinking', 'data')

@@ -158,6 +158,24 @@ describe('NodeStudioPage Runtime Integration', () => {
     })
   })
 
+  describe('Layered Thinking Mode', () => {
+    it('should create additive observation records for layered_thinking mode', async () => {
+      const record = await createObservationRecord({
+        type: 'observe',
+        text: '元気ですか',
+        provider: 'openai',
+        runtimeMode: 'node',
+        implementationMode: 'layered_thinking',
+        personalLearning,
+      })
+
+      expect(record.implementationMode).toBe('layered_thinking')
+      expect(record.assistantReply).toBeTruthy()
+      expect(record.layeredThinkingTrace).toBeDefined()
+      expect(record.layeredThinkingTrace?.l3Output.overallType).toBe('greeting_question')
+    })
+  })
+
   describe('Experience Mode Flow', () => {
     it('should work correctly for experience type', async () => {
       const record = await createObservationRecord({

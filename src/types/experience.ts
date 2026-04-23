@@ -15,6 +15,7 @@ import type { UncertaintyState } from '../predictive/uncertaintyTypes'
 import type { ReplaySummary } from '../replay/runIdleReplay'
 import type { FacadeView, FacadeViewTranslation } from '../core/facadeRuntime'
 import type { PresentationBiasProfile } from '../core/facadePresentation'
+import type { LayeredThinkingTrace } from '../runtime/layeredThinkingTypes'
 
 /**
  * UI mode: observe (research) vs experience (conversation)
@@ -26,8 +27,9 @@ export type ObservationSource = AppMode
  * Implementation mode: which architectural approach to use
  * - llm_mode: API-driven, provider-based, character/dialogue focused
  * - crystallized_thinking: API-independent, Dual Stream/Signal/ProtoMeaning core
+ * - layered_thinking: additive layered runtime scaffold for upcoming redesign
  */
-export type ImplementationMode = 'llm_mode' | 'crystallized_thinking'
+export type ImplementationMode = 'llm_mode' | 'crystallized_thinking' | 'layered_thinking'
 
 /**
  * Legacy runtime mode (to be deprecated in favor of ImplementationMode)
@@ -78,6 +80,7 @@ export type ObservationRecord = {
   rawFacadeView?: FacadeView
   facadeViewTranslation?: FacadeViewTranslation
   presentationBiasProfile?: PresentationBiasProfile
+  layeredThinkingTrace?: LayeredThinkingTrace
 }
 
 export type ExperienceMessage = {
@@ -121,4 +124,5 @@ export type ExperienceMessage = {
   rawFacadeView?: FacadeView
   facadeViewTranslation?: FacadeViewTranslation
   presentationBiasProfile?: PresentationBiasProfile
+  layeredThinkingTrace?: LayeredThinkingTrace
 }

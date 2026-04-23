@@ -59,6 +59,17 @@ describe('runMainRuntime mode dispatch', () => {
     expect(result.implementationMode).toBe('crystallized_thinking')
   })
 
+  it('should dispatch to layered_thinking mode', async () => {
+    const result = await runMainRuntime({
+      ...baseInput,
+      implementationMode: 'layered_thinking',
+    })
+
+    expect(result.implementationMode).toBe('layered_thinking')
+    expect('trace' in result).toBe(true)
+    expect(result.utterance.length).toBeGreaterThan(0)
+  })
+
   it('should handle different implementation modes with same input', async () => {
     const apiResult = await runMainRuntime({
       ...baseInput,
