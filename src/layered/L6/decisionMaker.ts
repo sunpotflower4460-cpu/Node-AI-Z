@@ -12,11 +12,9 @@ import type { ActionType, Decision, L6Result, WarmthBand } from './types'
  * @returns Decision-layer result.
  */
 export function runL6(l4Result: L4Result, l5Result: L5Result, brainState: BrainState): L6Result {
-  void brainState
-
   const { frame } = l4Result
   const { reaction } = l5Result
-  const topic = deriveTopic(frame.gist)
+  const topic = deriveTopic(frame.gist, brainState.recentTopics)
   const topicIsAmbiguous = isAmbiguousTopic(topic, frame.gist)
 
   let action: ActionType = 'ask_back'
@@ -122,9 +120,10 @@ export function runL6(l4Result: L4Result, l5Result: L5Result, brainState: BrainS
  * Derives a short topic string from the semantic gist.
  *
  * @param gist - Semantic gist.
+ * @param recentTopics - Recent topic history for fallback.
  * @returns Topic string capped to 40 characters.
  */
-function deriveTopic(gist: string): string {
+function deriveTopic(gist: string, recentTopics: string[]): string {
   const patterns = [
     'について知りたい',
     'について一緒に考えたい',
@@ -140,7 +139,8 @@ function deriveTopic(gist: string): string {
     }
   }
 
-  return trimTopic(gist)
+  const trimmed = trimTopic(gist)
+  return trimmed || trimTopic(recentTopics[0] ?? '')
 }
 
 /**
