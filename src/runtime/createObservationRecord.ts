@@ -59,12 +59,12 @@ export const createObservationRecord = async ({
   })
 
   // Convert RuntimeResult to ObservationRecord format
-  if (runtimeResult.implementationMode === 'jibun_kaigi_api') {
+  if (runtimeResult.implementationMode === 'llm_mode') {
     return {
       id: createObservationId(type),
       type,
       runtimeMode,
-      implementationMode: 'jibun_kaigi_api',
+      implementationMode: 'llm_mode',
       text,
       timestamp,
       time: formatObservationTime(timestamp),
