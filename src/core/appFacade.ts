@@ -30,6 +30,13 @@ export const createCrystallizedThinkingFacade = (): AppFacadeConfig => {
 }
 
 /**
+ * Backward-compatible alias for the historical Jibun Kaigi facade name.
+ */
+export const createJibunKaigiFacade = (): AppFacadeConfig => {
+  return createCrystallizedThinkingFacade()
+}
+
+/**
  * Create a default app facade for LLM Mode.
  * Future: Will have different access patterns.
  */
