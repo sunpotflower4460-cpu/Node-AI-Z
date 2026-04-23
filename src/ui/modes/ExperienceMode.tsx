@@ -51,15 +51,15 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtime
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      <section className="rounded-3xl border border-rose-100 bg-white px-5 py-6 shadow-sm md:px-6">
+      <section className="rounded-3xl border border-rose-100 bg-white px-4 py-5 shadow-sm md:px-6 md:py-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="max-w-2xl">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700">
               <MessageCircleHeart className="h-4 w-4" />
               体験モード
             </div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">自然に話しながら、裏では観察が積み上がる入口</h2>
-            <p className="mt-3 max-w-xl text-sm font-medium leading-relaxed text-slate-500 md:text-[15px]">
+            <h2 className="text-lg font-bold tracking-tight text-slate-900 sm:text-xl md:text-2xl">自然に話しながら、裏では観察が積み上がる入口</h2>
+            <p className="mt-3 hidden max-w-xl text-sm font-medium leading-relaxed text-slate-500 sm:block md:text-[15px]">
               表では会話を主役にしつつ、裏では runMainRuntime が legacy backbone または signal-centered route を選び、revision / memory を積み上げます。必要なときだけ観察研究モードに戻って、内部の変化を見返せます。
             </p>
           </div>
@@ -78,14 +78,16 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtime
                 <button
                   type="button"
                   onClick={() => onRuntimeModeChange('node')}
-                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all duration-150 ${runtimeMode === 'node' ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/60'}`}
+                  aria-pressed={runtimeMode === 'node'}
+                  className={`tap-target inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all duration-150 ${runtimeMode === 'node' ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/60'}`}
                 >
                   Node
                 </button>
                 <button
                   type="button"
                   onClick={() => onRuntimeModeChange('signal')}
-                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all duration-150 ${runtimeMode === 'signal' ? 'bg-white text-rose-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/60'}`}
+                  aria-pressed={runtimeMode === 'signal'}
+                  className={`tap-target inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-all duration-150 ${runtimeMode === 'signal' ? 'bg-white text-rose-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/60'}`}
                 >
                   <Activity className="h-3 w-3" />
                   Signal
@@ -183,11 +185,11 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtime
                       ) : null}
                       {isAssistant && message.observationId ? (
                         <>
-                          <span>観察研究モードで詳しく見返せます</span>
+                          <span className="hidden sm:inline">観察研究モードで詳しく見返せます</span>
                           <button
                             type="button"
                             onClick={() => onOpenObservation(message.observationId)}
-                            className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-600 transition-colors hover:border-indigo-300 hover:text-indigo-700"
+                            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-600 transition-colors hover:border-indigo-300 hover:text-indigo-700 active:scale-[0.98]"
                           >
                             観察で見る
                           </button>
@@ -201,13 +203,15 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtime
           )}
         </div>
 
-        <div className="border-t border-slate-200 bg-slate-50/80 p-4 md:p-5">
+        <div className="border-t border-slate-200 bg-slate-50/80 p-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] md:p-5">
           <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-shadow focus-within:shadow-md focus-within:border-rose-300 focus-within:ring-2 focus-within:ring-rose-100">
             <textarea
               value={inputText}
               onChange={(event) => setInputText(event.target.value)}
               placeholder="いま話したいことを、そのまま入力してください"
-              className="min-h-[88px] w-full resize-none border-0 bg-transparent text-[15px] font-medium leading-relaxed text-slate-800 outline-none placeholder:text-slate-400"
+              aria-label="メッセージ入力"
+              rows={3}
+              className="min-h-[88px] w-full resize-none border-0 bg-transparent text-base font-medium leading-relaxed text-slate-800 outline-none placeholder:text-slate-400 md:text-[15px]"
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && !event.shiftKey) {
                   event.preventDefault()
@@ -216,13 +220,14 @@ export const ExperienceMode = ({ messages, surfaceProviderLabel, tuning, runtime
               }}
             />
             <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs font-medium text-slate-400">Enter で送信 / Shift + Enter で改行</p>
+              <p className="hidden text-xs font-medium text-slate-400 sm:block">Enter で送信 / Shift + Enter で改行</p>
+              <p className="text-[11px] font-medium text-slate-400 sm:hidden">送信ボタンをタップ / Shift + Enter で改行</p>
               <button
                 type="button"
                 onClick={handleSend}
                 disabled={isSending || !inputText.trim()}
                 aria-label={isSending ? '返答中' : '送信'}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:shadow-md hover:from-rose-600 hover:to-rose-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                className="tap-target inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-rose-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:shadow-md hover:from-rose-600 hover:to-rose-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:py-2.5"
               >
                 <Send className="h-4 w-4" />
                 {isSending ? '返答中...' : '送信'}
