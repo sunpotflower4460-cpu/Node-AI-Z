@@ -3,12 +3,6 @@ import { analyzeL0 } from '../../L0/charClassifier'
 import { analyzeL1 } from '../../L1/tokenizer'
 import { runL2 } from '../chunker'
 
-type ChunkCase = {
-  input: string
-  expectedRoles: string[]
-  assertCase: ReturnType<typeof expect>
-}
-
 /**
  * Runs the L0 → L1 → L2 pipeline for a text sample.
  *

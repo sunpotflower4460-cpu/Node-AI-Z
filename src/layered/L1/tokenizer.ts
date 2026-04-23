@@ -7,7 +7,6 @@
 
 import type { L1Summary, TokenCategory, TokenNode } from './types'
 import {
-  isGreeting,
   isNegation,
   isQuestionParticle,
   lookupWord,
@@ -27,7 +26,7 @@ export function tokenize(text: string): TokenNode[] {
   while (position < text.length) {
     // Try to match the longest possible word from the current position
     let matched = false
-    let maxLength = Math.min(10, text.length - position)
+    const maxLength = Math.min(10, text.length - position)
 
     // Try matching from longest to shortest
     for (let len = maxLength; len > 0; len--) {

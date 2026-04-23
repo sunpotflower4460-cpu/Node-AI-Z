@@ -206,7 +206,7 @@ function isGreetingLikeStart(token: TokenNode): boolean {
  * @returns Final chunk list.
  */
 function assignChunkRoles(chunks: ChunkNode[], summary: L1Summary): ChunkNode[] {
-  const assigned = chunks.map(chunk => {
+  const assigned = chunks.map<ChunkNode>(chunk => {
     if (chunk.role !== 'unknown') {
       return chunk
     }
