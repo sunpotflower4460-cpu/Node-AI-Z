@@ -111,8 +111,10 @@ function deriveNextPrediction(
   sentenceType: SentenceType,
 ): Prediction {
   if (askBack) {
+    const expectedNeed = resolveAskBackExpectedNeed(need)
+
     return {
-      expectedNeed: need === 'connection' ? 'connection' : need === 'expression' ? 'expression' : 'information',
+      expectedNeed,
       expectedTopic: need === 'connection' ? '相手の様子' : topic || null,
       expectedSentenceType: need === 'expression' ? 'feeling_expression' : sentenceType,
     }
@@ -122,6 +124,25 @@ function deriveNextPrediction(
     expectedNeed: need,
     expectedTopic: topic || null,
     expectedSentenceType: sentenceType,
+  }
+}
+
+/**
+ * Resolves the likely next semantic need after an ask-back turn.
+ *
+ * @param need - Current semantic need.
+ * @returns Expected next semantic need.
+ */
+function resolveAskBackExpectedNeed(
+  need: BrainState['prediction']['expectedNeed'] | null,
+): Prediction['expectedNeed'] {
+  switch (need) {
+    case 'connection':
+      return 'connection'
+    case 'expression':
+      return 'expression'
+    default:
+      return 'information'
   }
 }
 

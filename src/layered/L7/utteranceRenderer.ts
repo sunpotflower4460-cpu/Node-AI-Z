@@ -105,7 +105,7 @@ function buildAskBackPrompt(l4Result: L4Result, decision: Decision): string {
     case 'answer':
       return 'どのあたりが気になる？'
     case 'ask_back':
-      return l4Result.frame.need === 'action' ? 'してほしいことを少し具体的に教えて。' : 'もう少し詳しく教えて。'
+      return buildClarificationPrompt(l4Result)
     case 'express':
       return '続けても大丈夫だよ。'
     case 'deflect':
@@ -113,6 +113,20 @@ function buildAskBackPrompt(l4Result: L4Result, decision: Decision): string {
     case 'wait':
       return ''
   }
+}
+
+/**
+ * Builds a clarification prompt for ask-back turns.
+ *
+ * @param l4Result - Semantic-layer result.
+ * @returns Clarification prompt.
+ */
+function buildClarificationPrompt(l4Result: L4Result): string {
+  if (l4Result.frame.need === 'action') {
+    return 'してほしいことを少し具体的に教えて。'
+  }
+
+  return 'もう少し詳しく教えて。'
 }
 
 /**
