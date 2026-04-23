@@ -26,7 +26,7 @@ import { HelpIcon, StatusIndicator } from '../ui/components/CommonUI'
 export default function NodeStudioPage() {
   const [mode, setMode] = useState<AppMode>('observe')
   const [runtimeMode, setRuntimeMode] = useState<RuntimeMode>('node')
-  const [implementationMode, setImplementationMode] = useState<ImplementationMode>('jibun_kaigi_api')
+  const [implementationMode, setImplementationMode] = useState<ImplementationMode>('crystallized_thinking')
   const [currentObservation, setCurrentObservation] = useState<ObservationRecord | null>(null)
   const [observeHistory, setObserveHistory] = useState<ObservationRecord[]>([])
   const [experienceMessages, setExperienceMessages] = useState<ExperienceMessage[]>(() => loadExperienceMessages(implementationMode))
@@ -241,17 +241,17 @@ export default function NodeStudioPage() {
             <div className="flex flex-col gap-1.5 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 inline-flex items-center gap-1">
                 実装方式
-                <HelpIcon content="AIの動作方式を選択できます。じぶん会議方式はAPIを使った対話型、結晶思考方式はAPI不要の独立した推論システムです。" />
+                <HelpIcon content="AIの動作方式を選択できます。LLMモードは外部APIを使った対話型、結晶思考モードはAPI不要の独立した推論システムです。" />
               </span>
               <div className="grid grid-cols-1 gap-1 rounded-lg border border-slate-200 bg-slate-100/80 p-1 sm:grid-cols-2">
                 <button
                   type="button"
-                  onClick={() => setImplementationMode('jibun_kaigi_api')}
-                  aria-pressed={implementationMode === 'jibun_kaigi_api'}
+                  onClick={() => setImplementationMode('llm_mode')}
+                  aria-pressed={implementationMode === 'llm_mode'}
                   title="外部APIを使った対話型の実装方式。OpenAI、Anthropic等のプロバイダーを利用します。"
-                  className={`tap-target inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all duration-150 ${implementationMode === 'jibun_kaigi_api' ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'}`}
+                  className={`tap-target inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all duration-150 ${implementationMode === 'llm_mode' ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'}`}
                 >
-                  じぶん会議(API方式)
+                  LLMモード
                 </button>
                 <button
                   type="button"
@@ -267,7 +267,7 @@ export default function NodeStudioPage() {
             <div className="relative flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
               <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600 inline-flex items-center gap-1">
                 <StatusIndicator status={isSending ? 'processing' : 'idle'} />
-                Surface Provider: {implementationMode === 'jibun_kaigi_api' ? currentProviderConfig.label : '未使用 (将来AI sensei用)'}
+                Surface Provider: {implementationMode === 'llm_mode' ? currentProviderConfig.label : '未使用 (将来AI sensei用)'}
                 <HelpIcon content="表面的な返答の生成に使用するAIプロバイダーです。内部の推論は共通で、表現だけが変わります。" />
               </span>
               <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 inline-flex items-center gap-1">
@@ -277,7 +277,7 @@ export default function NodeStudioPage() {
               <button
                 type="button"
                 onClick={() => setIsApiPanelOpen((previous) => !previous)}
-                disabled={implementationMode !== 'jibun_kaigi_api'}
+                disabled={implementationMode !== 'llm_mode'}
                 aria-expanded={isApiPanelOpen}
                 className="tap-target inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-indigo-300 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -285,7 +285,7 @@ export default function NodeStudioPage() {
                 基準APIを選ぶ
               </button>
 
-              {isApiPanelOpen && implementationMode === 'jibun_kaigi_api' ? (
+              {isApiPanelOpen && implementationMode === 'llm_mode' ? (
                 <div className="absolute left-0 top-full z-40 mt-2 w-full max-w-[min(100vw-2rem,320px)] rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl ring-1 ring-black/5 sm:left-auto sm:right-0">
                   <div className="mb-3">
                     <h2 className="text-sm font-bold text-slate-900">基準API選択 v0</h2>

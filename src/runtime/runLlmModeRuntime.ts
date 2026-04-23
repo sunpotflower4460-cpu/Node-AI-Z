@@ -2,16 +2,16 @@ import type { PersonalLearningState } from '../learning/types'
 import { generateSurfaceReply } from '../surface/generateSurfaceReply'
 import type { ApiProviderId } from '../types/apiProvider'
 import type { PlasticityState } from '../types/nodeStudio'
-import type { JibunKaigiApiResult } from './runtimeTypes'
+import type { LlmModeResult } from './runtimeTypes'
 import { runLegacyNodePipeline } from './runLegacyNodePipeline'
 
 /**
- * Jibun Kaigi API Runtime
+ * LLM Mode Runtime
  * API-driven approach using provider selection to generate responses.
  * This is the traditional "conversation with AI" mode.
  */
 
-export type JibunKaigiApiRuntimeInput = {
+export type LlmModeRuntimeInput = {
   text: string
   plasticity?: PlasticityState
   provider: ApiProviderId
@@ -19,14 +19,14 @@ export type JibunKaigiApiRuntimeInput = {
 }
 
 /**
- * Run the Jibun Kaigi API runtime.
+ * Run the LLM Mode runtime.
  * Uses legacy node pipeline + provider-based surface generation.
  */
-export const runJibunKaigiApiRuntime = async ({
+export const runLlmModeRuntime = async ({
   text,
   plasticity,
   provider,
-}: JibunKaigiApiRuntimeInput): Promise<JibunKaigiApiResult> => {
+}: LlmModeRuntimeInput): Promise<LlmModeResult> => {
   // Run legacy node pipeline
   const legacyResult = runLegacyNodePipeline(text, plasticity)
 
@@ -37,7 +37,7 @@ export const runJibunKaigiApiRuntime = async ({
   })
 
   return {
-    implementationMode: 'jibun_kaigi_api',
+    implementationMode: 'llm_mode',
     provider,
     pipelineResult: legacyResult.pipelineResult,
     studioView: legacyResult.studioView,

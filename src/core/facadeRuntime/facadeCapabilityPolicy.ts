@@ -15,8 +15,8 @@ export const getFacadeCapabilityPolicy = (
   switch (mode) {
     case 'crystallized_thinking':
       return getCrystallizedThinkingPolicy()
-    case 'jibun_kaigi':
-      return getJibunKaigiPolicy()
+    case 'llm_mode':
+      return getLlmModePolicy()
     case 'observer':
       return getObserverPolicy()
     case 'future_app':
@@ -43,12 +43,12 @@ const getCrystallizedThinkingPolicy = (): FacadeCapabilityPolicy => {
 }
 
 /**
- * Jibun Kaigi Policy
+ * LLM Mode Policy
  * Full read/write but no promotions
  */
-const getJibunKaigiPolicy = (): FacadeCapabilityPolicy => {
+const getLlmModePolicy = (): FacadeCapabilityPolicy => {
   return {
-    mode: 'jibun_kaigi',
+    mode: 'llm_mode',
     readableScopes: ['shared_trunk', 'personal_branch'],
     writableScopes: ['personal_branch'],
     allowPromotionRead: false, // Simpler view
@@ -145,7 +145,7 @@ export const canAccessTrunkSafety = (
  * Get all available facade modes
  */
 export const getAllFacadeModes = (): AppFacadeMode[] => {
-  return ['crystallized_thinking', 'jibun_kaigi', 'observer', 'future_app']
+  return ['crystallized_thinking', 'llm_mode', 'observer', 'future_app']
 }
 
 /**

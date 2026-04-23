@@ -15,7 +15,7 @@ const createDefaultApiSelection = (): ApiSelectionState => ({
 })
 
 /**
- * Load API selection state for jibun_kaigi_api mode
+ * Load API selection state for llm_mode
  * (Crystallized thinking mode does not use provider selection)
  */
 export const loadApiSelection = (): ApiSelectionState => {
@@ -24,7 +24,7 @@ export const loadApiSelection = (): ApiSelectionState => {
   }
 
   try {
-    const storageKey = getModeStorageKey('jibun_kaigi_api', API_SELECTION_KEY)
+    const storageKey = getModeStorageKey('llm_mode', API_SELECTION_KEY)
     const stored = localStorage.getItem(storageKey)
     if (!stored) {
       return createDefaultApiSelection()
@@ -46,7 +46,7 @@ export const loadApiSelection = (): ApiSelectionState => {
 }
 
 /**
- * Save API selection state for jibun_kaigi_api mode
+ * Save API selection state for llm_mode
  */
 export const saveApiSelection = (state: ApiSelectionState): void => {
   if (typeof localStorage === 'undefined') {
@@ -54,7 +54,7 @@ export const saveApiSelection = (state: ApiSelectionState): void => {
   }
 
   try {
-    const storageKey = getModeStorageKey('jibun_kaigi_api', API_SELECTION_KEY)
+    const storageKey = getModeStorageKey('llm_mode', API_SELECTION_KEY)
     localStorage.setItem(storageKey, JSON.stringify(state))
   } catch (error) {
     console.error('Failed to save API selection to localStorage.', error)

@@ -31,7 +31,7 @@ export type CoreLayerScope = 'shared_trunk' | 'personal_branch' | 'app_facade'
  */
 export type AppFacadeMode =
   | 'crystallized_thinking'
-  | 'jibun_kaigi'
+  | 'llm_mode'
   | 'observer'
   | 'future_app'
 
