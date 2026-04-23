@@ -1,5 +1,4 @@
 import type { BrainState } from '../brainState'
-import type { ChunkNode } from '../L2/types'
 import type { L3Result, SentenceNode, SentenceType } from '../L3/types'
 import type { L4Result, NeedType, SemanticFrame } from './types'
 
