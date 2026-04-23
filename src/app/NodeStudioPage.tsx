@@ -186,39 +186,39 @@ export default function NodeStudioPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-800 selection:bg-indigo-100 selection:text-indigo-900">
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white px-4 py-4 md:px-6">
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 px-4 py-4 backdrop-blur md:px-6">
         <div className="mx-auto flex w-full max-w-[1080px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h1 className="flex items-center gap-2 text-lg font-bold tracking-tight text-slate-900 md:text-xl">
+          <div className="space-y-2">
+            <h1 className="flex flex-wrap items-center gap-2 text-xl font-bold tracking-tight text-slate-900 md:text-xl">
               <BrainCircuit className="h-5 w-5 text-indigo-600 md:h-6 md:w-6" />
               Node-AI-Z
               <span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">SRM-3 / CPU Runtime</span>
             </h1>
-            <p className="mt-1 text-sm font-medium text-slate-500">
+            <p className="max-w-2xl text-sm font-medium leading-relaxed text-slate-500">
               研究するための観察ビューと、実際に話すための体験ビューを往復しながら、育つ知性を見ていく実験アプリ。
             </p>
           </div>
           <div className="flex flex-col gap-3 lg:items-end">
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">実装方式</span>
-              <div className="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1">
+              <div className="grid grid-cols-1 gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={() => setImplementationMode('jibun_kaigi_api')}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${implementationMode === 'jibun_kaigi_api' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${implementationMode === 'jibun_kaigi_api' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                   じぶん会議(API方式)
                 </button>
                 <button
                   type="button"
                   onClick={() => setImplementationMode('crystallized_thinking')}
-                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${implementationMode === 'crystallized_thinking' ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${implementationMode === 'crystallized_thinking' ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                   結晶思考(API非依存)
                 </button>
               </div>
             </div>
-            <div className="relative flex flex-wrap items-center gap-2">
+            <div className="relative flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
               <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
                 Surface Provider: {implementationMode === 'jibun_kaigi_api' ? currentProviderConfig.label : '未使用 (将来AI sensei用)'}
               </span>
@@ -229,14 +229,14 @@ export default function NodeStudioPage() {
                 type="button"
                 onClick={() => setIsApiPanelOpen((previous) => !previous)}
                 disabled={implementationMode !== 'jibun_kaigi_api'}
-                className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Settings2 className="h-3.5 w-3.5" />
                 基準APIを選ぶ
               </button>
 
               {isApiPanelOpen && implementationMode === 'jibun_kaigi_api' ? (
-                <div className="absolute right-0 top-full z-40 mt-2 w-[320px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+                <div className="absolute left-0 top-full z-40 mt-2 w-full max-w-[320px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:left-auto sm:right-0">
                   <div className="mb-3">
                     <h2 className="text-sm font-bold text-slate-900">基準API選択 v0</h2>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500">
@@ -273,7 +273,7 @@ export default function NodeStudioPage() {
 
               {/* Phase 2: Dashboard for Boundary / Confidence / Uncertainty / Replay */}
               {implementationMode === 'crystallized_thinking' && currentObservation && (
-                <div className="absolute right-0 top-full z-40 mt-2 w-[400px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+                <div className="absolute left-0 top-full z-40 mt-2 w-full max-w-[400px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:left-auto sm:right-0">
                   <div className="mb-3">
                     <h2 className="text-sm font-bold text-slate-900">Phase 2 Runtime State</h2>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500">
@@ -361,12 +361,14 @@ export default function NodeStudioPage() {
                 </div>
               )}
             </div>
-            <ModeSwitch mode={mode} onChange={setMode} />
+            <div className="w-full lg:w-auto">
+              <ModeSwitch mode={mode} onChange={setMode} />
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-6 px-4 py-6 md:px-6">
+      <main className="mx-auto flex w-full max-w-[1080px] flex-1 flex-col gap-6 px-4 py-5 md:px-6 md:py-6">
         {mode === 'observe' ? (
           <ObserveMode
             currentObservation={currentObservation}
