@@ -69,12 +69,12 @@ const profileMap: Record<AppFacadeMode, PresentationBiasProfile> = {
   crystallized_thinking: crystallizedThinkingProfile,
   observer: observerProfile,
   future_app: futureAppProfile,
-  jibun_kaigi: fallbackProfile,
+  llm_mode: fallbackProfile,
 }
 
 export const getPresentationBiasProfile = (mode: AppFacadeMode): PresentationBiasProfile => {
-  if (mode === 'jibun_kaigi') {
-    return { ...fallbackProfile, mode: 'jibun_kaigi' }
+  if (mode === 'llm_mode') {
+    return { ...fallbackProfile, mode: 'llm_mode' }
   }
   if (profileMap[mode]) return profileMap[mode]
   return { ...fallbackProfile, mode }
