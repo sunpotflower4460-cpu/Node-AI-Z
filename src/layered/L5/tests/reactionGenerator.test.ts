@@ -24,7 +24,7 @@ function runPipeline(
   const l3Result = runL3(l2Result, 1)
   const brainState = { ...createInitialBrainState(), mood }
   const l4Result = runL4(l3Result, brainState)
-  const l5Result = runL5(l4Result, brainState)
+  const l5Result = runL5(l4Result, brainState, null)
 
   return {
     l0Result,

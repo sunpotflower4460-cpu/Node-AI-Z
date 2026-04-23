@@ -21,8 +21,8 @@ function runPipeline(input: string, brainState: BrainState = createInitialBrainS
   const l2Result = runL2(l1Result)
   const l3Result = runL3(l2Result, 1)
   const l4Result = runL4(l3Result, brainState)
-  const l5Result = runL5(l4Result, brainState)
-  const l6Result = runL6(l4Result, l5Result, brainState)
+  const l5Result = runL5(l4Result, brainState, null)
+  const l6Result = runL6(l4Result, l5Result, brainState, null)
 
   return {
     l0Result,

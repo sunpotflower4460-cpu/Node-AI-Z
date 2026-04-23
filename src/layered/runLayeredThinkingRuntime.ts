@@ -31,9 +31,18 @@ export async function runLayeredThinkingRuntime(
   const l2Result = runL2(l1Result)
   const l3Result = runL3(l2Result, previousBrainState.turnCount + 1)
   const l4Result = runL4(l3Result, previousBrainState)
-  const l5Result = runL5(l4Result, previousBrainState)
-  const l6Result = runL6(l4Result, l5Result, previousBrainState)
+
+  // Compute predictionError before L5/L6 if we have a previous turn
+  const predictionErrorForLayers = previousBrainState.turnCount > 0
+    ? computePredictionError(previousBrainState, '', l4Result.frame.need, l3Result.overallType)
+    : null
+
+  const l5Result = runL5(l4Result, previousBrainState, predictionErrorForLayers)
+  const l6Result = runL6(l4Result, l5Result, previousBrainState, predictionErrorForLayers)
+
+  // Now compute predictionError with the actual topic for trace
   const predictionError = computePredictionError(previousBrainState, l6Result.decision.topic, l4Result.frame.need, l3Result.overallType)
+
   const l7Result = runL7(l4Result, l5Result, l6Result, previousBrainState)
   const nextPrediction = deriveNextPrediction(l4Result.frame.need, l6Result.decision.topic, l6Result.decision.askBack, l3Result.overallType)
   const nextBrainState = buildNextBrainState(previousBrainState, l4Result, l5Result, l6Result, l7Result.utterance, nextPrediction, predictionError)
