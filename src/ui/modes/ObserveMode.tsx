@@ -258,13 +258,18 @@ export const ObserveMode = ({
               <Compass className="h-4 w-4" />
               観察研究モード
             </div>
-            <h2 className="flex items-center gap-2 text-2xl font-bold tracking-tight text-slate-900">
+            <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
               <BrainCircuit className="h-6 w-6 text-indigo-600" />
               Node Studio
             </h2>
             <p className="mt-3 text-sm font-medium leading-relaxed text-slate-500 md:text-[15px]">
               内部プロセスを観察し、反応・構造・修正・帰還を研究するモードです。結晶思考モデルの挙動を見ながら、Node / Relation / Pattern / Home / Revision を比較・検証できます。
             </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700">入力して分析</span>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">タブで内部を見る</span>
+              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">履歴から見返せる</span>
+            </div>
           </div>
           <button
             type="button"
@@ -300,11 +305,14 @@ export const ObserveMode = ({
               onClick={handleAnalyze}
               disabled={isAnalyzing || !inputText.trim()}
               aria-label={isAnalyzing ? '分析中' : '分析する'}
-              className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-[15px] font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-[15px] font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50 sm:w-auto"
             >
               {isAnalyzing ? <RefreshCw className="h-4.5 w-4.5 animate-spin" /> : <Activity className="h-4.5 w-4.5" />}
               Analyze
             </button>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-500">
+            1. テキストを入力 → 2. Analyze → 3. 下のタブで Reply / States / History などを確認
           </div>
           <div className="scrollbar-hide flex items-center gap-2.5 overflow-x-auto pb-1">
             <span className="mr-1 flex shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400"><Terminal className="h-3.5 w-3.5" /> Samples</span>
@@ -313,7 +321,7 @@ export const ObserveMode = ({
                 key={sample}
                 type="button"
                 onClick={() => handleSampleClick(sample)}
-                className="shrink-0 rounded-lg border border-slate-200/60 bg-slate-100 px-3.5 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200"
+                className="shrink-0 rounded-lg border border-slate-200/60 bg-slate-100 px-3.5 py-2 text-left text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200"
               >
                 {sample.length > 20 ? `${sample.substring(0, 20)}...` : sample}
               </button>
@@ -1231,13 +1239,13 @@ export const ObserveMode = ({
                 </div>
               </section>
             ) : null}
-            <div className="scrollbar-hide sticky top-[92px] z-10 flex gap-2 overflow-x-auto border-b-2 border-slate-100 bg-[#F8FAFC] pb-1 pt-1">
+            <div className="scrollbar-hide sticky top-2 z-10 -mx-1 flex gap-2 overflow-x-auto border-b-2 border-slate-100 bg-[#F8FAFC] px-1 pb-1 pt-1 md:top-[92px]">
               {(['Reply', 'SessionBrain', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`-mb-[2px] flex items-center gap-2 whitespace-nowrap border-b-2 px-5 py-3 text-[15px] font-bold transition-colors ${activeTab === tab ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'}`}
+                  className={`-mb-[2px] flex shrink-0 items-center gap-2 whitespace-nowrap rounded-t-xl border-b-2 px-4 py-3 text-sm font-bold transition-colors ${activeTab === tab ? 'border-indigo-600 bg-white/80 text-indigo-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'}`}
                 >
                   {tab === 'Reply' ? <MessageSquareText className="h-4.5 w-4.5" /> : null}
                   {tab === 'SessionBrain' ? <Brain className="h-4.5 w-4.5" /> : null}
