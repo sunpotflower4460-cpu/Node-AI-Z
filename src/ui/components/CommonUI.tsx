@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { Brain, ChevronDown, ChevronUp, Info, Sparkles, Workflow } from 'lucide-react'
+import { Brain, ChevronDown, ChevronUp, HelpCircle, Info, Sparkles, Workflow } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export const OriginBadge = ({ origin }: { origin: string }) => {
@@ -92,3 +92,56 @@ export const TabHeader = ({ title, description, icon: Icon, colorClass }: { titl
     <p className="text-sm font-medium text-slate-500 leading-relaxed pl-[42px]">{description}</p>
   </div>
 )
+
+export const Tooltip = ({ children, content }: { children: ReactNode; content: string }) => {
+  const [isVisible, setIsVisible] = useState(false)
+
+  return (
+    <span className="relative inline-flex items-center">
+      <span
+        onMouseEnter={() => setIsVisible(true)}
+        onMouseLeave={() => setIsVisible(false)}
+        onClick={() => setIsVisible(!isVisible)}
+        className="cursor-help"
+      >
+        {children}
+      </span>
+      {isVisible && (
+        <span className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 text-xs font-medium text-white bg-slate-900 rounded-lg shadow-lg whitespace-normal max-w-xs pointer-events-none">
+          {content}
+          <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900" />
+        </span>
+      )}
+    </span>
+  )
+}
+
+export const HelpIcon = ({ content }: { content: string }) => {
+  return (
+    <Tooltip content={content}>
+      <HelpCircle className="inline-block w-3.5 h-3.5 text-slate-400 hover:text-indigo-500 transition-colors ml-1" />
+    </Tooltip>
+  )
+}
+
+export const StatusIndicator = ({ status, label }: { status: 'active' | 'idle' | 'processing'; label?: string }) => {
+  const getStatusStyle = () => {
+    switch (status) {
+      case 'active':
+        return 'bg-green-500'
+      case 'processing':
+        return 'bg-yellow-500 animate-pulse'
+      case 'idle':
+        return 'bg-slate-300'
+      default:
+        return 'bg-slate-300'
+    }
+  }
+
+  return (
+    <span className="inline-flex items-center gap-2 text-xs">
+      <span className={`w-2 h-2 rounded-full ${getStatusStyle()}`} />
+      {label && <span className="font-medium text-slate-600">{label}</span>}
+    </span>
+  )
+}
