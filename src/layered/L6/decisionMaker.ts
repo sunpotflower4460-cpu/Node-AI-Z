@@ -140,7 +140,12 @@ function deriveTopic(gist: string, recentTopics: string[]): string {
   }
 
   const trimmed = trimTopic(gist)
-  return trimmed || trimTopic(recentTopics[0] ?? '')
+  if (trimmed) {
+    return trimmed
+  }
+
+  const recentTopic = recentTopics[0]
+  return recentTopic ? trimTopic(recentTopic) : ''
 }
 
 /**

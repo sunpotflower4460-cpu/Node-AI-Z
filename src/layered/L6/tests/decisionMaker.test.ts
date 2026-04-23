@@ -90,7 +90,7 @@ describe('runL6', () => {
     expect(l6Result.decision.showUncertainty).toBe(true)
   })
 
-  it('keeps heavy-turn greetings warm while attaching a context modifier', () => {
+  it('attaches a context modifier and still greets back after a heavy prior turn', () => {
     const brainState: BrainState = {
       ...createInitialBrainState(),
       mood: 'heavy',
