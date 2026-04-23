@@ -26,8 +26,34 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
+}
+
+/* Focus rings */
+:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* Progress bar fill animation */
+@keyframes progressFill {
+  from { width: 0%; }
+}
+
+.progress-fill {
+  animation: progressFill 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Smooth fade-in for sections */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.25s ease-out both;
 }
 
 .scrollbar-hide {
@@ -37,4 +63,23 @@ input {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* Thin scrollbar for data panels */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
 }
