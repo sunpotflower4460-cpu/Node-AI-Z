@@ -23,6 +23,16 @@ export const HistoryTab = ({ history, restoreHistory }: HistoryTabProps) => (
             const mainPattern = item.pipelineResult.liftedPatterns[0]
             const modeLabel = item.type === 'observe' ? '観察研究モード' : '体験モード'
             const modeClass = item.type === 'observe' ? 'border-indigo-100 bg-indigo-50 text-indigo-600' : 'border-rose-100 bg-rose-50 text-rose-600'
+            const implementationLabel = item.implementationMode === 'layered_thinking'
+              ? 'Layered'
+              : item.implementationMode === 'crystallized_thinking'
+                ? '結晶思考'
+                : 'LLM'
+            const implementationClass = item.implementationMode === 'layered_thinking'
+              ? 'border-emerald-100 bg-emerald-50 text-emerald-700'
+              : item.implementationMode === 'crystallized_thinking'
+                ? 'border-violet-100 bg-violet-50 text-violet-700'
+                : 'border-slate-200 bg-slate-50 text-slate-600'
 
             return (
               <div key={item.id} onClick={() => restoreHistory(item)} className="flex cursor-pointer flex-col gap-3 p-5 transition-colors hover:bg-slate-50/80 active:bg-slate-100">
@@ -30,6 +40,7 @@ export const HistoryTab = ({ history, restoreHistory }: HistoryTabProps) => (
                   <div className="flex-1">
                     <div className="mb-2 flex flex-wrap items-center gap-2">
                       <span className={`rounded-md border px-2 py-1 text-xs font-bold tracking-wide ${modeClass}`}>{modeLabel}</span>
+                      <span className={`rounded-md border px-2 py-1 text-xs font-bold tracking-wide ${implementationClass}`}>{implementationLabel}</span>
                       <span className="text-xs font-semibold text-slate-400">{item.time}</span>
                     </div>
                     <p className="line-clamp-2 text-[15px] font-semibold leading-relaxed text-slate-800">"{item.text}"</p>

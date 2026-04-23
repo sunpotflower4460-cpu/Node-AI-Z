@@ -152,6 +152,7 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
 
 export type LayeredThinkingResult = RuntimeResultBase & {
   implementationMode: 'layered_thinking'
+  input: string
   utterance: string
   trace: LayeredThinkingTrace
 }

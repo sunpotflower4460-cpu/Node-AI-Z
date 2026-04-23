@@ -23,6 +23,7 @@ export const mapExperienceMessagesToObservationHistory = (
       id: message.observationId,
       type: 'experience' as const,
       runtimeMode: message.runtimeMode ?? ('node' as const),
+      implementationMode: message.implementationMode,
       text: message.pipelineResult.inputText,
       timestamp: message.timestamp,
       time: formatObservationTime(message.timestamp),
@@ -41,6 +42,7 @@ export const mapExperienceMessagesToObservationHistory = (
       rawFacadeView: message.rawFacadeView,
       facadeViewTranslation: message.facadeViewTranslation,
       presentationBiasProfile: message.presentationBiasProfile,
+      layeredThinkingTrace: message.layeredThinkingTrace,
     }))
 }
 

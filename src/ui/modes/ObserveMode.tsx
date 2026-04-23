@@ -16,6 +16,8 @@ import { SessionBrainTab } from '../tabs/SessionBrainTab'
 import { Badge, HelpIcon } from '../components/CommonUI'
 import { HumanReviewPanel } from '../review/HumanReviewPanel'
 import { TrunkUndoPanel } from '../review/TrunkUndoPanel'
+import { LayeredObservePanel } from '../LayeredObservePanel'
+import type { LayeredThinkingResult } from '../../runtime/runtimeTypes'
 import {
   createEmptySharedTrunk,
   listPendingHumanReviews,
@@ -34,7 +36,7 @@ const SAMPLE_INPUTS = [
 ]
 
 type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision' | 'SessionBrain'
-type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal' | 'dual' | 'facade_raw' | 'facade_translated' | 'facade_notes'
+type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal' | 'dual' | 'facade_raw' | 'facade_translated' | 'facade_notes' | 'layered'
 const MIN_PLASTICITY_DISPLAY_VALUE = 0.009
 
 const TONE_NOTES: Record<string, (value: number) => string> = {
@@ -75,6 +77,19 @@ const describeRelationGrowth = (key: string) => {
   }
   const [source, target] = relationParts
   return `${source} と ${target} のあいだの通り道が少し太くなり、揺れや引っぱりを先に拾いやすくなっています。`
+}
+
+const getLayeredThinkingResult = (record: ObservationRecord): LayeredThinkingResult | null => {
+  if (record.implementationMode !== 'layered_thinking' || !record.layeredThinkingTrace) {
+    return null
+  }
+
+  return {
+    implementationMode: 'layered_thinking',
+    input: record.text,
+    utterance: record.assistantReply,
+    trace: record.layeredThinkingTrace,
+  }
 }
 
 type AppliedBoostSource = 'auto' | 'keep' | 'soften' | 'lock'
@@ -248,6 +263,10 @@ export const ObserveMode = ({
   const summaryNotes = facadeTranslation?.summaryNotes
     ?? translatedFacadeView?.surfacePresentation?.notes
     ?? []
+  const layeredCurrentResult = currentObservation ? getLayeredThinkingResult(currentObservation) : null
+  const layeredHistory = history
+    .filter((item) => item.implementationMode === 'layered_thinking' && item.layeredThinkingTrace)
+    .filter((item) => item.id !== currentObservation?.id)
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -1253,6 +1272,38 @@ export const ObserveMode = ({
                 </div>
               </section>
             ) : null}
+            {layeredCurrentResult ? (
+              <section className="mb-6 rounded-3xl border border-emerald-100 bg-emerald-50/50 p-4 shadow-sm md:p-5">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div>
+                    <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-emerald-700">
+                      Layered Observe
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                      layered_thinking の層ごとの観測結果を、このターンと履歴でそのまま確認できます。
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <LayeredObservePanel result={layeredCurrentResult} />
+                  {layeredHistory.length > 0 ? (
+                    <div className="space-y-3">
+                      <div className="pt-2 text-xs font-bold uppercase tracking-widest text-emerald-700">
+                        複数ターン履歴
+                      </div>
+                      {layeredHistory.map((item) => {
+                        const result = getLayeredThinkingResult(item)
+                        if (!result) {
+                          return null
+                        }
+
+                        return <LayeredObservePanel key={item.id} result={result} />
+                      })}
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+            ) : null}
             <div className="scrollbar-hide sticky top-2 z-10 -mx-1 flex gap-1 overflow-x-auto bg-[#F8FAFC] px-1 pb-2 pt-1 md:top-[84px]" role="tablist" aria-label="観察ビュー">
               {(['Reply', 'SessionBrain', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
                 <button
@@ -1402,6 +1453,9 @@ export const ObserveMode = ({
                 {dualStreamResult ? (
                   <button type="button" onClick={() => { setRawViewMode('dual'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'dual' && isRawOpen ? 'bg-violet-800 text-white' : 'text-violet-400 hover:bg-slate-800'}`}>Dual</button>
                 ) : null}
+                {currentObservation.layeredThinkingTrace ? (
+                  <button type="button" onClick={() => { setRawViewMode('layered'); setIsRawOpen(true) }} className={`rounded px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider ${rawViewMode === 'layered' && isRawOpen ? 'bg-emerald-800 text-white' : 'text-emerald-400 hover:bg-slate-800'}`}>Layered</button>
+                ) : null}
                 <button type="button" onClick={() => setIsRawOpen(!isRawOpen)} className="p-1.5 text-slate-500 hover:text-white">{isRawOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</button>
               </div>
             </div>
@@ -1416,6 +1470,7 @@ export const ObserveMode = ({
                 {rawViewMode === 'facade_notes' ? JSON.stringify({ translation: facadeTranslation, profile: presentationBiasProfile }, null, 2) : null}
                 {rawViewMode === 'signal' && currentObservation.signalResult ? JSON.stringify(currentObservation.signalResult, null, 2) : null}
                 {rawViewMode === 'dual' && dualStreamResult ? JSON.stringify(dualStreamResult, null, 2) : null}
+                {rawViewMode === 'layered' && currentObservation.layeredThinkingTrace ? JSON.stringify(currentObservation.layeredThinkingTrace, null, 2) : null}
               </div>
             ) : null}
           </div>
