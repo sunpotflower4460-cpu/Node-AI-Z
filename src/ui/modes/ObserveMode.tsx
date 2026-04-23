@@ -264,9 +264,11 @@ export const ObserveMode = ({
     ?? translatedFacadeView?.surfacePresentation?.notes
     ?? []
   const layeredCurrentResult = currentObservation ? getLayeredThinkingResult(currentObservation) : null
-  const layeredHistory = history
-    .filter((item) => item.implementationMode === 'layered_thinking' && item.layeredThinkingTrace)
-    .filter((item) => item.id !== currentObservation?.id)
+  const layeredHistory = history.filter((item) =>
+    item.implementationMode === 'layered_thinking'
+    && item.layeredThinkingTrace
+    && item.id !== currentObservation?.id
+  )
 
   return (
     <div className="flex flex-1 flex-col gap-6">
