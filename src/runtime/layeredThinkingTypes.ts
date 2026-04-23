@@ -192,6 +192,12 @@ export type LayeredBrainState = {
   recentTopics: string[]
 }
 
+export type LayeredUtteranceTrace = {
+  utterance: string
+  templateKey: string
+  appliedModifiers: string[]
+}
+
 export type LayeredThinkingTrace = {
   characterNodes: CharNode[]
   l0Summary: L0Summary
@@ -203,6 +209,7 @@ export type LayeredThinkingTrace = {
   semanticFrame: SemanticFrame
   reactionState: ReactionState
   decision: Decision
+  l7?: LayeredUtteranceTrace
   utterance: string
   predictionError: PredictionError | null
   nextPrediction: Prediction

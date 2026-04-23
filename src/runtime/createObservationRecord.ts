@@ -3,6 +3,7 @@ import type { ApiProviderId } from '../types/apiProvider'
 import type { ExperienceMessage, ObservationRecord, RuntimeMode, ImplementationMode } from '../types/experience'
 import type { PlasticityState } from '../types/nodeStudio'
 import type { SessionBrainState } from '../brain/sessionBrainState'
+import type { LayeredBrainState } from './layeredThinkingTypes'
 import { runMainRuntime } from './runMainRuntime'
 import { runLegacyNodePipeline } from './runLegacyNodePipeline'
 import { buildRevisionEntry } from '../revision/buildRevisionEntry'
@@ -22,7 +23,7 @@ export type CreateObservationRecordInput = {
   runtimeMode: RuntimeMode
   implementationMode: ImplementationMode
   personalLearning: PersonalLearningState
-  brainState?: SessionBrainState // Phase 1: Session continuity
+  brainState?: SessionBrainState | LayeredBrainState
 }
 
 export const createObservationId = (prefix: string) => {

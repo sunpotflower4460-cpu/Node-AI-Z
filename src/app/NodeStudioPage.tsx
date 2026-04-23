@@ -15,8 +15,10 @@ import type { ApiProviderId, ApiSelectionState } from '../types/apiProvider'
 import type { ExperienceMessage, AppMode, ObservationRecord, RuntimeMode, ImplementationMode } from '../types/experience'
 import type { RevisionEntry, RevisionState, UserTuningAction } from '../types/nodeStudio'
 import type { SessionBrainState } from '../brain/sessionBrainState'
+import type { LayeredBrainState } from '../runtime/layeredThinkingTypes'
 import { createInitialBrainState } from '../brain/createInitialBrainState'
 import { loadSessionBrainState, saveSessionBrainState } from '../storage/sessionBrainStorage'
+import { loadLayeredBrainState, saveLayeredBrainState } from '../storage/layeredBrainStorage'
 import { mapExperienceMessagesToObservationHistory, mergeObservationHistories } from '../studio/mapExperienceMessagesToObservationHistory'
 import { ModeSwitch } from '../ui/components/ModeSwitch'
 import { ExperienceMode } from '../ui/modes/ExperienceMode'
@@ -42,6 +44,7 @@ export default function NodeStudioPage() {
     const loaded = loadSessionBrainState()
     return loaded ?? createInitialBrainState()
   })
+  const [layeredBrainState, setLayeredBrainState] = useState<LayeredBrainState | undefined>(() => loadLayeredBrainState())
 
   const currentProviderConfig = useMemo(() => getApiProviderConfig(apiSelection.baseProvider), [apiSelection.baseProvider])
 
@@ -64,6 +67,17 @@ export default function NodeStudioPage() {
     }
   }, [brainState, implementationMode])
 
+  useEffect(() => {
+    if (layeredBrainState && implementationMode === 'layered_thinking') {
+      saveLayeredBrainState(layeredBrainState)
+    }
+  }, [layeredBrainState, implementationMode])
+
+  const handleImplementationModeChange = useCallback((nextMode: ImplementationMode) => {
+    setImplementationMode(nextMode)
+    setExperienceMessages(loadExperienceMessages(nextMode))
+  }, [])
+
   const addRevisionEntryToMemory = useCallback((entry: RevisionEntry) => {
     setRevisionState((previous) => addRevisionEntry(previous, entry))
   }, [])
@@ -79,7 +93,7 @@ export default function NodeStudioPage() {
     runtimeMode: RuntimeMode,
     currentImplementationMode: ImplementationMode,
     currentPersonalLearning: PersonalLearningState,
-    currentBrainState?: SessionBrainState,
+    currentBrainState?: SessionBrainState | LayeredBrainState,
   ): Promise<ObservationRecord> => {
     return createObservationRecord({
       type,
@@ -89,7 +103,7 @@ export default function NodeStudioPage() {
       implementationMode: currentImplementationMode,
       personalLearning: currentPersonalLearning,
       plasticity: revisionState.plasticity,
-      brainState: currentImplementationMode === 'crystallized_thinking' ? currentBrainState : undefined,
+      brainState: currentImplementationMode === 'llm_mode' ? undefined : currentBrainState,
     })
   }, [revisionState.plasticity])
 
@@ -111,6 +125,10 @@ export default function NodeStudioPage() {
       setBrainState(record.nextBrainState)
     }
 
+    if (record.implementationMode === 'layered_thinking' && record.layeredThinkingTrace?.nextBrainState) {
+      setLayeredBrainState(record.layeredThinkingTrace.nextBrainState)
+    }
+
     if (type === 'observe') {
       setObserveHistory((previous) => [record, ...previous])
       return
@@ -122,12 +140,24 @@ export default function NodeStudioPage() {
   const handleObservationSubmit = useCallback(async (text: string, type: ObservationRecord['type']) => {
     setIsSending(true)
     try {
-      const record = await createObservation(text, type, apiSelection.baseProvider, runtimeMode, implementationMode, personalLearning, brainState)
+      const record = await createObservation(
+        text,
+        type,
+        apiSelection.baseProvider,
+        runtimeMode,
+        implementationMode,
+        personalLearning,
+        implementationMode === 'crystallized_thinking'
+          ? brainState
+          : implementationMode === 'layered_thinking'
+            ? layeredBrainState
+            : undefined,
+      )
       commitObservationRecord(record, type)
     } finally {
       setIsSending(false)
     }
-  }, [apiSelection.baseProvider, commitObservationRecord, createObservation, personalLearning, runtimeMode, implementationMode, brainState])
+  }, [apiSelection.baseProvider, brainState, commitObservationRecord, createObservation, layeredBrainState, personalLearning, runtimeMode, implementationMode])
 
   const handleObserveAnalyze = useCallback(async (text: string) => {
     await handleObservationSubmit(text, 'observe')
@@ -137,9 +167,24 @@ export default function NodeStudioPage() {
     await handleObservationSubmit(text, 'experience')
   }, [handleObservationSubmit])
 
+  const syncStateFromRecord = useCallback((record: ObservationRecord) => {
+    if (record.implementationMode) {
+      handleImplementationModeChange(record.implementationMode)
+    }
+
+    if (record.implementationMode === 'crystallized_thinking' && record.nextBrainState) {
+      setBrainState(record.nextBrainState)
+    }
+
+    if (record.implementationMode === 'layered_thinking' && record.layeredThinkingTrace?.nextBrainState) {
+      setLayeredBrainState(record.layeredThinkingTrace.nextBrainState)
+    }
+  }, [handleImplementationModeChange])
+
   const handleRestoreObservation = useCallback((record: ObservationRecord) => {
+    syncStateFromRecord(record)
     setCurrentObservation(record)
-  }, [])
+  }, [syncStateFromRecord])
 
   const handleOpenObservation = useCallback((observationId: string) => {
     const record = history.find((item) => item.id === observationId)
@@ -147,9 +192,10 @@ export default function NodeStudioPage() {
       return
     }
 
+    syncStateFromRecord(record)
     setCurrentObservation(record)
     setMode('observe')
-  }, [history])
+  }, [history, syncStateFromRecord])
 
   const handleResetCurrent = useCallback(() => {
     setCurrentObservation(null)
@@ -241,12 +287,12 @@ export default function NodeStudioPage() {
             <div className="flex flex-col gap-1.5 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 inline-flex items-center gap-1">
                 実装方式
-                <HelpIcon content="AIの動作方式を選択できます。LLMモードは外部APIを使った対話型、結晶思考モードはAPI不要の独立した推論システムです。" />
-              </span>
-              <div className="grid grid-cols-1 gap-1 rounded-lg border border-slate-200 bg-slate-100/80 p-1 sm:grid-cols-2">
+                  <HelpIcon content="AIの動作方式を選択できます。LLMモードは外部APIを使った対話型、結晶思考モードはAPI不要の独立した推論システム、Layered Thinking は層ごとの内部観測に向いた加算型ランタイムです。" />
+                </span>
+               <div className="grid grid-cols-1 gap-1 rounded-lg border border-slate-200 bg-slate-100/80 p-1 sm:grid-cols-3">
                 <button
                   type="button"
-                  onClick={() => setImplementationMode('llm_mode')}
+                  onClick={() => handleImplementationModeChange('llm_mode')}
                   aria-pressed={implementationMode === 'llm_mode'}
                   title="外部APIを使った対話型の実装方式。OpenAI、Anthropic等のプロバイダーを利用します。"
                   className={`tap-target inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all duration-150 ${implementationMode === 'llm_mode' ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'}`}
@@ -255,12 +301,21 @@ export default function NodeStudioPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setImplementationMode('crystallized_thinking')}
+                  onClick={() => handleImplementationModeChange('crystallized_thinking')}
                   aria-pressed={implementationMode === 'crystallized_thinking'}
                   title="外部API不要の独立した推論システム。内部状態を持ち続け、学習しながら成長します。"
                   className={`tap-target inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all duration-150 ${implementationMode === 'crystallized_thinking' ? 'bg-white text-violet-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'}`}
                 >
                   結晶思考(API非依存)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleImplementationModeChange('layered_thinking')}
+                  aria-pressed={implementationMode === 'layered_thinking'}
+                  title="加算的な層構造で入力から発話までを追える観測向けの実装方式です。"
+                  className={`tap-target inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all duration-150 ${implementationMode === 'layered_thinking' ? 'bg-white text-emerald-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'}`}
+                >
+                  Layered Thinking
                 </button>
               </div>
             </div>

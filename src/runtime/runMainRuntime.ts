@@ -4,6 +4,7 @@ import type { ImplementationMode } from '../types/experience'
 import type { PlasticityState } from '../types/nodeStudio'
 import type { RuntimeResult } from './runtimeTypes'
 import type { SessionBrainState } from '../brain/sessionBrainState'
+import type { LayeredBrainState } from './layeredThinkingTypes'
 import { runLlmModeRuntime } from './runLlmModeRuntime'
 import { runCrystallizedThinkingRuntime } from './runCrystallizedThinkingRuntime'
 import { runLayeredThinkingRuntime } from './runLayeredThinkingRuntime'
@@ -21,7 +22,7 @@ export type MainRuntimeInput = {
   provider: ApiProviderId
   implementationMode: ImplementationMode
   personalLearning: PersonalLearningState
-  brainState?: SessionBrainState // Phase 1: Session continuity
+  brainState?: SessionBrainState | LayeredBrainState
 }
 
 /**
@@ -54,6 +55,7 @@ export const runMainRuntime = async ({
       text,
       plasticity,
       personalLearning,
+      brainState: brainState as LayeredBrainState | undefined,
     })
   }
 
@@ -62,6 +64,6 @@ export const runMainRuntime = async ({
     text,
     plasticity,
     personalLearning,
-    brainState,
+    brainState: brainState as SessionBrainState | undefined,
   })
 }

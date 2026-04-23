@@ -603,6 +603,36 @@ const pickVariant = <T,>(variants: T[], seed: number, fallback: T): T => {
   return variants[seed % variants.length] ?? fallback
 }
 
+const resolveTemplateKey = (decision: Decision, reactionState: ReactionState): string => {
+  if (decision.action === 'greet_back') {
+    if (reactionState.warmth >= 0.4) return 'greet_back_warm'
+    if (reactionState.warmth >= 0) return 'greet_back_neutral'
+    return 'greet_back_cool'
+  }
+
+  if (decision.action === 'answer') return 'answer_medium'
+  if (decision.action === 'listen') return 'listen_short'
+  if (decision.action === 'explore') return 'explore_medium'
+  if (decision.action === 'ask_back') return 'ask_back_short'
+  if (decision.action === 'wait') return 'wait_short'
+  if (decision.action === 'deflect') return 'deflect_short'
+  return 'express_short'
+}
+
+const deriveAppliedModifiers = (decision: Decision): string[] => {
+  const modifiers: string[] = []
+
+  if (decision.showUncertainty) {
+    modifiers.push('uncertainty_prefix')
+  }
+
+  if (decision.askBack) {
+    modifiers.push('ask_back_suffix')
+  }
+
+  return modifiers
+}
+
 const renderUtterance = (
   decision: Decision,
   reactionState: ReactionState,
@@ -689,6 +719,11 @@ const buildTrace = (
   const reactionState = buildReactionState(semanticFrame, previousBrainState, predictionError)
   const decision = buildDecision(semanticFrame, reactionState, predictionError)
   const utterance = renderUtterance(decision, reactionState, semanticFrame, text, seedOffset)
+  const l7 = {
+    utterance,
+    templateKey: resolveTemplateKey(decision, reactionState),
+    appliedModifiers: deriveAppliedModifiers(decision),
+  }
   const nextPrediction = deriveNextPrediction(semanticFrame, decision, sentence.sentenceType)
   const nextBrainState: LayeredBrainState = {
     turnCount: previousBrainState.turnCount + 1,
@@ -711,6 +746,7 @@ const buildTrace = (
     semanticFrame,
     reactionState,
     decision,
+    l7,
     utterance,
     predictionError,
     nextPrediction,
@@ -732,6 +768,7 @@ export const runLayeredThinkingRuntime = async ({
 
   return {
     implementationMode: 'layered_thinking',
+    input: text,
     utterance: trace.utterance,
     trace,
   }

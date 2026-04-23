@@ -174,6 +174,31 @@ describe('NodeStudioPage Runtime Integration', () => {
       expect(record.layeredThinkingTrace).toBeDefined()
       expect(record.layeredThinkingTrace?.l3Output.overallType).toBe('greeting_question')
     })
+
+    it('should preserve layered brain state across multiple turns', async () => {
+      const firstRecord = await createObservationRecord({
+        type: 'experience',
+        text: '最近なんかモヤモヤするんだけど',
+        provider: 'openai',
+        runtimeMode: 'node',
+        implementationMode: 'layered_thinking',
+        personalLearning,
+      })
+
+      const secondRecord = await createObservationRecord({
+        type: 'experience',
+        text: '元気ですか',
+        provider: 'openai',
+        runtimeMode: 'node',
+        implementationMode: 'layered_thinking',
+        personalLearning,
+        brainState: firstRecord.layeredThinkingTrace?.nextBrainState,
+      })
+
+      expect(firstRecord.layeredThinkingTrace?.nextBrainState.turnCount).toBe(1)
+      expect(secondRecord.layeredThinkingTrace?.nextBrainState.turnCount).toBe(2)
+      expect(secondRecord.layeredThinkingTrace?.predictionError).not.toBeNull()
+    })
   })
 
   describe('Experience Mode Flow', () => {
