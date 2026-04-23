@@ -59,6 +59,20 @@ const EMPTY_CATEGORY_DISTRIBUTION: Record<TokenCategory, number> = {
   unknown: 0,
 }
 
+const TOKEN_CATEGORIES: TokenCategory[] = [
+  'noun',
+  'verb',
+  'adjective',
+  'particle',
+  'copula',
+  'auxiliary',
+  'greeting',
+  'filler',
+  'interjection',
+  'connector',
+  'unknown',
+]
+
 const EMPTY_PREDICTION: Prediction = {
   expectedNeed: null,
   expectedTopic: null,
@@ -88,6 +102,20 @@ const DICTIONARY = [
 ].sort((left, right) => right.length - left.length)
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+
+const getDominantTokenCategory = (distribution: Record<TokenCategory, number>): TokenCategory => {
+  let dominantCategory: TokenCategory = 'unknown'
+  let dominantCount = -1
+
+  for (const category of TOKEN_CATEGORIES) {
+    if (distribution[category] > dominantCount) {
+      dominantCategory = category
+      dominantCount = distribution[category]
+    }
+  }
+
+  return dominantCategory
+}
 
 const createInitialLayeredBrainState = (): LayeredBrainState => ({
   turnCount: 0,
@@ -228,8 +256,7 @@ const tokenizeText = (text: string) => {
     l1Summary.categoryDistribution[token.category] += 1
   }
 
-  l1Summary.dominantCategory = (Object.entries(l1Summary.categoryDistribution)
-    .sort((left, right) => right[1] - left[1])[0]?.[0] ?? 'unknown') as TokenCategory
+  l1Summary.dominantCategory = getDominantTokenCategory(l1Summary.categoryDistribution)
 
   return { tokenNodes, l1Summary }
 }
@@ -568,19 +595,26 @@ const buildDecision = (
 
 const hashText = (value: string) => Array.from(value).reduce((sum, char) => sum + char.charCodeAt(0), 0)
 
-const pickVariant = <T,>(variants: T[], seed: number) => variants[seed % variants.length]
+const pickVariant = <T,>(variants: T[], seed: number, fallback: T): T => {
+  if (variants.length === 0) {
+    return fallback
+  }
+
+  return variants[seed % variants.length] ?? fallback
+}
 
 const renderUtterance = (
   decision: Decision,
   reactionState: ReactionState,
   semanticFrame: SemanticFrame,
   inputText: string,
+  seedOffset: number,
 ) => {
-  const seed = hashText(`${inputText}:${decision.action}:${decision.topic}`)
+  const seed = hashText(`${inputText}:${decision.action}:${decision.topic}:${seedOffset}`)
   const askBackVariants = ['そっちは？', 'そっちはどう？', 'あなたは？', '']
-  const askBack = decision.askBack ? pickVariant(askBackVariants, seed) : ''
+  const askBack = decision.askBack ? pickVariant(askBackVariants, seed, '') : ''
   const uncertaintyPrefix = decision.showUncertainty
-    ? pickVariant(['うーん、', '正直まだ読み切れてないけど、', 'はっきりとは言えないけど、'], seed)
+    ? pickVariant(['うーん、', '正直まだ読み切れてないけど、', 'はっきりとは言えないけど、'], seed, 'うーん、')
     : ''
 
   if (decision.action === 'greet_back') {
@@ -600,7 +634,7 @@ const renderUtterance = (
         `ぼちぼち。${askBack}`,
       ],
     }
-    return pickVariant(variants[tone], seed).trim()
+    return pickVariant(variants[tone], seed, `まあ、普通かな。${askBack}`).trim()
   }
 
   if (decision.action === 'answer') {
@@ -644,6 +678,7 @@ const deriveMood = (reactionState: ReactionState, decision: Decision, prediction
 const buildTrace = (
   text: string,
   previousBrainState: LayeredBrainState,
+  seedOffset: number,
 ): LayeredThinkingTrace => {
   const { characterNodes, l0Summary } = analyzeCharacters(text)
   const { tokenNodes, l1Summary } = tokenizeText(text)
@@ -653,7 +688,7 @@ const buildTrace = (
   const predictionError = computePredictionError(previousBrainState, semanticFrame, sentence.sentenceType)
   const reactionState = buildReactionState(semanticFrame, previousBrainState, predictionError)
   const decision = buildDecision(semanticFrame, reactionState, predictionError)
-  const utterance = renderUtterance(decision, reactionState, semanticFrame, text)
+  const utterance = renderUtterance(decision, reactionState, semanticFrame, text, seedOffset)
   const nextPrediction = deriveNextPrediction(semanticFrame, decision, sentence.sentenceType)
   const nextBrainState: LayeredBrainState = {
     turnCount: previousBrainState.turnCount + 1,
@@ -689,10 +724,11 @@ export const runLayeredThinkingRuntime = async ({
   plasticity,
   brainState,
 }: LayeredThinkingRuntimeInput): Promise<LayeredThinkingResult> => {
-  void personalLearning
-  void plasticity
   const previousBrainState = brainState ?? createInitialLayeredBrainState()
-  const trace = buildTrace(text, previousBrainState)
+  const seedOffset =
+    hashText(JSON.stringify(personalLearning)) +
+    hashText(JSON.stringify(plasticity ?? null))
+  const trace = buildTrace(text, previousBrainState, seedOffset)
 
   return {
     implementationMode: 'layered_thinking',
