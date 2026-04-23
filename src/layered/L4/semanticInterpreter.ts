@@ -79,8 +79,7 @@ function buildGist(sentence: SentenceNode | undefined, sentenceType: SentenceTyp
 
   const topic = extractTopicFromSentence(sentence)
   const feeling = extractFeelingCue(sentence.surface) ?? topic
-  const requestText = normalizeStatement(sentence.surface)
-  const statementText = normalizeStatement(sentence.surface)
+  const normalizedText = normalizeStatement(sentence.surface)
 
   switch (sentenceType) {
     case 'greeting_question':
@@ -92,9 +91,9 @@ function buildGist(sentence: SentenceNode | undefined, sentenceType: SentenceTyp
     case 'opinion_question':
       return `${topic || '何か'}について一緒に考えたい`
     case 'request':
-      return `${requestText || '何か'}を求めている`
+      return `${normalizedText || '何か'}を求めている`
     case 'statement':
-      return `${statementText || topic || '何か'}と述べている`
+      return `${normalizedText || topic || '何か'}と述べている`
     case 'greeting':
       return '挨拶している'
     case 'continuation':
