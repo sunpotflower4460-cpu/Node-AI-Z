@@ -292,7 +292,7 @@ export const ObserveMode = ({
                 value={inputText}
                 onChange={(event) => setInputText(event.target.value)}
                 placeholder="テキストを入力して内部パイプラインを観察する..."
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 text-[15px] font-medium text-slate-800 transition-all focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3.5 pl-12 pr-4 text-[15px] font-medium text-slate-800 transition-all focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') {
                     handleAnalyze()
@@ -305,17 +305,17 @@ export const ObserveMode = ({
               onClick={handleAnalyze}
               disabled={isAnalyzing || !inputText.trim()}
               aria-label={isAnalyzing ? '分析中' : '分析する'}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-[15px] font-bold text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:opacity-50 sm:w-auto"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-[15px] font-bold text-white shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md disabled:opacity-50 sm:w-auto"
             >
               {isAnalyzing ? <RefreshCw className="h-4.5 w-4.5 animate-spin" /> : <Activity className="h-4.5 w-4.5" />}
               Analyze
             </button>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-500">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-xs font-medium text-slate-500">
             1. テキストを入力 → 2. Analyze → 3. 下のタブで Reply / States / History などを確認
           </div>
-          <div className="scrollbar-hide flex items-center gap-2.5 overflow-x-auto pb-1">
-            <span className="mr-1 flex shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400"><Terminal className="h-3.5 w-3.5" /> Samples</span>
+          <div className="scrollbar-hide flex items-center gap-2 overflow-x-auto pb-1">
+            <span className="mr-0.5 flex shrink-0 items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400"><Terminal className="h-3.5 w-3.5" /> Samples</span>
             {SAMPLE_INPUTS.map((sample) => (
               <button
                 key={sample}
@@ -1239,20 +1239,25 @@ export const ObserveMode = ({
                 </div>
               </section>
             ) : null}
-            <div className="scrollbar-hide sticky top-2 z-10 -mx-1 flex gap-2 overflow-x-auto border-b-2 border-slate-100 bg-[#F8FAFC] px-1 pb-1 pt-1 md:top-[92px]">
+            <div className="scrollbar-hide sticky top-2 z-10 -mx-1 flex gap-1 overflow-x-auto bg-[#F8FAFC] px-1 pb-2 pt-1 md:top-[84px]">
               {(['Reply', 'SessionBrain', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`-mb-[2px] flex shrink-0 items-center gap-2 whitespace-nowrap rounded-t-xl border-b-2 px-4 py-3 text-sm font-bold transition-colors ${activeTab === tab ? 'border-indigo-600 bg-white/80 text-indigo-700' : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'}`}
+                  className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-bold transition-all duration-150 ${
+                    activeTab === tab
+                      ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-black/5'
+                      : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'
+                  }`}
                 >
-                  {tab === 'Reply' ? <MessageSquareText className="h-4.5 w-4.5" /> : null}
-                  {tab === 'SessionBrain' ? <Brain className="h-4.5 w-4.5" /> : null}
-                  {tab === 'Home' ? <Home className="h-4.5 w-4.5" /> : null}
-                  {tab === 'Relations' ? <GitPullRequest className="h-4.5 w-4.5" /> : null}
-                  {tab === 'Revision' ? <RefreshCw className="h-4.5 w-4.5" /> : null}
+                  {tab === 'Reply' ? <MessageSquareText className="h-4 w-4" /> : null}
+                  {tab === 'SessionBrain' ? <Brain className="h-4 w-4" /> : null}
+                  {tab === 'Home' ? <Home className="h-4 w-4" /> : null}
+                  {tab === 'Relations' ? <GitPullRequest className="h-4 w-4" /> : null}
+                  {tab === 'Revision' ? <RefreshCw className="h-4 w-4" /> : null}
                   {tab}
+                  {activeTab === tab ? <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" /> : null}
                 </button>
               ))}
             </div>

@@ -186,64 +186,68 @@ export default function NodeStudioPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-800 selection:bg-indigo-100 selection:text-indigo-900">
-      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 px-4 py-4 backdrop-blur md:px-6">
-        <div className="mx-auto flex w-full max-w-[1080px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <h1 className="flex flex-wrap items-center gap-2 text-xl font-bold tracking-tight text-slate-900 md:text-xl">
-              <BrainCircuit className="h-5 w-5 text-indigo-600 md:h-6 md:w-6" />
-              Node-AI-Z
-              <span className="ml-2 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">SRM-3 / CPU Runtime</span>
-            </h1>
-            <p className="max-w-2xl text-sm font-medium leading-relaxed text-slate-500">
-              研究するための観察ビューと、実際に話すための体験ビューを往復しながら、育つ知性を見ていく実験アプリ。
-            </p>
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 px-4 py-3 backdrop-blur md:px-6">
+        <div className="mx-auto flex w-full max-w-[1080px] flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
+              <BrainCircuit className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-lg font-extrabold tracking-tight text-slate-900">Node-AI-Z</h1>
+                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">SRM-3 / CPU Runtime</span>
+              </div>
+              <p className="mt-0.5 max-w-2xl text-xs font-medium leading-relaxed text-slate-500">
+                研究するための観察ビューと、実際に話すための体験ビューを往復しながら、育つ知性を見ていく実験アプリ。
+              </p>
+            </div>
           </div>
-          <div className="flex flex-col gap-3 lg:items-end">
-            <div className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-3">
+          <div className="flex flex-col gap-2.5 lg:items-end">
+            <div className="flex flex-col gap-1.5 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">実装方式</span>
-              <div className="grid grid-cols-1 gap-1 rounded-xl border border-slate-200 bg-slate-100/80 p-1 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-1 rounded-lg border border-slate-200 bg-slate-100/80 p-1 sm:grid-cols-2">
                 <button
                   type="button"
                   onClick={() => setImplementationMode('jibun_kaigi_api')}
-                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${implementationMode === 'jibun_kaigi_api' ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-bold transition-all duration-150 ${implementationMode === 'jibun_kaigi_api' ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'}`}
                 >
                   じぶん会議(API方式)
                 </button>
                 <button
                   type="button"
                   onClick={() => setImplementationMode('crystallized_thinking')}
-                  className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition-colors ${implementationMode === 'crystallized_thinking' ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  className={`inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-bold transition-all duration-150 ${implementationMode === 'crystallized_thinking' ? 'bg-white text-violet-700 shadow-sm ring-1 ring-black/5' : 'text-slate-500 hover:text-slate-800 hover:bg-white/50'}`}
                 >
                   結晶思考(API非依存)
                 </button>
               </div>
             </div>
-            <div className="relative flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600">
+            <div className="relative flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
                 Surface Provider: {implementationMode === 'jibun_kaigi_api' ? currentProviderConfig.label : '未使用 (将来AI sensei用)'}
               </span>
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                 Internal reasoning: shared
               </span>
               <button
                 type="button"
                 onClick={() => setIsApiPanelOpen((previous) => !previous)}
                 disabled={implementationMode !== 'jibun_kaigi_api'}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-indigo-300 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Settings2 className="h-3.5 w-3.5" />
                 基準APIを選ぶ
               </button>
 
               {isApiPanelOpen && implementationMode === 'jibun_kaigi_api' ? (
-                <div className="absolute left-0 top-full z-40 mt-2 w-full max-w-[320px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:left-auto sm:right-0">
+                <div className="absolute left-0 top-full z-40 mt-2 w-full max-w-[320px] rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl ring-1 ring-black/5 sm:left-auto sm:right-0">
                   <div className="mb-3">
                     <h2 className="text-sm font-bold text-slate-900">基準API選択 v0</h2>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500">
                       基準APIは最終発話の表面にだけ影響します。Node / Home / Revision / Memory は共通です。
                     </p>
                   </div>
-                  <div className="flex flex-col gap-2.5">
+                  <div className="flex flex-col gap-2">
                     {apiProviders.map((provider) => {
                       const isSelected = provider.id === apiSelection.baseProvider
 
@@ -253,14 +257,14 @@ export default function NodeStudioPage() {
                           type="button"
                           onClick={() => handleBaseProviderChange(provider.id)}
                           disabled={!provider.available}
-                          className={`rounded-xl border p-3 text-left transition-colors ${isSelected ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white'} ${provider.available ? 'hover:border-indigo-200 hover:bg-slate-50' : 'cursor-not-allowed bg-slate-50 text-slate-400 opacity-70'}`}
+                          className={`rounded-xl border p-3 text-left transition-all duration-150 ${isSelected ? 'border-indigo-300 bg-indigo-50 shadow-sm' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-slate-50'} ${!provider.available ? 'cursor-not-allowed bg-slate-50 text-slate-400 opacity-60' : ''}`}
                         >
                           <div className="flex items-center justify-between gap-3">
                             <div>
                               <div className="text-sm font-semibold text-slate-900">{provider.label}</div>
                               <div className="mt-1 text-xs leading-relaxed text-slate-500">{provider.description}</div>
                             </div>
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${provider.available ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
+                            <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${provider.available ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
                               {provider.available ? (isSelected ? 'Selected' : 'Available') : 'Disabled'}
                             </span>
                           </div>
@@ -273,7 +277,7 @@ export default function NodeStudioPage() {
 
               {/* Phase 2: Dashboard for Boundary / Confidence / Uncertainty / Replay */}
               {implementationMode === 'crystallized_thinking' && currentObservation && (
-                <div className="absolute left-0 top-full z-40 mt-2 w-full max-w-[400px] rounded-2xl border border-slate-200 bg-white p-4 shadow-xl sm:left-auto sm:right-0">
+                <div className="absolute left-0 top-full z-40 mt-2 w-full max-w-[400px] rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl ring-1 ring-black/5 sm:left-auto sm:right-0">
                   <div className="mb-3">
                     <h2 className="text-sm font-bold text-slate-900">Phase 2 Runtime State</h2>
                     <p className="mt-1 text-xs leading-relaxed text-slate-500">

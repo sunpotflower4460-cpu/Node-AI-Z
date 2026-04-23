@@ -21,10 +21,17 @@ export const ModeSwitch = ({ mode, onChange }: ModeSwitchProps) => (
           key={key}
           type="button"
           onClick={() => onChange(key)}
-          className={`inline-flex min-w-0 items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${isActive ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+          className={`inline-flex min-w-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all duration-200 ${
+            isActive
+              ? 'bg-white text-slate-900 shadow-md ring-1 ring-black/5'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-white/60'
+          }`}
         >
-          <Icon className="h-4 w-4 shrink-0" />
+          <Icon className={`h-4 w-4 shrink-0 transition-colors ${isActive ? (key === 'observe' ? 'text-indigo-600' : 'text-rose-500') : ''}`} />
           <span className="truncate">{label}</span>
+          {isActive ? (
+            <span className={`h-1.5 w-1.5 rounded-full ${key === 'observe' ? 'bg-indigo-500' : 'bg-rose-500'}`} />
+          ) : null}
         </button>
       )
     })}
