@@ -4,6 +4,7 @@ import type { CrystallizedThinkingResult } from './runtimeTypes'
 import type { SessionBrainState } from '../brain/sessionBrainState'
 import type { Phase2AblationFlags } from '../config/phase2Flags'
 import type { Phase3AblationFlags } from '../config/phase3Flags'
+import type { ProtoMeaningSeed, MixedLatentSeed } from '../signalField/signalFieldTypes'
 import { runChunkedNodePipeline } from './runChunkedNodePipeline'
 import { runSignalRuntime } from '../signal/runSignalRuntime'
 import { deriveUtteranceIntent } from '../utterance/deriveUtteranceIntent'
@@ -137,6 +138,17 @@ export type CrystallizedThinkingRuntimeInput = {
   brainState?: SessionBrainState // Phase 1: Session continuity
   phase2Flags?: Phase2AblationFlags // Phase 2: Ablation flags
   phase3Flags?: Phase3AblationFlags // Phase 3: Ablation flags
+  // Signal Field integration (optional — passed from runIntegratedSignalCrystallizedRuntime)
+  signalDerivedProtoSeeds?: ProtoMeaningSeed[]
+  signalDerivedMixedSeeds?: MixedLatentSeed[]
+  signalFieldSummary?: {
+    activeParticleCount: number
+    assemblyCount: number
+    protoMeaningSeedCount: number
+    mixedLatentSeedCount: number
+    bridgeCount: number
+    replayTriggered: boolean
+  }
 }
 
 /**
@@ -159,6 +171,9 @@ export const runCrystallizedThinkingRuntime = async ({
   brainState: inputBrainState,
   phase2Flags = DEFAULT_PHASE2_FLAGS,
   phase3Flags = DEFAULT_PHASE3_FLAGS,
+  signalDerivedProtoSeeds,
+  signalDerivedMixedSeeds,
+  signalFieldSummary,
 }: CrystallizedThinkingRuntimeInput): Promise<CrystallizedThinkingResult> => {
   // ===== Phase 1: Initialize or use existing brain state =====
   const brainState = inputBrainState ?? createInitialBrainState()
@@ -226,6 +241,21 @@ export const runCrystallizedThinkingRuntime = async ({
     ...weightedError.notes,
     ...signalDynamicsAdjustment.notes,
   ]
+
+  // ===== Signal Field Integration (pre-semantic seeds → pipeline influence) =====
+  // Derive cue strings from signal proto seeds (for workspace hints / Observe display)
+  const signalDerivedCues: string[] = (signalDerivedProtoSeeds ?? []).flatMap(s => s.features)
+
+  // Derive light workspace bias from mixed latent seeds
+  // (repetition → hold, instability → cautious, crossModalBinding → open)
+  let signalWorkspaceBias = { repetition: 0, instability: 0, crossModalBinding: 0 }
+  for (const seed of signalDerivedMixedSeeds ?? []) {
+    signalWorkspaceBias = {
+      repetition: Math.min(1, signalWorkspaceBias.repetition + (seed.axes.repetition ?? 0) * seed.weight),
+      instability: Math.min(1, signalWorkspaceBias.instability + (seed.axes.instability ?? 0) * seed.weight),
+      crossModalBinding: Math.min(1, signalWorkspaceBias.crossModalBinding + (seed.axes.crossModalBinding ?? 0) * seed.weight),
+    }
+  }
 
   // ===== Pass 3: Apply Persona to proto meanings =====
 
@@ -632,9 +662,11 @@ export const runCrystallizedThinkingRuntime = async ({
         afterglow: brainState.afterglow,
         recentFieldIntensity: brainState.recentFieldIntensity,
         overloadPressure: workspacePhaseControlResult.updatedState.distractorPressure,
-        safetySense: interoceptiveState?.socialSafety ?? 0.5,
+        // Signal field bias: instability → slightly increase overloadPressure (cautious)
+        // crossModalBinding → slightly raise recentFieldIntensity (open to update)
+        safetySense: Math.min(1, (interoceptiveState?.socialSafety ?? 0.5) + signalWorkspaceBias.crossModalBinding * 0.1),
         unresolvedThreadCount: workspacePhaseControlResult.updatedState.heldItems.filter(
-          (item) => item.strength > 0.5,
+          (item) => item.strength > (0.5 - signalWorkspaceBias.repetition * 0.1),
         ).length,
       },
     })
@@ -1219,5 +1251,10 @@ export const runCrystallizedThinkingRuntime = async ({
     aiSenseiConfig,
     humanReviewSummaries,
     humanReviewRecords,
+    // Signal Field Layer integration
+    signalFieldSummary,
+    signalDerivedCues,
+    signalDerivedProtoSeeds,
+    signalDerivedMixedSeeds,
   }
 }

@@ -120,6 +120,7 @@ Node-AI-Z には二つの独立した実装方式があります。
 - `runSignalIntelligenceRuntime` — signal-centered route を束ねる入口（既存、徐々に統合予定）
 - `runChunkedNodePipeline` — chunk / feature / activationProfile を通した signal 前段付き legacy 拡張
 - `runDualStreamRuntime` — Lexical Stream と Micro-Signal Stream を独立に走らせ、融合した FusedState を option / decision / utterance へ橋渡しする入口
+- `runIntegratedSignalCrystallizedRuntime` — **Signal Field Layer と結晶思考 runtime を橋渡しする統合 orchestrator**（v2 追加）。Signal Field → proto-meaning seeds → mixed latent seeds → 結晶思考本流という順で実行し、両経路の比較を Observe に渡す
 - `createObservationRecord` — runtime 結果を Observe / Experience 共通の observation record にまとめます
 
 **mode dispatch の重要性**:
@@ -853,3 +854,40 @@ Node-AI-Z は最初から意味ノード辞書を大量に持たず、signal fie
 - **Binding Teacher（LLM補助輪）**: LLM は知性本体ではなく、"これとこれは同じ対象だよ" と教える Binding Teacher として使われ、cross-modal bridge の形成を補助する
 - **Cross-Modal Bridge**: テキスト・画像・音声の assembly 間に段階的な橋（tentative → reinforced → promoted）が張られる
 - **単語・ラベルの後付け**: 単語やラベルは最初から固定せず、反復の後に昇格した proto-meaning に対して後から付与されうる
+
+## Signal Field Layer → 結晶思考接続（v2）
+
+Node-AI-Z は Signal Field Layer を最下層に追加し、既存の結晶思考 runtime と接続することで、
+「最初から意味辞書を持つ」ではなく「意味が後から生まれる」方向へ一歩進んだ構造になりました。
+
+### 接続の流れ
+
+```
+生入力（テキストなど）
+  ↓
+Signal Field Layer（粒子場・assembly・replay）
+  ↓  deriveProtoMeaningSeeds
+ProtoMeaningSeed（意味未満の pre-semantic seed）
+  ↓  deriveMixedLatentSeeds
+MixedLatentSeed（pull / instability / repetition / crossModalBinding などの抽象軸）
+  ↓
+runCrystallizedThinkingRuntime（既存 runtime — 壊さない）
+  ├─ proto meaning 形成への軽い混入
+  ├─ workspace gate salienceFactors への薄い bias
+  └─ Observe: signal vs lexical 比較表示
+```
+
+### 重要な設計原則
+
+- **Signal Field は既存 runtime の"手前"に置く** — 既存の crystallized_thinking runtime を置き換えない
+- **直接「意味」に飛ばさない** — assemblies → proto-meaning seeds → mixed latent seeds → 既存 meaning flow の段階を必ず通す
+- **既存の meaning layer を壊さない** — workspace / proto / option / decision の骨格はそのまま
+- **両経路の比較** — lexical/chunk 経路と signal field 経路は Observe で並べて比較できる
+
+### 新規追加ファイル
+
+- `src/signalField/deriveProtoMeaningSeeds.ts` — assemblies/bridges/replay → pre-semantic seeds
+- `src/signalField/deriveMixedLatentSeeds.ts` — seeds → latent axes（意味ラベルなし）
+- `src/signalField/buildSignalFieldSummary.ts` — Observe 向け Signal Field 要約
+- `src/runtime/runIntegratedSignalCrystallizedRuntime.ts` — Signal Field → crystallized_thinking 統合 orchestrator
+- `src/observe/buildSignalVsLexicalComparison.ts` — lexical 経路 vs signal 経路の比較表示

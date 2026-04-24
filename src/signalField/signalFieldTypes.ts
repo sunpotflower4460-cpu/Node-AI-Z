@@ -72,3 +72,36 @@ export type SignalFieldState = {
   crossModalBridges: CrossModalBridge[]
   frameCount: number
 }
+
+/**
+ * A pre-semantic seed derived from Signal Field assemblies / proto-meanings / bridges.
+ * Intentionally does NOT carry high-level meaning labels (e.g. "sadness").
+ * Features describe structural / statistical properties of the firing pattern.
+ */
+export type ProtoMeaningSeed = {
+  id: string
+  sourceAssemblyIds: string[]
+  sourceProtoMeaningIds?: string[]
+  strength: number
+  seedType: 'assembly_cluster' | 'bridge_cluster' | 'replay_cluster'
+  features: string[]
+}
+
+/**
+ * A latent-axis seed derived from ProtoMeaningSeeds.
+ * Connects the signal field layer to the crystallized_thinking mixed-node world.
+ * Axes are abstract continuous values — no final meaning labels yet.
+ */
+export type MixedLatentSeed = {
+  id: string
+  sourceSeedIds: string[]
+  weight: number
+  axes: {
+    pull?: number
+    avoidance?: number
+    openness?: number
+    instability?: number
+    repetition?: number
+    crossModalBinding?: number
+  }
+}
