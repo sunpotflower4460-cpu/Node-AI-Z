@@ -7,6 +7,13 @@ import type { ProtoMeaningSeed, MixedLatentSeed } from './signalFieldTypes'
  * abstract latent-axis form that the crystallized_thinking mixed-node layer expects.
  * Final meaning labels are still NOT assigned here.
  */
+
+let _seedCounter = 0
+
+function nextSeedId(prefix: string, count: number): string {
+  return `${prefix}_${++_seedCounter}_n${count}`
+}
+
 export function deriveMixedLatentSeeds(seeds: ProtoMeaningSeed[]): MixedLatentSeed[] {
   if (seeds.length === 0) return []
 
@@ -27,7 +34,7 @@ export function deriveMixedLatentSeeds(seeds: ProtoMeaningSeed[]): MixedLatentSe
     const hasHighReplay = assemblySeeds.some(s => s.features.includes('high_replay_recurrence'))
 
     mixed.push({
-      id: `mlseed_assembly_${Date.now()}_${assemblySeeds.length}`,
+      id: nextSeedId('mlseed_assembly', assemblySeeds.length),
       sourceSeedIds: assemblySeeds.map(s => s.id),
       weight: avgStrength,
       axes: {
@@ -46,7 +53,7 @@ export function deriveMixedLatentSeeds(seeds: ProtoMeaningSeed[]): MixedLatentSe
     const avgStrength = mean(bridgeSeeds.map(s => s.strength))
 
     mixed.push({
-      id: `mlseed_bridge_${Date.now()}_${bridgeSeeds.length}`,
+      id: nextSeedId('mlseed_bridge', bridgeSeeds.length),
       sourceSeedIds: bridgeSeeds.map(s => s.id),
       weight: avgStrength,
       axes: {
@@ -67,7 +74,7 @@ export function deriveMixedLatentSeeds(seeds: ProtoMeaningSeed[]): MixedLatentSe
     const hasRepeated = replaySeeds.some(s => s.features.includes('repeated_cluster'))
 
     mixed.push({
-      id: `mlseed_replay_${Date.now()}_${replaySeeds.length}`,
+      id: nextSeedId('mlseed_replay', replaySeeds.length),
       sourceSeedIds: replaySeeds.map(s => s.id),
       weight: avgStrength,
       axes: {

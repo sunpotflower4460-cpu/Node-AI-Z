@@ -246,6 +246,10 @@ export const runCrystallizedThinkingRuntime = async ({
   // Derive cue strings from signal proto seeds (for workspace hints / Observe display)
   const signalDerivedCues: string[] = (signalDerivedProtoSeeds ?? []).flatMap(s => s.features)
 
+  // Bias multipliers: kept small so signal field does not dominate the existing pipeline
+  const CROSS_MODAL_BIAS_FACTOR = 0.1   // crossModalBinding → slightly raise social safety (more open to update)
+  const REPETITION_BIAS_FACTOR = 0.1    // repetition → slightly lower hold threshold (favour retention)
+
   // Derive light workspace bias from mixed latent seeds
   // (repetition → hold, instability → cautious, crossModalBinding → open)
   let signalWorkspaceBias = { repetition: 0, instability: 0, crossModalBinding: 0 }
@@ -664,9 +668,9 @@ export const runCrystallizedThinkingRuntime = async ({
         overloadPressure: workspacePhaseControlResult.updatedState.distractorPressure,
         // Signal field bias: instability → slightly increase overloadPressure (cautious)
         // crossModalBinding → slightly raise recentFieldIntensity (open to update)
-        safetySense: Math.min(1, (interoceptiveState?.socialSafety ?? 0.5) + signalWorkspaceBias.crossModalBinding * 0.1),
+        safetySense: Math.min(1, (interoceptiveState?.socialSafety ?? 0.5) + signalWorkspaceBias.crossModalBinding * CROSS_MODAL_BIAS_FACTOR),
         unresolvedThreadCount: workspacePhaseControlResult.updatedState.heldItems.filter(
-          (item) => item.strength > (0.5 - signalWorkspaceBias.repetition * 0.1),
+          (item) => item.strength > (0.5 - signalWorkspaceBias.repetition * REPETITION_BIAS_FACTOR),
         ).length,
       },
     })
