@@ -842,3 +842,14 @@ npm run build
 npm run lint
 npm run test:run
 ```
+
+## Signal Field Layer（意味未満の発火場）
+
+Node-AI-Z は最初から意味ノード辞書を大量に持たず、signal field / assemblies / proto-meaning から始まる最小基盤を持つ。
+
+- **粒子場（Stable Particle Field）**: 安定した決定論的座標を持つ粒子群が存在し、刺激に応じて発火・伝播・Hebbian結合強化・減衰・replayを行う
+- **Assembly 検出**: 反復する同時発火群が assembly として検出され、安定した発火パターンが育つ
+- **Proto-Meaning 昇格**: assembly が閾値を超えた安定性を持つと proto-meaning へ昇格する。この段階でも単語やラベルは固定されない
+- **Binding Teacher（LLM補助輪）**: LLM は知性本体ではなく、"これとこれは同じ対象だよ" と教える Binding Teacher として使われ、cross-modal bridge の形成を補助する
+- **Cross-Modal Bridge**: テキスト・画像・音声の assembly 間に段階的な橋（tentative → reinforced → promoted）が張られる
+- **単語・ラベルの後付け**: 単語やラベルは最初から固定せず、反復の後に昇格した proto-meaning に対して後から付与されうる
