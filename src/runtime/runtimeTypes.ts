@@ -37,6 +37,8 @@ import type {
   HumanReviewSummary,
 } from '../core/guardian/humanReview/humanReviewTypes'
 import type { LayeredThinkingTrace } from './layeredThinkingTypes'
+import type { ProtoMeaningSeed, MixedLatentSeed } from '../signalField/signalFieldTypes'
+import type { SignalVsLexicalComparison } from '../observe/buildSignalVsLexicalComparison'
 
 /**
  * Base runtime result shared by both modes
@@ -148,6 +150,19 @@ export type CrystallizedThinkingResult = RuntimeResultBase & {
   aiSenseiConfig?: import('../core/guardian/aiSensei').AiSenseiConfig
   humanReviewSummaries?: HumanReviewSummary[]
   humanReviewRecords?: HumanReviewRecord[]
+  // Signal Field Layer — integration bridge
+  signalFieldSummary?: {
+    activeParticleCount: number
+    assemblyCount: number
+    protoMeaningSeedCount: number
+    mixedLatentSeedCount: number
+    bridgeCount: number
+    replayTriggered: boolean
+  }
+  signalDerivedCues?: string[]
+  signalDerivedProtoSeeds?: ProtoMeaningSeed[]
+  signalDerivedMixedSeeds?: MixedLatentSeed[]
+  signalVsLexicalComparison?: SignalVsLexicalComparison
 }
 
 export type LayeredThinkingResult = RuntimeResultBase & {
