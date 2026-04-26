@@ -14,7 +14,7 @@ export function applyAssemblySuppression(
   branch: SignalPersonalBranch,
 ): SignalCompetitionResult {
   const notes = [...competition.notes]
-  let additionalSuppressed: string[] = []
+  const additionalSuppressed: string[] = []
 
   // Check for assemblies that share too many particles
   const dominantAssemblies = competition.dominantAssemblyIds
