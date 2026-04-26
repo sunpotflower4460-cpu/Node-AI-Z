@@ -1,4 +1,3 @@
-import type { SignalModeRuntimeResult } from '../runtime/runSignalModeRuntime'
 import type { SignalConsolidationState } from '../signalConsolidation/signalConsolidationTypes'
 import type { SignalAttentionBudget, AttentionAllocation } from '../signalAttention/signalAttentionTypes'
 import type { SignalCompetitionResult } from '../signalInhibition/signalInhibitionTypes'

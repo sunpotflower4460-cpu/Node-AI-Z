@@ -1,4 +1,4 @@
-import type { SignalFieldState, ParticlePoint } from '../signalField/signalFieldTypes'
+import type { SignalFieldState } from '../signalField/signalFieldTypes'
 
 /**
  * Apply lateral inhibition to prevent runaway activation.

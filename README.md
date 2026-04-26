@@ -855,6 +855,18 @@ Node-AI-Z は最初から意味ノード辞書を大量に持たず、signal fie
 - **Cross-Modal Bridge**: テキスト・画像・音声の assembly 間に段階的な橋（tentative → reinforced → promoted）が張られる
 - **単語・ラベルの後付け**: 単語やラベルは最初から固定せず、反復の後に昇格した proto-meaning に対して後から付与されうる
 
+### Signal Mode Brain-Like Growth Features
+
+Signal Mode は、Personal Branch と Loop に加えて、自然な脳に近づくための以下の補強機能を持ちます：
+
+- **休止時 Replay / Consolidation**: 会話中ではないタイミングに、最近の発火や assembly を再活性・整理する。Replay 成功したものは安定化され、失敗したものは弱められる。Teacher dependency も段階的に低減される。
+- **Attention / Energy Budget**: 発火や学習の資源に上限を持たせる。活動量や teacher 使用量に応じて fatigue が蓄積し、learningRateMultiplier が変化する。休止時には recovery が進む。
+- **Inhibition / Competition**: 何でもつながりすぎないように、競合・抑制を入れる。Winner-take-more 方式で dominant / coactive / suppressed を分け、過剰な同時発火を防ぐ。
+- **Promotion Readiness 精密化**: Assembly / Bridge / Proto Seed が「意味の芽」へ進む準備があるかを数値化する。Recurrence / Replay / Stability / Teacher Independence / Noise Risk などから readinessScore を算出する。
+- **Node Mother 接続前 Export**: まだ Mother へ接続しないが、将来渡せる形式（SignalMotherExportPackage）を作る。High readiness / Low noise risk / Low teacher dependency の項目のみが export 候補になる。
+
+これにより、Signal Mode は「発火して育つ」だけでなく、「休んで整理し、注意資源を持ち、抑制し、昇格準備を評価し、将来 Mother に渡せる形まで整う」状態になります。
+
 ## Signal Field Layer → 結晶思考接続（v2）
 
 Node-AI-Z は Signal Field Layer を最下層に追加し、既存の結晶思考 runtime と接続することで、
