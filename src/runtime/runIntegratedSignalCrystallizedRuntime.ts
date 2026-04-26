@@ -137,8 +137,10 @@ function textToVector(text: string): number[] {
 
 function extractLexicalChunks(result: CrystallizedThinkingResult): string[] {
   const chunks: string[] = []
-  const optionLabels = result.optionAwareness?.detectedOptions?.map(o => o.label) ?? []
-  chunks.push(...optionLabels)
+  // Extract option summary label if available
+  if (result.optionAwareness?.summaryLabel) {
+    chunks.push(result.optionAwareness.summaryLabel)
+  }
   const sensoryGloss = result.protoMeanings?.sensory?.map(m => m.glossJa) ?? []
   chunks.push(...sensoryGloss.slice(0, 3))
   return chunks
