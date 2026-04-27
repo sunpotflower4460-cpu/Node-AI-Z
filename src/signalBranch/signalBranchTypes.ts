@@ -1,3 +1,7 @@
+import type { ContrastRecord } from '../signalContrast/signalContrastTypes'
+import type { SignalSequenceRecord } from '../signalSequence/signalSequenceTypes'
+import type { SignalPlasticityRecord } from '../signalPlasticity/signalPlasticityTypes'
+
 export type SignalExperienceSource =
   | 'external_stimulus'
   | 'internal_replay'
@@ -62,6 +66,9 @@ export type SignalPersonalBranch = {
   assemblyRecords: SignalAssemblyRecord[]
   bridgeRecords: SignalBridgeRecord[]
   protoSeedRecords: SignalProtoSeedRecord[]
+  contrastRecords: ContrastRecord[]
+  sequenceRecords: SignalSequenceRecord[]
+  plasticityRecords: SignalPlasticityRecord[]
   recentRecallEvents: SignalRecallEvent[]
   summary: {
     assemblyCount: number

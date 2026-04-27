@@ -1,6 +1,7 @@
 import type { SignalModeRuntimeResult } from '../runtime/runSignalModeRuntime'
 import type { SignalBranchSummary } from '../signalBranch/buildSignalBranchSummary'
 import type { SignalBrainLikeGrowthSummary } from './buildSignalBrainLikeGrowthSummary'
+import type { SignalActiveLearningSummary } from './buildSignalActiveLearningSummary'
 import { buildSignalBranchSummary } from '../signalBranch/buildSignalBranchSummary'
 
 /**
@@ -43,6 +44,8 @@ export type SignalModeObserveSummary = {
 
   // Brain-Like Growth Features
   brainLikeGrowth: SignalBrainLikeGrowthSummary
+
+  activeLearning: SignalActiveLearningSummary
 
   // Summary Insights
   insights: {
@@ -106,6 +109,7 @@ export function buildSignalModeObserveSummary(
     },
 
     brainLikeGrowth: result.observe.brainLikeGrowth,
+    activeLearning: result.observe.activeLearning,
 
     insights: {
       isTeacherDependent,
