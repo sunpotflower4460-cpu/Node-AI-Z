@@ -1,5 +1,6 @@
 import type { SignalModeRuntimeResult } from '../runtime/runSignalModeRuntime'
 import type { SignalBranchSummary } from '../signalBranch/buildSignalBranchSummary'
+import type { SignalBrainLikeGrowthSummary } from './buildSignalBrainLikeGrowthSummary'
 import { buildSignalBranchSummary } from '../signalBranch/buildSignalBranchSummary'
 
 /**
@@ -9,6 +10,7 @@ import { buildSignalBranchSummary } from '../signalBranch/buildSignalBranchSumma
  * - Signal Field state (particles, assemblies, bridges)
  * - Personal Branch learning (experience, teacher dependency)
  * - Loop dynamics (self-echo, boundary tension, prediction residue)
+ * - Brain-like growth features (consolidation, attention, inhibition, promotion, export)
  */
 export type SignalModeObserveSummary = {
   // Signal Field
@@ -38,6 +40,9 @@ export type SignalModeObserveSummary = {
       teacher: number
     }
   }
+
+  // Brain-Like Growth Features
+  brainLikeGrowth: SignalBrainLikeGrowthSummary
 
   // Summary Insights
   insights: {
@@ -99,6 +104,8 @@ export function buildSignalModeObserveSummary(
         teacher: result.loopState.boundaryLoop.sourceBalance.teacher,
       },
     },
+
+    brainLikeGrowth: result.observe.brainLikeGrowth,
 
     insights: {
       isTeacherDependent,
