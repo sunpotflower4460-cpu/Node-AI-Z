@@ -27,6 +27,9 @@ export function createInitialSignalPersonalBranch(): SignalPersonalBranch {
     assemblyRecords: [],
     bridgeRecords: [],
     protoSeedRecords: [],
+    contrastRecords: [],
+    sequenceRecords: [],
+    plasticityRecords: [],
     recentRecallEvents: [],
     summary: {
       assemblyCount: 0,

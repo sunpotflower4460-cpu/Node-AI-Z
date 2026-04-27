@@ -32,6 +32,28 @@ import { buildSignalPromotionReadinessSummary } from '../signalPromotion/buildSi
 import { buildSignalMotherExport } from '../signalExport/buildSignalMotherExport'
 import { validateSignalMotherExport } from '../signalExport/validateSignalMotherExport'
 import { buildSignalBrainLikeGrowthSummary } from '../observe/buildSignalBrainLikeGrowthSummary'
+import { compareAssemblies } from '../signalContrast/compareAssemblies'
+import { classifyContrastRelation } from '../signalContrast/classifyContrastRelation'
+import { recordContrastExperience } from '../signalContrast/recordContrastExperience'
+import { buildContrastSummary } from '../signalContrast/buildContrastSummary'
+import type { ContrastRecord } from '../signalContrast/signalContrastTypes'
+import { recordActivationSequence } from '../signalSequence/recordActivationSequence'
+import { updateSequenceMemory } from '../signalSequence/updateSequenceMemory'
+import { predictNextAssemblies } from '../signalSequence/predictNextAssemblies'
+import { buildSequenceSummary } from '../signalSequence/buildSequenceSummary'
+import { decayTimescaleWeights } from '../signalPlasticity/decayTimescaleWeights'
+import { updateMultiTimescaleWeights } from '../signalPlasticity/updateMultiTimescaleWeights'
+import { buildPlasticitySummary } from '../signalPlasticity/buildPlasticitySummary'
+import { selectDreamCandidates } from '../signalDream/selectDreamCandidates'
+import { runOfflineDreamExploration } from '../signalDream/runOfflineDreamExploration'
+import { buildDreamSummary } from '../signalDream/buildDreamSummary'
+import { selectAttentionTargets } from '../signalAttentionActive/selectAttentionTargets'
+import { chooseTeacherQueryTargets } from '../signalAttentionActive/chooseTeacherQueryTargets'
+import { buildActiveAttentionSummary } from '../signalAttentionActive/buildActiveAttentionSummary'
+import { generateInternalQuestions } from '../signalInquiry/generateInternalQuestions'
+import { prioritizeInternalQuestions } from '../signalInquiry/prioritizeInternalQuestions'
+import { buildInternalQuestionSummary } from '../signalInquiry/buildInternalQuestionSummary'
+import { buildSignalActiveLearningSummary } from '../observe/buildSignalActiveLearningSummary'
 
 /**
  * Signal Mode Runtime Input
@@ -81,39 +103,28 @@ export type SignalModeRuntimeResult = {
       predictionResidue: number
     }
     brainLikeGrowth: ReturnType<typeof buildSignalBrainLikeGrowthSummary>
+    activeLearning: ReturnType<typeof buildSignalActiveLearningSummary>
   }
+}
+
+function createEmptyDreamSummary() {
+  return buildDreamSummary({
+    candidates: [],
+    evaluations: [],
+    strengthenedBridgeIds: [],
+    createdBridgeIds: [],
+    notes: [],
+  })
 }
 
 /**
  * Run Signal Mode Runtime.
- *
- * This is the main runtime for Signal Mode that integrates:
- * 1. Signal Field dynamics (particles, assemblies, bridges)
- * 2. Personal Branch learning (experience accumulation, teacher dependency reduction)
- * 3. Self/Boundary Loops (temporal continuity, source awareness)
- * 4. Consolidation (resting replay, pruning)
- * 5. Attention Budget (energy, fatigue, learning rate modulation)
- * 6. Inhibition (competition, lateral inhibition)
- * 7. Promotion Readiness (evaluation for Mother export)
- * 8. Mother Export (package creation, validation)
- *
- * Each turn:
- * - Runs Signal Field runtime (ignition, propagation, assembly detection, etc.)
- * - Records assemblies and bridges in Personal Branch
- * - Updates Self-Loop (echo, baseline, replay tendency)
- * - Updates Boundary-Loop (source balance, tension, prediction residue)
- * - Updates Attention Budget (fatigue, recovery, learning rate)
- * - Applies Competition and Inhibition
- * - Derives proto-meaning seeds and mixed latent seeds
- * - Updates branch maturity stages
- * - Runs Consolidation if resting
- * - Computes Promotion Readiness
- * - Generates Mother Export Package
  */
 export async function runSignalModeRuntime(
   input: SignalModeRuntimeInput,
 ): Promise<SignalModeRuntimeResult> {
-  // Initialize or retrieve existing states
+  const timestamp = input.stimulus.timestamp
+
   const branch = input.existingBranch ?? createInitialSignalPersonalBranch()
   const loopState = input.existingLoopState ?? createInitialSignalLoopState()
   const previousFieldState = input.existingFieldState
@@ -123,7 +134,6 @@ export async function runSignalModeRuntime(
   const isUserActive = input.isUserActive ?? true
   const recentActivityLevel = input.recentActivityLevel ?? 0.5
 
-  // 1. Run Signal Field runtime
   const fieldResult = await runSignalFieldRuntime({
     stimulus: input.stimulus,
     existingState: previousFieldState,
@@ -134,53 +144,83 @@ export async function runSignalModeRuntime(
   })
 
   const fieldState = fieldResult.state
+  const currentAssemblyIds = fieldState.assemblies.map(assembly => assembly.id)
 
-  // 2. Record assemblies in Personal Branch
   let updatedBranch = recordAssemblyExperience(
     branch,
-    fieldResult.observe.newlyDetectedAssemblies.map(id =>
-      fieldState.assemblies.find(a => a.id === id)!,
-    ),
-    'external_stimulus', // Default source; could be refined based on context
+    fieldResult.observe.newlyDetectedAssemblies.map(id => fieldState.assemblies.find(assembly => assembly.id === id)!).filter(Boolean),
+    'external_stimulus',
   )
 
-  // 3. Record bridges in Personal Branch
   if (fieldState.crossModalBridges.length > 0) {
     updatedBranch = recordBridgeExperience(updatedBranch, fieldState.crossModalBridges, {
       createdBy: input.enableBindingTeacher ? 'binding_teacher' : 'self_discovered',
       confidence: fieldResult.observe.bindingTeacherResult?.confidence ?? 0.5,
-      timestamp: Date.now(),
+      timestamp,
     })
   }
 
-  // 4. Update bridge maturity stages
   updatedBranch = updateSignalPersonalBranch(updatedBranch)
 
-  // 5. Compute prediction residue
+  const contrastExperiences: ContrastRecord[] = []
+  for (let i = 0; i < fieldState.assemblies.length; i += 1) {
+    for (let j = i + 1; j < fieldState.assemblies.length; j += 1) {
+      const comparison = compareAssemblies(fieldState.assemblies[i]!, fieldState.assemblies[j]!)
+      const classification = classifyContrastRelation(comparison)
+      contrastExperiences.push({
+        id: `contrast_${comparison.sourceAssemblyId}_${comparison.targetAssemblyId}`,
+        sourceAssemblyId: comparison.sourceAssemblyId,
+        targetAssemblyId: comparison.targetAssemblyId,
+        relation: classification.relation,
+        confidence: classification.confidence,
+        teacherAssisted: false,
+        selfDiscovered: true,
+        recurrenceCount: 1,
+        lastUpdatedAt: timestamp,
+      })
+    }
+  }
+  updatedBranch = recordContrastExperience(updatedBranch, contrastExperiences, timestamp)
+
+  const previousSequencePredictions = predictNextAssemblies(
+    updatedBranch.sequenceRecords,
+    loopState.selfLoop.recentAssemblyIds,
+  )
+  const sequenceObservation = recordActivationSequence({
+    previousAssemblyIds: loopState.selfLoop.recentAssemblyIds,
+    currentAssemblyIds,
+    observedAt: timestamp,
+  })
+  updatedBranch = {
+    ...updatedBranch,
+    sequenceRecords: updateSequenceMemory(
+      updatedBranch.sequenceRecords,
+      sequenceObservation,
+      previousSequencePredictions,
+    ),
+    updatedAt: timestamp,
+  }
+
   const predictionResidue = computePredictionResidue(previousFieldState, fieldState)
 
-  // 6. Update Self-Loop
   const updatedSelfLoop = updateSelfLoop(
     loopState.selfLoop,
     fieldState,
     fieldState.recentActivations,
   )
 
-  // 7. Classify signal sources
   const signalSources = fieldState.recentActivations.map(event => ({
     source: classifySignalSource(event),
     strength: event.strength,
   }))
 
-  // 8. Update Boundary-Loop
   const updatedBoundaryLoop = updateBoundaryLoop(
     loopState.boundaryLoop,
     signalSources,
     predictionResidue,
   )
 
-  // 9. Update Attention Budget
-  const activeParticleCount = fieldState.particles.filter(p => p.activation > 0.1).length
+  const activeParticleCount = fieldState.particles.filter(particle => particle.activation > 0.1).length
   attentionBudget = updateAttentionBudget(
     attentionBudget,
     activeParticleCount,
@@ -188,29 +228,59 @@ export async function runSignalModeRuntime(
     !isUserActive,
   )
 
-  // 10. Allocate Attention
   const attentionAllocation = allocateSignalAttention(
     attentionBudget,
     !isUserActive,
     predictionResidue,
   )
 
-  // 11. Compute Competition and Inhibition
+  let plasticityRecords = decayTimescaleWeights(updatedBranch.plasticityRecords, timestamp)
+  const plasticityReinforcements = [
+    ...updatedBranch.assemblyRecords
+      .filter(record => currentAssemblyIds.includes(record.assemblyId))
+      .map(record => ({
+        targetType: 'assembly' as const,
+        targetId: record.assemblyId,
+        intensity: Math.max(0.2, record.stabilityScore + record.recurrenceCount * 0.05),
+      })),
+    ...updatedBranch.bridgeRecords
+      .filter(record => timestamp - record.lastUsedAt < 15_000)
+      .map(record => ({
+        targetType: 'bridge' as const,
+        targetId: `${record.sourceAssemblyId}->${record.targetAssemblyId}`,
+        intensity: Math.max(0.2, record.confidence),
+      })),
+    ...updatedBranch.sequenceRecords
+      .filter(record => timestamp - record.lastObservedAt < 15_000)
+      .map(record => ({
+        targetType: 'sequence' as const,
+        targetId: record.id,
+        intensity: Math.max(0.2, record.predictionConfidence),
+      })),
+  ]
+  plasticityRecords = updateMultiTimescaleWeights({
+    records: plasticityRecords,
+    reinforcements: plasticityReinforcements,
+    learningRateMultiplier: attentionBudget.learningRateMultiplier,
+    timestamp,
+    isResting: !isUserActive,
+  })
+  updatedBranch = {
+    ...updatedBranch,
+    plasticityRecords,
+    updatedAt: timestamp,
+  }
+
   const recentlyActiveAssemblyIds = fieldState.assemblies
-    .filter(a => a.lastActivatedAt > Date.now() - 10000)
-    .map(a => a.id)
+    .filter(assembly => assembly.lastActivatedAt > timestamp - 10_000)
+    .map(assembly => assembly.id)
 
-  let competition = computeSignalCompetition(
-    updatedBranch,
-    recentlyActiveAssemblyIds,
-  )
-
+  let competition = computeSignalCompetition(updatedBranch, recentlyActiveAssemblyIds)
   competition = applyAssemblySuppression(competition, updatedBranch)
 
-  // 12. Run Consolidation if conditions are met
   const shouldConsolidate = shouldRunConsolidation(
     {
-      now: Date.now(),
+      now: timestamp,
       isUserActive,
       recentActivityLevel,
     },
@@ -218,47 +288,122 @@ export async function runSignalModeRuntime(
     updatedBranch,
   )
 
+  let dreamSummary = createEmptyDreamSummary()
+
   if (shouldConsolidate) {
     const replayResult = runRestingReplay(updatedBranch)
     updatedBranch = consolidateSignalBranch(updatedBranch, replayResult)
 
+    const dreamCandidates = selectDreamCandidates({
+      branch: updatedBranch,
+      contrastRecords: updatedBranch.contrastRecords,
+      sequenceRecords: updatedBranch.sequenceRecords,
+    })
+    const dreamExploration = runOfflineDreamExploration({
+      branch: updatedBranch,
+      candidates: dreamCandidates,
+      contrastRecords: updatedBranch.contrastRecords,
+      sequenceRecords: updatedBranch.sequenceRecords,
+      plasticityRecords: updatedBranch.plasticityRecords,
+      timestamp,
+    })
+    updatedBranch = updateSignalPersonalBranch({
+      ...dreamExploration.branch,
+      plasticityRecords: updateMultiTimescaleWeights({
+        records: dreamExploration.branch.plasticityRecords,
+        reinforcements: [
+          ...dreamExploration.result.strengthenedBridgeIds.map(id => ({
+            targetType: 'bridge' as const,
+            targetId: id,
+            intensity: 0.55,
+          })),
+          ...dreamExploration.result.createdBridgeIds.map(id => ({
+            targetType: 'bridge' as const,
+            targetId: id,
+            intensity: 0.45,
+          })),
+        ],
+        learningRateMultiplier: attentionBudget.learningRateMultiplier,
+        timestamp,
+        isResting: true,
+      }),
+      updatedAt: timestamp,
+    })
+    dreamSummary = buildDreamSummary(dreamExploration.result)
+
     consolidationState = {
       ...consolidationState,
-      lastConsolidatedAt: Date.now(),
+      lastConsolidatedAt: timestamp,
       consolidationCount: consolidationState.consolidationCount + 1,
       recentReplayAssemblyIds: replayResult.replayedAssemblyIds,
       strengthenedAssemblyIds: replayResult.strengthenedAssemblyIds,
-      weakenedBridgeIds: [], // Could be computed from bridges
-      prunedLinkCount: 0, // Could be computed from pruning
-      notes: replayResult.notes,
+      weakenedBridgeIds: [],
+      prunedLinkCount: 0,
+      notes: [...replayResult.notes, ...dreamSummary.notes],
     }
   }
 
-  // 13. Compute Promotion Readiness
   const allReadiness = [
-    ...updatedBranch.assemblyRecords.map(a =>
+    ...updatedBranch.assemblyRecords.map(record =>
       computeAssemblyPromotionReadiness(
-        a,
-        competition.suppressedAssemblyIds.includes(a.assemblyId),
+        record,
+        competition.suppressedAssemblyIds.includes(record.assemblyId),
       ),
     ),
-    ...updatedBranch.bridgeRecords.map(b => computeBridgePromotionReadiness(b)),
-    ...updatedBranch.protoSeedRecords.map(p =>
-      computeProtoSeedPromotionReadiness(p, updatedBranch),
+    ...updatedBranch.bridgeRecords.map(record => computeBridgePromotionReadiness(record)),
+    ...updatedBranch.protoSeedRecords.map(record =>
+      computeProtoSeedPromotionReadiness(record, updatedBranch),
     ),
   ]
 
   const promotionReadiness = buildSignalPromotionReadinessSummary(allReadiness)
+  const contrastSummary = buildContrastSummary(updatedBranch.contrastRecords)
+  const nextSequencePredictions = predictNextAssemblies(updatedBranch.sequenceRecords, currentAssemblyIds)
+  const sequenceSummary = buildSequenceSummary(updatedBranch.sequenceRecords, nextSequencePredictions)
+  const plasticitySummary = buildPlasticitySummary(updatedBranch.plasticityRecords)
 
-  // 14. Build Mother Export Package
+  const selectedAttentionTargets = selectAttentionTargets({
+    branch: updatedBranch,
+    promotionReadiness,
+    contrastSummary,
+    sequenceSummary,
+    attentionAllocation,
+  })
+  const activeAttentionBudgetLimit = Math.max(
+    1,
+    Math.min(
+      6,
+      Math.floor(
+        (attentionAllocation.replayBudget +
+          attentionAllocation.teacherBudget +
+          attentionAllocation.consolidationBudget) /
+          12,
+      ),
+    ),
+  )
+  const teacherQueryTargetIds = chooseTeacherQueryTargets(
+    selectedAttentionTargets,
+    attentionAllocation.teacherBudget,
+  )
+  const activeAttentionSummary = buildActiveAttentionSummary({
+    selectedTargets: selectedAttentionTargets,
+    teacherQueryTargetIds,
+    budgetLimit: activeAttentionBudgetLimit,
+  })
+
+  const internalQuestions = prioritizeInternalQuestions(
+    generateInternalQuestions(selectedAttentionTargets),
+    updatedBoundaryLoop.boundaryTension,
+    updatedBoundaryLoop.predictionResidue,
+  )
+  const internalQuestionSummary = buildInternalQuestionSummary(internalQuestions)
+
   const motherExport = buildSignalMotherExport(updatedBranch, allReadiness)
   const motherExportValidation = validateSignalMotherExport(motherExport)
 
-  // 15. Derive proto-meaning seeds and mixed latent seeds
   const protoSeeds = deriveProtoMeaningSeeds(fieldState)
   const mixedSeeds = deriveMixedLatentSeeds(protoSeeds)
 
-  // 16. Build observation summary
   const fieldSummary = buildSignalFieldSummary(
     fieldState,
     protoSeeds,
@@ -283,6 +428,17 @@ export async function runSignalModeRuntime(
     motherExportValidation,
   )
 
+  const activeLearning = buildSignalActiveLearningSummary({
+    activeAttention: activeAttentionSummary,
+    contrast: contrastSummary,
+    sequence: sequenceSummary,
+    plasticity: plasticitySummary,
+    dream: dreamSummary,
+    inquiry: internalQuestionSummary,
+  })
+
+  updatedBranch = updateSignalPersonalBranch(updatedBranch)
+
   return {
     fieldState,
     personalBranch: updatedBranch,
@@ -297,6 +453,7 @@ export async function runSignalModeRuntime(
       branchSummary: updatedBranch.summary,
       loopSummary,
       brainLikeGrowth,
+      activeLearning,
     },
   }
 }
