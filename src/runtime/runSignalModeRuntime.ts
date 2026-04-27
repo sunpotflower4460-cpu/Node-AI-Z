@@ -107,6 +107,11 @@ export type SignalModeRuntimeResult = {
   }
 }
 
+const MAX_CONTRAST_COMPARISONS = 8
+const MIN_ATTENTION_TARGETS = 1
+const MAX_ATTENTION_TARGETS = 6
+const BUDGET_PER_TARGET = 12
+
 function createEmptyDreamSummary() {
   return buildDreamSummary({
     candidates: [],
@@ -145,10 +150,12 @@ export async function runSignalModeRuntime(
 
   const fieldState = fieldResult.state
   const currentAssemblyIds = fieldState.assemblies.map(assembly => assembly.id)
+  const currentAssemblyIdSet = new Set(currentAssemblyIds)
+  const assemblyById = new Map(fieldState.assemblies.map(assembly => [assembly.id, assembly]))
 
   let updatedBranch = recordAssemblyExperience(
     branch,
-    fieldResult.observe.newlyDetectedAssemblies.map(id => fieldState.assemblies.find(assembly => assembly.id === id)!).filter(Boolean),
+    fieldResult.observe.newlyDetectedAssemblies.filter(id => assemblyById.has(id)).map(id => assemblyById.get(id)!),
     'external_stimulus',
   )
 
@@ -163,9 +170,12 @@ export async function runSignalModeRuntime(
   updatedBranch = updateSignalPersonalBranch(updatedBranch)
 
   const contrastExperiences: ContrastRecord[] = []
-  for (let i = 0; i < fieldState.assemblies.length; i += 1) {
-    for (let j = i + 1; j < fieldState.assemblies.length; j += 1) {
-      const comparison = compareAssemblies(fieldState.assemblies[i]!, fieldState.assemblies[j]!)
+  const contrastAssemblies = fieldState.assemblies
+    .filter(assembly => assembly.lastActivatedAt > timestamp - 10_000)
+    .slice(0, MAX_CONTRAST_COMPARISONS)
+  for (let i = 0; i < contrastAssemblies.length; i += 1) {
+    for (let j = i + 1; j < contrastAssemblies.length; j += 1) {
+      const comparison = compareAssemblies(contrastAssemblies[i]!, contrastAssemblies[j]!)
       const classification = classifyContrastRelation(comparison)
       contrastExperiences.push({
         id: `contrast_${comparison.sourceAssemblyId}_${comparison.targetAssemblyId}`,
@@ -237,7 +247,7 @@ export async function runSignalModeRuntime(
   let plasticityRecords = decayTimescaleWeights(updatedBranch.plasticityRecords, timestamp)
   const plasticityReinforcements = [
     ...updatedBranch.assemblyRecords
-      .filter(record => currentAssemblyIds.includes(record.assemblyId))
+      .filter(record => currentAssemblyIdSet.has(record.assemblyId))
       .map(record => ({
         targetType: 'assembly' as const,
         targetId: record.assemblyId,
@@ -370,14 +380,14 @@ export async function runSignalModeRuntime(
     attentionAllocation,
   })
   const activeAttentionBudgetLimit = Math.max(
-    1,
+    MIN_ATTENTION_TARGETS,
     Math.min(
-      6,
+      MAX_ATTENTION_TARGETS,
       Math.floor(
         (attentionAllocation.replayBudget +
           attentionAllocation.teacherBudget +
           attentionAllocation.consolidationBudget) /
-          12,
+          BUDGET_PER_TARGET,
       ),
     ),
   )

@@ -3,6 +3,16 @@ import type {
   SignalPlasticityTargetType,
 } from './signalPlasticityTypes'
 
+const SHORT_TERM_GAIN = 0.45
+const MID_TERM_GAIN_ACTIVE = 0.18
+const MID_TERM_GAIN_RESTING = 0.28
+const LONG_TERM_GAIN_ACTIVE = 0.08
+const LONG_TERM_GAIN_RESTING = 0.16
+const SHORT_TO_MID_ACTIVE = 0.02
+const SHORT_TO_MID_RESTING = 0.08
+const MID_TO_LONG_ACTIVE = 0.01
+const MID_TO_LONG_RESTING = 0.05
+
 export type PlasticityReinforcement = {
   targetType: SignalPlasticityTargetType
   targetId: string
@@ -31,9 +41,11 @@ export function updateMultiTimescaleWeights(input: {
       lastUpdatedAt: input.timestamp,
     }
 
-    const shortTermGain = learning * 0.45
-    const midTermGain = learning * (input.isResting ? 0.28 : 0.18)
-    const longTermGain = learning * (input.isResting ? 0.16 : 0.08)
+    const shortTermGain = learning * SHORT_TERM_GAIN
+    const midTermGain = learning * (input.isResting ? MID_TERM_GAIN_RESTING : MID_TERM_GAIN_ACTIVE)
+    const longTermGain = learning * (input.isResting ? LONG_TERM_GAIN_RESTING : LONG_TERM_GAIN_ACTIVE)
+    const shortToMidTransfer = previousWeights.shortTerm * (input.isResting ? SHORT_TO_MID_RESTING : SHORT_TO_MID_ACTIVE)
+    const midToLongTransfer = previousWeights.midTerm * (input.isResting ? MID_TO_LONG_RESTING : MID_TO_LONG_ACTIVE)
 
     recordMap.set(key, {
       id: existing?.id ?? `plasticity_${reinforcement.targetType}_${reinforcement.targetId}`,
@@ -42,8 +54,8 @@ export function updateMultiTimescaleWeights(input: {
       reinforcementCount: (existing?.reinforcementCount ?? 0) + 1,
       weights: {
         shortTerm: Math.min(1, previousWeights.shortTerm + shortTermGain),
-        midTerm: Math.min(1, previousWeights.midTerm + midTermGain + previousWeights.shortTerm * (input.isResting ? 0.08 : 0.02)),
-        longTerm: Math.min(1, previousWeights.longTerm + longTermGain + previousWeights.midTerm * (input.isResting ? 0.05 : 0.01)),
+        midTerm: Math.min(1, previousWeights.midTerm + midTermGain + shortToMidTransfer),
+        longTerm: Math.min(1, previousWeights.longTerm + longTermGain + midToLongTransfer),
         lastUpdatedAt: input.timestamp,
       },
     })

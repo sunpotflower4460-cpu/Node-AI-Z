@@ -1,11 +1,15 @@
 import type { Assembly } from '../signalField/signalFieldTypes'
 import type { AssemblyComparison } from './signalContrastTypes'
 
+const OVERLAP_WEIGHT = 0.55
+const RECURRENCE_WEIGHT = 0.2
+const COACTIVATION_WEIGHT = 0.15
+const TEMPORAL_WEIGHT = 0.1
+
 export function compareAssemblies(
   source: Assembly,
   target: Assembly,
 ): AssemblyComparison {
-  const sourceSet = new Set(source.particleIds)
   const targetSet = new Set(target.particleIds)
   const sharedParticleCount = source.particleIds.filter(id => targetSet.has(id)).length
   const unionSize = new Set([...source.particleIds, ...target.particleIds]).size || 1
@@ -25,10 +29,10 @@ export function compareAssemblies(
     0,
     Math.min(
       1,
-      overlapRatio * 0.55 +
-        recurrenceAlignment * 0.2 +
-        coactivationAlignment * 0.15 +
-        temporalAlignment * 0.1,
+      overlapRatio * OVERLAP_WEIGHT +
+        recurrenceAlignment * RECURRENCE_WEIGHT +
+        coactivationAlignment * COACTIVATION_WEIGHT +
+        temporalAlignment * TEMPORAL_WEIGHT,
     ),
   )
 

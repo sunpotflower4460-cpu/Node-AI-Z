@@ -10,6 +10,12 @@ const QUESTION_PROMPTS: Record<ActiveAttentionTarget['reason'], string> = {
   contrast_unclear: 'What feature separates these similar patterns?',
 }
 
+function normalizeSuggestedAction(
+  action: ActiveAttentionTarget['recommendedAction'],
+): InternalQuestion['suggestedAction'] {
+  return action === 'suppress' ? 'observe_next_turn' : action
+}
+
 export function generateInternalQuestions(
   targets: ActiveAttentionTarget[],
 ): InternalQuestion[] {
@@ -28,6 +34,6 @@ export function generateInternalQuestions(
     targetId: target.targetId,
     prompt: QUESTION_PROMPTS[target.reason],
     priority: target.urgency,
-    suggestedAction: target.recommendedAction,
+    suggestedAction: normalizeSuggestedAction(target.recommendedAction),
   }))
 }

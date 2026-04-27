@@ -47,7 +47,9 @@ export function selectDreamCandidates(input: {
     }
 
     const sourceAssemblyId = sequence.assemblyIds.at(-1)!
-    const [targetAssemblyId] = Object.entries(sequence.transitionWeights).sort(([, a], [, b]) => b - a)[0] ?? []
+    const sortedTransitions = Object.entries(sequence.transitionWeights).sort(([, weightA], [, weightB]) => weightB - weightA)
+    const topTransition = sortedTransitions[0]
+    const targetAssemblyId = topTransition?.[0]
     if (!targetAssemblyId) {
       continue
     }
