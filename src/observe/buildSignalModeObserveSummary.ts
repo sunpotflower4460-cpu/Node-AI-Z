@@ -2,19 +2,10 @@ import type { SignalModeRuntimeResult } from '../runtime/runSignalModeRuntime'
 import type { SignalBranchSummary } from '../signalBranch/buildSignalBranchSummary'
 import type { SignalBrainLikeGrowthSummary } from './buildSignalBrainLikeGrowthSummary'
 import type { SignalActiveLearningSummary } from './buildSignalActiveLearningSummary'
+import type { SignalActionOutcomeObserveSummary } from './buildSignalActionOutcomeObserveSummary'
 import { buildSignalBranchSummary } from '../signalBranch/buildSignalBranchSummary'
 
-/**
- * Signal Mode Observe Summary
- *
- * Comprehensive observation data for Signal Mode, including:
- * - Signal Field state (particles, assemblies, bridges)
- * - Personal Branch learning (experience, teacher dependency)
- * - Loop dynamics (self-echo, boundary tension, prediction residue)
- * - Brain-like growth features (consolidation, attention, inhibition, promotion, export)
- */
 export type SignalModeObserveSummary = {
-  // Signal Field
   field: {
     activeParticleCount: number
     assemblyCount: number
@@ -24,11 +15,7 @@ export type SignalModeObserveSummary = {
     replayTriggered: boolean
     frameCount: number
   }
-
-  // Personal Branch
   branch: SignalBranchSummary
-
-  // Loop State
   loop: {
     selfEchoStrength: number
     replayTendency: number
@@ -41,13 +28,9 @@ export type SignalModeObserveSummary = {
       teacher: number
     }
   }
-
-  // Brain-Like Growth Features
   brainLikeGrowth: SignalBrainLikeGrowthSummary
-
   activeLearning: SignalActiveLearningSummary
-
-  // Summary Insights
+  actionOutcomeLearning: SignalActionOutcomeObserveSummary
   insights: {
     isTeacherDependent: boolean
     hasStablePatterns: boolean
@@ -56,18 +39,10 @@ export type SignalModeObserveSummary = {
   }
 }
 
-/**
- * Build Signal Mode Observe Summary.
- *
- * Combines Signal Field, Personal Branch, and Loop State data
- * into a comprehensive observation summary for display/logging.
- */
 export function buildSignalModeObserveSummary(
   result: SignalModeRuntimeResult,
 ): SignalModeObserveSummary {
   const branchSummary = buildSignalBranchSummary(result.personalBranch)
-
-  // Compute insights
   const isTeacherDependent = branchSummary.averageTeacherDependency > 0.6
   const hasStablePatterns = branchSummary.mostStableAssemblies.length > 0
   const isInternallyDriven =
@@ -92,9 +67,7 @@ export function buildSignalModeObserveSummary(
       replayTriggered: result.observe.fieldSummary.replayTriggered,
       frameCount: result.fieldState.frameCount,
     },
-
     branch: branchSummary,
-
     loop: {
       selfEchoStrength: result.loopState.selfLoop.selfEchoStrength,
       replayTendency: result.loopState.selfLoop.replayTendency,
@@ -107,10 +80,9 @@ export function buildSignalModeObserveSummary(
         teacher: result.loopState.boundaryLoop.sourceBalance.teacher,
       },
     },
-
     brainLikeGrowth: result.observe.brainLikeGrowth,
     activeLearning: result.observe.activeLearning,
-
+    actionOutcomeLearning: result.observe.actionOutcomeLearning,
     insights: {
       isTeacherDependent,
       hasStablePatterns,

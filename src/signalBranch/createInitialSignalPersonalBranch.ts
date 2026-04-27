@@ -1,21 +1,7 @@
+import { createInitialModulatorState } from '../signalModulator/createInitialModulatorState'
+import { buildDevelopmentSummary } from '../signalDevelopment/buildDevelopmentSummary'
 import type { SignalPersonalBranch } from './signalBranchTypes'
 
-/**
- * Create an empty Signal Mode personal branch.
- *
- * IMPORTANT: Does NOT inject meaning nodes or word dictionaries.
- * Signal Mode starts with an empty branch and builds experience through:
- * - Stable particles
- * - Ignition
- * - Propagation
- * - Hebbian learning
- * - Decay
- * - Replay
- * - Assembly detection
- * - Proto seed formation
- * - Bridge formation
- * - Personal branch accumulation
- */
 export function createInitialSignalPersonalBranch(): SignalPersonalBranch {
   const now = Date.now()
 
@@ -31,6 +17,29 @@ export function createInitialSignalPersonalBranch(): SignalPersonalBranch {
     sequenceRecords: [],
     plasticityRecords: [],
     recentRecallEvents: [],
+    actionHistory: [],
+    actionResults: [],
+    outcomeMemory: {
+      records: [],
+      averageReward: 0,
+      recentErrorRate: 0,
+      successfulActionTypes: {},
+    },
+    modulatorState: createInitialModulatorState(),
+    predictionMemory: {
+      recentPredictions: [],
+      recentComparisons: [],
+      averageSurprise: 0,
+      lastUpdatedAt: now,
+    },
+    reconsolidationState: {
+      openMemories: [],
+      recentlyRevisedTargetIds: [],
+      recentlyRestabilizedTargetIds: [],
+      lastUpdatedAt: now,
+      notes: [],
+    },
+    developmentState: buildDevelopmentSummary(1),
     summary: {
       assemblyCount: 0,
       bridgeCount: 0,

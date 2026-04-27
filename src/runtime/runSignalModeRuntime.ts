@@ -55,15 +55,29 @@ import { generateInternalQuestions } from '../signalInquiry/generateInternalQues
 import { prioritizeInternalQuestions } from '../signalInquiry/prioritizeInternalQuestions'
 import { buildInternalQuestionSummary } from '../signalInquiry/buildInternalQuestionSummary'
 import { buildSignalActiveLearningSummary } from '../observe/buildSignalActiveLearningSummary'
+import { selectSignalActions } from '../signalAction/selectSignalActions'
+import { executeSignalAction } from '../signalAction/executeSignalAction'
+import { evaluateSignalActionOutcome } from '../signalAction/evaluateSignalActionOutcome'
+import { buildSignalActionSummary } from '../signalAction/buildSignalActionSummary'
+import { computeSignalReward } from '../signalReward/computeSignalReward'
+import { recordActionOutcome } from '../signalReward/recordActionOutcome'
+import { updateOutcomeMemory } from '../signalReward/updateOutcomeMemory'
+import { buildSignalRewardSummary } from '../signalReward/buildSignalRewardSummary'
+import { updateSignalModulators } from '../signalModulator/updateSignalModulators'
+import { applyModulatorsToLearning } from '../signalModulator/applyModulatorsToLearning'
+import { buildModulatorSummary } from '../signalModulator/buildModulatorSummary'
+import { generateHierarchicalPredictions } from '../signalPrediction/generateHierarchicalPredictions'
+import { comparePredictionWithActual } from '../signalPrediction/comparePredictionWithActual'
+import { updatePredictionMemory } from '../signalPrediction/updatePredictionMemory'
+import { buildHierarchicalPredictionSummary } from '../signalPrediction/buildHierarchicalPredictionSummary'
+import { openMemoryForReconsolidation } from '../signalReconsolidation/openMemoryForReconsolidation'
+import { reviseSignalMemory } from '../signalReconsolidation/reviseSignalMemory'
+import { restabilizeSignalMemory } from '../signalReconsolidation/restabilizeSignalMemory'
+import { buildReconsolidationSummary } from '../signalReconsolidation/buildReconsolidationSummary'
+import { determineSignalDevelopmentStage } from '../signalDevelopment/determineSignalDevelopmentStage'
+import { buildDevelopmentSummary } from '../signalDevelopment/buildDevelopmentSummary'
+import { buildSignalActionOutcomeObserveSummary } from '../observe/buildSignalActionOutcomeObserveSummary'
 
-/**
- * Signal Mode Runtime Input
- *
- * Integrates:
- * - Signal Field (particles, assemblies, bridges)
- * - Personal Branch (learning, experience accumulation)
- * - Self/Boundary Loops (temporal continuity, source awareness)
- */
 export type SignalModeRuntimeInput = {
   stimulus: ParticleStimulus
   existingBranch?: SignalPersonalBranch
@@ -79,15 +93,6 @@ export type SignalModeRuntimeInput = {
   recentActivityLevel?: number
 }
 
-/**
- * Signal Mode Runtime Result
- *
- * Returns updated states for:
- * - Signal Field
- * - Personal Branch
- * - Loop State
- * - Observation summary
- */
 export type SignalModeRuntimeResult = {
   fieldState: SignalFieldState
   personalBranch: SignalPersonalBranch
@@ -105,6 +110,7 @@ export type SignalModeRuntimeResult = {
     }
     brainLikeGrowth: ReturnType<typeof buildSignalBrainLikeGrowthSummary>
     activeLearning: ReturnType<typeof buildSignalActiveLearningSummary>
+    actionOutcomeLearning: ReturnType<typeof buildSignalActionOutcomeObserveSummary>
   }
 }
 
@@ -120,14 +126,10 @@ function createEmptyDreamSummary() {
   })
 }
 
-/**
- * Run Signal Mode Runtime.
- */
 export async function runSignalModeRuntime(
   input: SignalModeRuntimeInput,
 ): Promise<SignalModeRuntimeResult> {
   const timestamp = input.stimulus.timestamp
-
   const branch = input.existingBranch ?? createInitialSignalPersonalBranch()
   const loopState = input.existingLoopState ?? createInitialSignalLoopState()
   const previousFieldState = input.existingFieldState
@@ -153,7 +155,9 @@ export async function runSignalModeRuntime(
 
   let updatedBranch = recordAssemblyExperience(
     branch,
-    fieldResult.observe.newlyDetectedAssemblies.filter(id => assemblyById.has(id)).map(id => assemblyById.get(id)!),
+    fieldResult.observe.newlyDetectedAssemblies
+      .filter(id => assemblyById.has(id))
+      .map(id => assemblyById.get(id)!),
     'external_stimulus',
   )
 
@@ -168,7 +172,6 @@ export async function runSignalModeRuntime(
   updatedBranch = updateSignalPersonalBranch(updatedBranch)
 
   const contrastExperiences: ContrastRecord[] = []
-  // Keep pairwise contrast bounded; increasing this cap raises the per-turn O(n²) comparison cost.
   const contrastAssemblies = fieldState.assemblies
     .filter(assembly => assembly.lastActivatedAt > timestamp - 10_000)
     .slice(0, MAX_CONTRAST_COMPARISONS)
@@ -211,7 +214,6 @@ export async function runSignalModeRuntime(
   }
 
   const predictionResidue = computePredictionResidue(previousFieldState, fieldState)
-
   const updatedSelfLoop = updateSelfLoop(
     loopState.selfLoop,
     fieldState,
@@ -396,6 +398,126 @@ export async function runSignalModeRuntime(
   )
   const internalQuestionSummary = buildInternalQuestionSummary(internalQuestions)
 
+  const developmentState = buildDevelopmentSummary(determineSignalDevelopmentStage(updatedBranch))
+  const predictions = developmentState.capabilities.canPredictHierarchically
+    ? generateHierarchicalPredictions({
+        branch: updatedBranch,
+        currentAssemblyIds,
+        previousAssemblyIds: loopState.selfLoop.recentAssemblyIds,
+        timestamp,
+      })
+    : []
+  const predictionComparisons = comparePredictionWithActual({
+    predictions,
+    actualAssemblyIds: currentAssemblyIds,
+    actualBridgeIds: updatedBranch.bridgeRecords.map(record => record.id),
+    actualProtoSeedIds: updatedBranch.protoSeedRecords.map(record => record.protoSeedId),
+  })
+  const predictionMemory = updatePredictionMemory({
+    memory: updatedBranch.predictionMemory,
+    predictions,
+    comparisons: predictionComparisons,
+    timestamp,
+  })
+
+  let modulatorState = developmentState.capabilities.canModulateLearning
+    ? updateSignalModulators({
+        previous: updatedBranch.modulatorState,
+        branch: updatedBranch,
+        outcomeMemory: updatedBranch.outcomeMemory,
+        predictionMemory,
+        attentionBudget,
+        activeParticleCount,
+        timestamp,
+      })
+    : updatedBranch.modulatorState
+  attentionBudget = applyModulatorsToLearning(attentionBudget, modulatorState)
+
+  const selectedActions = selectSignalActions({
+    selectedTargets: selectedAttentionTargets,
+    teacherQueryTargetIds,
+    promotionReadiness,
+    modulatorState,
+    development: developmentState,
+    timestamp,
+  })
+
+  const evaluatedResults = []
+  let actionBranch = updatedBranch
+  for (const action of selectedActions) {
+    const executed = await executeSignalAction({
+      action,
+      branch: actionBranch,
+      fieldState,
+      enableBindingTeacher: input.enableBindingTeacher,
+      textSummary: input.textSummary,
+      imageSummary: input.imageSummary,
+      audioSummary: input.audioSummary,
+      timestamp,
+    })
+    actionBranch = executed.branch
+    evaluatedResults.push(evaluateSignalActionOutcome(action, executed.result))
+  }
+
+  let outcomeMemory = updatedBranch.outcomeMemory
+  const recentOutcomeRecords = []
+  for (let index = 0; index < selectedActions.length; index += 1) {
+    const action = selectedActions[index]!
+    const result = evaluatedResults[index]!
+    const surprise = predictionComparisons.find(comparison => comparison.targetId === action.targetId)?.surprise ?? 0
+    const reward = computeSignalReward(result, surprise)
+    const rewardResult = {
+      ...result,
+      rewardValue: reward.rewardValue,
+      notes: [...result.notes, ...reward.notes],
+    }
+    evaluatedResults[index] = rewardResult
+    const record = recordActionOutcome({
+      action,
+      result: rewardResult,
+      errorValue: reward.errorValue,
+      timestamp,
+    })
+    recentOutcomeRecords.push(record)
+    outcomeMemory = updateOutcomeMemory({
+      memory: outcomeMemory,
+      record,
+      actionType: action.actionType,
+    })
+  }
+
+  const reconsolidationOpened = developmentState.capabilities.canReconsolidate
+    ? openMemoryForReconsolidation({
+        previous: updatedBranch.reconsolidationState,
+        recentOutcomes: recentOutcomeRecords,
+        predictionComparisons,
+        timestamp,
+      })
+    : updatedBranch.reconsolidationState
+  const revised = developmentState.capabilities.canReconsolidate
+    ? reviseSignalMemory({
+        branch: actionBranch,
+        state: reconsolidationOpened,
+        timestamp,
+      })
+    : { branch: actionBranch, state: reconsolidationOpened }
+  const reconsolidationState = developmentState.capabilities.canReconsolidate
+    ? restabilizeSignalMemory(revised.state, timestamp)
+    : revised.state
+
+  updatedBranch = updateSignalPersonalBranch({
+    ...revised.branch,
+    actionHistory: [...updatedBranch.actionHistory, ...selectedActions].slice(-20),
+    actionResults: [...updatedBranch.actionResults, ...evaluatedResults].slice(-20),
+    outcomeMemory,
+    modulatorState,
+    predictionMemory,
+    reconsolidationState,
+    developmentState,
+    updatedAt: timestamp,
+  })
+  modulatorState = updatedBranch.modulatorState
+
   const motherExport = buildSignalMotherExport(updatedBranch, allReadiness)
   const motherExportValidation = validateSignalMotherExport(motherExport)
 
@@ -435,7 +557,19 @@ export async function runSignalModeRuntime(
     inquiry: internalQuestionSummary,
   })
 
-  updatedBranch = updateSignalPersonalBranch(updatedBranch)
+  const actionSummary = buildSignalActionSummary(selectedActions, evaluatedResults)
+  const rewardSummary = buildSignalRewardSummary(updatedBranch.outcomeMemory)
+  const modulatorSummary = buildModulatorSummary(modulatorState)
+  const predictionSummary = buildHierarchicalPredictionSummary(updatedBranch.predictionMemory)
+  const reconsolidationSummary = buildReconsolidationSummary(updatedBranch.reconsolidationState)
+  const actionOutcomeLearning = buildSignalActionOutcomeObserveSummary({
+    actions: actionSummary,
+    reward: rewardSummary,
+    modulators: modulatorSummary,
+    prediction: predictionSummary,
+    reconsolidation: reconsolidationSummary,
+    development: updatedBranch.developmentState,
+  })
 
   return {
     fieldState,
@@ -452,6 +586,7 @@ export async function runSignalModeRuntime(
       loopSummary,
       brainLikeGrowth,
       activeLearning,
+      actionOutcomeLearning,
     },
   }
 }

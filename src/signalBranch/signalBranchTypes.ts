@@ -1,6 +1,12 @@
 import type { ContrastRecord } from '../signalContrast/signalContrastTypes'
 import type { SignalSequenceRecord } from '../signalSequence/signalSequenceTypes'
 import type { SignalPlasticityRecord } from '../signalPlasticity/signalPlasticityTypes'
+import type { SignalAction, SignalActionResult } from '../signalAction/signalActionTypes'
+import type { SignalOutcomeMemory } from '../signalReward/signalRewardTypes'
+import type { SignalModulatorState } from '../signalModulator/signalModulatorTypes'
+import type { HierarchicalPredictionMemory } from '../signalPrediction/hierarchicalPredictionTypes'
+import type { SignalReconsolidationState } from '../signalReconsolidation/signalReconsolidationTypes'
+import type { SignalDevelopmentState } from '../signalDevelopment/signalDevelopmentTypes'
 
 export type SignalExperienceSource =
   | 'external_stimulus'
@@ -70,6 +76,13 @@ export type SignalPersonalBranch = {
   sequenceRecords: SignalSequenceRecord[]
   plasticityRecords: SignalPlasticityRecord[]
   recentRecallEvents: SignalRecallEvent[]
+  actionHistory: SignalAction[]
+  actionResults: SignalActionResult[]
+  outcomeMemory: SignalOutcomeMemory
+  modulatorState: SignalModulatorState
+  predictionMemory: HierarchicalPredictionMemory
+  reconsolidationState: SignalReconsolidationState
+  developmentState: SignalDevelopmentState
   summary: {
     assemblyCount: number
     bridgeCount: number
