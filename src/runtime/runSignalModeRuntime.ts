@@ -55,6 +55,7 @@ import { generateInternalQuestions } from '../signalInquiry/generateInternalQues
 import { prioritizeInternalQuestions } from '../signalInquiry/prioritizeInternalQuestions'
 import { buildInternalQuestionSummary } from '../signalInquiry/buildInternalQuestionSummary'
 import { buildSignalActiveLearningSummary } from '../observe/buildSignalActiveLearningSummary'
+import type { SignalActionResult } from '../signalAction/signalActionTypes'
 import { selectSignalActions } from '../signalAction/selectSignalActions'
 import { executeSignalAction } from '../signalAction/executeSignalAction'
 import { evaluateSignalActionOutcome } from '../signalAction/evaluateSignalActionOutcome'
@@ -442,7 +443,7 @@ export async function runSignalModeRuntime(
     timestamp,
   })
 
-  const evaluatedResults = []
+  const evaluatedResults: SignalActionResult[] = []
   let actionBranch = updatedBranch
   for (const action of selectedActions) {
     const executed = await executeSignalAction({
@@ -463,10 +464,10 @@ export async function runSignalModeRuntime(
   const recentOutcomeRecords = []
   for (let index = 0; index < selectedActions.length; index += 1) {
     const action = selectedActions[index]!
-    const result = evaluatedResults[index]!
+    const result: SignalActionResult = evaluatedResults[index]!
     const surprise = predictionComparisons.find(comparison => comparison.targetId === action.targetId)?.surprise ?? 0
     const reward = computeSignalReward(result, surprise)
-    const rewardResult = {
+    const rewardResult: SignalActionResult = {
       ...result,
       rewardValue: reward.rewardValue,
       notes: [...result.notes, ...reward.notes],
