@@ -32,7 +32,9 @@ export function updateSequenceMemory(
   const predictionConfidence = totalWeight > 0 ? Math.max(...Object.values(transitionWeights)) / totalWeight : 0
 
   recordMap.set(contextKey, {
-    id: existing?.id ?? `sequence_${contextKey || 'root'}_${observation.observedAt}`,
+    id:
+      existing?.id ??
+      `sequence_${contextKey || 'root'}_${observation.nextAssemblyIds.join('-')}_${observation.observedAt}`,
     assemblyIds: observation.contextAssemblyIds,
     transitionWeights,
     recurrenceCount: (existing?.recurrenceCount ?? 0) + 1,

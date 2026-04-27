@@ -16,21 +16,29 @@ function normalizeSuggestedAction(
   return action === 'suppress' ? 'observe_next_turn' : action
 }
 
+function mapQuestionType(
+  reason: ActiveAttentionTarget['reason'],
+): InternalQuestion['questionType'] {
+  switch (reason) {
+    case 'teacher_dependency_high':
+      return 'teacher_dependency'
+    case 'contrast_unclear':
+      return 'contrast'
+    case 'sequence_prediction_mismatch':
+      return 'sequence'
+    case 'high_promotion_readiness':
+      return 'promotion'
+    default:
+      return 'stability'
+  }
+}
+
 export function generateInternalQuestions(
   targets: ActiveAttentionTarget[],
 ): InternalQuestion[] {
   return targets.map(target => ({
     id: `question_${target.id}`,
-    questionType:
-      target.reason === 'teacher_dependency_high'
-        ? 'teacher_dependency'
-        : target.reason === 'contrast_unclear'
-          ? 'contrast'
-          : target.reason === 'sequence_prediction_mismatch'
-            ? 'sequence'
-            : target.reason === 'high_promotion_readiness'
-              ? 'promotion'
-              : 'stability',
+    questionType: mapQuestionType(target.reason),
     targetId: target.targetId,
     prompt: QUESTION_PROMPTS[target.reason],
     priority: target.urgency,

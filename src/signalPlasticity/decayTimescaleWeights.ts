@@ -5,7 +5,7 @@ export function decayTimescaleWeights(
   now: number,
 ): SignalPlasticityRecord[] {
   return records.map(record => {
-    const elapsed = Math.max(1, now - record.weights.lastUpdatedAt)
+    const elapsed = Math.max(0, now - record.weights.lastUpdatedAt)
     const decayFactor = Math.min(1, elapsed / 10_000)
 
     return {

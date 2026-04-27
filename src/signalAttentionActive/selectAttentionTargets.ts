@@ -5,10 +5,7 @@ import type { SequenceSummary } from '../signalSequence/signalSequenceTypes'
 import type { AttentionAllocation } from '../signalAttention/signalAttentionTypes'
 import type { ActiveAttentionTarget } from './activeAttentionTypes'
 import { scoreAttentionUrgency } from './scoreAttentionUrgency'
-
-const MIN_ATTENTION_TARGETS = 1
-const MAX_ATTENTION_TARGETS = 6
-const BUDGET_PER_TARGET = 12
+import { computeActiveAttentionBudgetLimit } from './computeActiveAttentionBudgetLimit'
 
 export type SelectAttentionTargetsInput = {
   branch: SignalPersonalBranch
@@ -120,18 +117,7 @@ export function selectAttentionTargets(
     })
   }
 
-  const budgetLimit = Math.max(
-    MIN_ATTENTION_TARGETS,
-    Math.min(
-      MAX_ATTENTION_TARGETS,
-      Math.floor(
-        (input.attentionAllocation.replayBudget +
-          input.attentionAllocation.teacherBudget +
-          input.attentionAllocation.consolidationBudget) /
-          BUDGET_PER_TARGET,
-      ),
-    ),
-  )
+  const budgetLimit = computeActiveAttentionBudgetLimit(input.attentionAllocation)
 
   return candidates
     .sort((a, b) => b.urgency - a.urgency)

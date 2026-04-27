@@ -50,6 +50,7 @@ import { buildDreamSummary } from '../signalDream/buildDreamSummary'
 import { selectAttentionTargets } from '../signalAttentionActive/selectAttentionTargets'
 import { chooseTeacherQueryTargets } from '../signalAttentionActive/chooseTeacherQueryTargets'
 import { buildActiveAttentionSummary } from '../signalAttentionActive/buildActiveAttentionSummary'
+import { computeActiveAttentionBudgetLimit } from '../signalAttentionActive/computeActiveAttentionBudgetLimit'
 import { generateInternalQuestions } from '../signalInquiry/generateInternalQuestions'
 import { prioritizeInternalQuestions } from '../signalInquiry/prioritizeInternalQuestions'
 import { buildInternalQuestionSummary } from '../signalInquiry/buildInternalQuestionSummary'
@@ -108,9 +109,6 @@ export type SignalModeRuntimeResult = {
 }
 
 const MAX_CONTRAST_COMPARISONS = 8
-const MIN_ATTENTION_TARGETS = 1
-const MAX_ATTENTION_TARGETS = 6
-const BUDGET_PER_TARGET = 12
 
 function createEmptyDreamSummary() {
   return buildDreamSummary({
@@ -170,6 +168,7 @@ export async function runSignalModeRuntime(
   updatedBranch = updateSignalPersonalBranch(updatedBranch)
 
   const contrastExperiences: ContrastRecord[] = []
+  // Keep pairwise contrast bounded; increasing this cap raises the per-turn O(n²) comparison cost.
   const contrastAssemblies = fieldState.assemblies
     .filter(assembly => assembly.lastActivatedAt > timestamp - 10_000)
     .slice(0, MAX_CONTRAST_COMPARISONS)
@@ -379,18 +378,7 @@ export async function runSignalModeRuntime(
     sequenceSummary,
     attentionAllocation,
   })
-  const activeAttentionBudgetLimit = Math.max(
-    MIN_ATTENTION_TARGETS,
-    Math.min(
-      MAX_ATTENTION_TARGETS,
-      Math.floor(
-        (attentionAllocation.replayBudget +
-          attentionAllocation.teacherBudget +
-          attentionAllocation.consolidationBudget) /
-          BUDGET_PER_TARGET,
-      ),
-    ),
-  )
+  const activeAttentionBudgetLimit = computeActiveAttentionBudgetLimit(attentionAllocation)
   const teacherQueryTargetIds = chooseTeacherQueryTargets(
     selectedAttentionTargets,
     attentionAllocation.teacherBudget,
