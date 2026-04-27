@@ -10,6 +10,9 @@ describe('runSignalModeRuntime', () => {
         strength: 1,
         timestamp: 1000,
       },
+      enableBindingTeacher: true,
+      textSummary: 'small repeating concept',
+      imageSummary: 'matching visual concept',
       isUserActive: true,
       recentActivityLevel: 0.6,
     })
@@ -26,15 +29,42 @@ describe('runSignalModeRuntime', () => {
       existingFieldState: first.fieldState,
       existingConsolidationState: first.consolidationState,
       existingAttentionBudget: first.attentionBudget,
+      enableBindingTeacher: true,
+      textSummary: 'small repeating concept',
+      imageSummary: 'matching visual concept',
       isUserActive: false,
       recentActivityLevel: 0.1,
     })
 
-    expect(second.personalBranch.sequenceRecords.length).toBeGreaterThanOrEqual(0)
-    expect(second.personalBranch.plasticityRecords.length).toBeGreaterThan(0)
-    expect(second.observe.activeLearning.sequence.totalRecords).toBeGreaterThanOrEqual(0)
-    expect(second.observe.activeLearning.plasticity.totalRecords).toBeGreaterThan(0)
-    expect(second.observe.activeLearning.activeAttention.budgetLimit).toBeGreaterThan(0)
-    expect(second.observe.activeLearning.inquiry.totalQuestions).toBeGreaterThanOrEqual(0)
+    const third = await runSignalModeRuntime({
+      stimulus: {
+        modality: 'text',
+        vector: [0.9, 0.62, 0.31],
+        strength: 1,
+        timestamp: 3000,
+      },
+      existingBranch: second.personalBranch,
+      existingLoopState: second.loopState,
+      existingFieldState: second.fieldState,
+      existingConsolidationState: second.consolidationState,
+      existingAttentionBudget: second.attentionBudget,
+      enableBindingTeacher: true,
+      textSummary: 'small repeating concept',
+      imageSummary: 'matching visual concept',
+      isUserActive: true,
+      recentActivityLevel: 0.3,
+    })
+
+    expect(third.personalBranch.sequenceRecords.length).toBeGreaterThanOrEqual(0)
+    expect(third.personalBranch.plasticityRecords.length).toBeGreaterThan(0)
+    expect(third.observe.activeLearning.sequence.totalRecords).toBeGreaterThanOrEqual(0)
+    expect(third.observe.activeLearning.plasticity.totalRecords).toBeGreaterThan(0)
+    expect(third.observe.activeLearning.activeAttention.budgetLimit).toBeGreaterThan(0)
+    expect(third.observe.activeLearning.inquiry.totalQuestions).toBeGreaterThanOrEqual(0)
+    expect(third.personalBranch.predictionMemory.recentPredictions.length).toBeGreaterThan(0)
+    expect(third.personalBranch.developmentState.stage).toBeGreaterThanOrEqual(6)
+    expect(third.observe.actionOutcomeLearning.development.stage).toBeGreaterThanOrEqual(6)
+    expect(third.observe.actionOutcomeLearning.modulators.learningRateMultiplier).toBeGreaterThan(0)
+    expect(third.observe.actionOutcomeLearning.prediction.totalPredictions).toBeGreaterThan(0)
   })
 })
