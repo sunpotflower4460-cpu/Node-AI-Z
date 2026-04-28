@@ -60,7 +60,7 @@ export async function runScenarioStep(
       enableBindingTeacher: isTeacherHint,
       textSummary: typeof payload.text === 'string' ? payload.text : undefined,
       imageSummary: typeof payload.image === 'string' ? payload.image : undefined,
-      isUserActive: step.inputType !== 'rest',
+      isUserActive: true,
       recentActivityLevel: 0.5,
     },
     ablation,

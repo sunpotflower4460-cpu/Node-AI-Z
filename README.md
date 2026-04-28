@@ -911,3 +911,110 @@ runCrystallizedThinkingRuntime（既存 runtime — 壊さない）
 - `src/signalField/buildSignalFieldSummary.ts` — Observe 向け Signal Field 要約
 - `src/runtime/runIntegratedSignalCrystallizedRuntime.ts` — Signal Field → crystallized_thinking 統合 orchestrator
 - `src/observe/buildSignalVsLexicalComparison.ts` — lexical 経路 vs signal 経路の比較表示
+
+## Signal Mode 育成基盤（v8）
+
+Node-AI-Z v8 では、新 Signal Mode に **保存・復元・検証・比較・リスク検出・発達観察** の基盤を追加しました。
+
+### Signal Mode の永続化（Save / Restore）
+
+- Signal Mode の状態（`SignalFieldState`, `SignalPersonalBranch`, `SignalLoopState` など）を **snapshot として保存・復元** できます。
+- 再起動後も育てた状態の続きから再開できます。
+- `SignalStorageAdapter` インターフェースで storage を差し替えられる設計になっており、将来 Node Mother / サーバー永続化へ移行できます。
+- **Reset は Signal Mode だけに効きます** — 旧 Crystallized Legacy と LLM Mode の状態には一切触れません。
+
+```
+src/signalPersistence/
+  signalPersistenceTypes.ts   — snapshot / summary / adapter の型定義
+  createSignalSnapshot.ts     — 現在の状態を snapshot にまとめる
+  restoreSignalSnapshot.ts    — snapshot から状態を復元する（version mismatch / 欠損 field を安全に扱う）
+  saveSignalModeState.ts      — snapshot を保存する（localStorage / 差し替え可能 adapter）
+  loadSignalModeState.ts      — snapshot を読み込む
+  resetSignalModeState.ts     — Signal Mode のみを初期化する
+  validateSignalSnapshot.ts   — snapshot が安全に復元可能かを検査する
+  buildPersistenceSummary.ts  — Observe 向け persistence 要約を構築する
+```
+
+### Scenario Runner（成長検証）
+
+- **同じ刺激や異なる刺激を複数ターン流し**、Signal Mode の成長を検証できます。
+- 以下のシナリオが用意されています：
+  1. **Same Object Learning** — 同じ text/image ペアを繰り返し見せて assembly 強化を確認する
+  2. **Similar But Different** — 似て非なる入力を混ぜて contrast learning を確認する
+  3. **Teacher-Assisted to Teacher-Free** — teacher ありから teacher なし recall へ移行する
+  4. **Overbinding Stress** — 類似入力を大量に入れて過結合を検査する
+  5. **Rest Consolidation** — 入力後に rest step を挟んで replay / consolidation を観察する
+
+```
+src/signalScenario/
+  signalScenarioTypes.ts      — シナリオ / step / result の型定義
+  createScenarioRunner.ts     — 上記5シナリオのファクトリ関数
+  runScenarioStep.ts          — 1 step を実行する
+  runSignalScenario.ts        — シナリオ全体を実行する
+  evaluateScenarioResult.ts   — 成長指標（teacher dependency / recall success / overbinding）を評価する
+  buildScenarioSummary.ts     — Observe 向け summary を構築する
+```
+
+### Ablation（機能 ON/OFF 比較）
+
+- **teacher / inhibition / dream / reward** などを個別に切って挙動差を比較できます。
+- 同じシナリオを baseline と ablation で走らせ、metric の差分を見られます。
+
+```
+src/signalAblation/
+  signalAblationTypes.ts          — ablation config / comparison の型定義
+  createDefaultAblationConfig.ts  — 全機能 ON のデフォルト config を作る
+  applyAblationConfig.ts          — runtime input に ablation config を適用する
+  compareAblationRuns.ts          — baseline vs ablated の差分を計算する
+  buildAblationSummary.ts         — Observe 向け summary を構築する
+```
+
+### Overbinding Risk 検出
+
+- Signal Mode が「**何でも結びつきすぎる**」危険を検出します。
+- 以下の4指標を計算します：
+  - **Overbinding Risk** — bridge が短時間に増えすぎているか / bridge/assembly 比が高すぎるか
+  - **False Binding Risk** — recall 失敗が多い bridge / 低 confidence なのに強化された bridge
+  - **Teacher Overtrust Risk** — teacher 依存が高いのに self recall が低い bridge が promoted に近い
+  - **Dream Noise Risk** — dream 由来の tentative bridge が多すぎるか
+
+```
+src/signalRisk/
+  signalRiskTypes.ts              — SignalRiskReport 型定義
+  computeOverbindingRisk.ts       — 過結合リスクを計算する
+  computeFalseBindingRisk.ts      — 偽結合リスクを計算する
+  computeTeacherOvertrustRisk.ts  — teacher 過信リスクを計算する
+  computeDreamNoiseRisk.ts        — dream ノイズリスクを計算する
+  buildSignalRiskSummary.ts       — 全指標を集約して SignalRiskReport を構築する
+```
+
+### Development Dashboard（発達段階の可視化）
+
+- Signal Mode の **現在の発達段階（Stage 1〜8）と、次の Stage に必要な条件** を表示します。
+- 現在 Stage にいる理由、次の Stage は何か、何が足りないか、何をすれば進むかが分かります。
+- Node Mother 接続前に Signal Mode の安定性を検証する段階として活用できます。
+
+```
+src/signalDevelopmentDashboard/
+  developmentDashboardTypes.ts           — DevelopmentRequirement / SignalDevelopmentDashboard の型定義
+  computeNextStageRequirements.ts        — 次 Stage に必要な条件を計算する
+  buildDevelopmentDashboard.ts           — 現在 Stage / 次 Stage / 不足条件 / 推奨アクションをまとめる
+  buildDevelopmentDashboardSummary.ts    — Observe 向け summary を構築する
+```
+
+### runSignalModeRuntime への統合
+
+`runSignalModeRuntime` の observe に **evaluation** フィールドが追加され、以下が含まれるようになりました：
+
+- **persistence** — snapshot ID / particleCount / assemblyCount / bridgeCount / developmentStage
+- **risk** — overbindingRisk / falseBindingRisk / teacherOvertrustRisk / dreamNoiseRisk / riskLevel / recommendedActions
+- **development** — currentStage / stageProgress / nextStage / requirements / bottlenecks / recommendedNextActions
+
+また `autosave: true` オプションで毎回 snapshot を自動保存し、`returnSnapshot: true` で snapshot を結果に含めることができます。
+
+### Node Mother 接続の前段階
+
+現在の Signal Mode は **育てられるが、まだ Node Mother へは接続しない** 段階です。
+
+- export package / promotion readiness / overbinding risk / development stage を観察することで、接続前の安全性を確認できます。
+- 次の自然なステップは **Signal Mode ↔ Node Mother Bridge v0** です。

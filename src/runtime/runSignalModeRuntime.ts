@@ -78,6 +78,14 @@ import { buildReconsolidationSummary } from '../signalReconsolidation/buildRecon
 import { determineSignalDevelopmentStage } from '../signalDevelopment/determineSignalDevelopmentStage'
 import { buildDevelopmentSummary } from '../signalDevelopment/buildDevelopmentSummary'
 import { buildSignalActionOutcomeObserveSummary } from '../observe/buildSignalActionOutcomeObserveSummary'
+import { createSignalSnapshot } from '../signalPersistence/createSignalSnapshot'
+import { saveSignalModeState } from '../signalPersistence/saveSignalModeState'
+import { buildPersistenceSummary } from '../signalPersistence/buildPersistenceSummary'
+import { buildSignalRiskSummary } from '../signalRisk/buildSignalRiskSummary'
+import { buildDevelopmentDashboard } from '../signalDevelopmentDashboard/buildDevelopmentDashboard'
+import { buildDevelopmentDashboardSummary } from '../signalDevelopmentDashboard/buildDevelopmentDashboardSummary'
+import { buildSignalEvaluationObserveSummary } from '../observe/buildSignalEvaluationObserveSummary'
+import type { SignalModeSnapshot } from '../signalPersistence/signalPersistenceTypes'
 
 export type SignalModeRuntimeInput = {
   stimulus: ParticleStimulus
@@ -92,6 +100,10 @@ export type SignalModeRuntimeInput = {
   audioSummary?: string
   isUserActive?: boolean
   recentActivityLevel?: number
+  /** When true, autosave Signal Mode state after each run */
+  autosave?: boolean
+  /** When provided, the result will include the snapshot for external use */
+  returnSnapshot?: boolean
 }
 
 export type SignalModeRuntimeResult = {
@@ -100,6 +112,7 @@ export type SignalModeRuntimeResult = {
   loopState: SignalLoopState
   consolidationState: SignalConsolidationState
   attentionBudget: SignalAttentionBudget
+  snapshot?: SignalModeSnapshot
   observe: {
     fieldSummary: ReturnType<typeof buildSignalFieldSummary>
     branchSummary: SignalPersonalBranch['summary']
@@ -112,6 +125,7 @@ export type SignalModeRuntimeResult = {
     brainLikeGrowth: ReturnType<typeof buildSignalBrainLikeGrowthSummary>
     activeLearning: ReturnType<typeof buildSignalActiveLearningSummary>
     actionOutcomeLearning: ReturnType<typeof buildSignalActionOutcomeObserveSummary>
+    evaluation: ReturnType<typeof buildSignalEvaluationObserveSummary>
   }
 }
 
@@ -572,15 +586,40 @@ export async function runSignalModeRuntime(
     development: updatedBranch.developmentState,
   })
 
+  // Risk, dashboard, and persistence evaluation
+  const finalLoopState = { selfLoop: updatedSelfLoop, boundaryLoop: updatedBoundaryLoop }
+  const riskReport = buildSignalRiskSummary(updatedBranch, fieldState)
+  const developmentDashboard = buildDevelopmentDashboard(updatedBranch, riskReport)
+  const developmentDashboardSummary = buildDevelopmentDashboardSummary(developmentDashboard)
+
+  // Build snapshot (always create, optionally save)
+  const snapshot = createSignalSnapshot({
+    fieldState,
+    personalBranch: updatedBranch,
+    loopState: finalLoopState,
+    consolidationState,
+    attentionBudget,
+  })
+
+  if (input.autosave) {
+    await saveSignalModeState(snapshot)
+  }
+
+  const persistenceSummary = buildPersistenceSummary(input.returnSnapshot ?? input.autosave ? snapshot : null)
+
+  const evaluation = buildSignalEvaluationObserveSummary({
+    persistence: persistenceSummary,
+    risk: riskReport,
+    development: developmentDashboardSummary,
+  })
+
   return {
     fieldState,
     personalBranch: updatedBranch,
-    loopState: {
-      selfLoop: updatedSelfLoop,
-      boundaryLoop: updatedBoundaryLoop,
-    },
+    loopState: finalLoopState,
     consolidationState,
     attentionBudget,
+    snapshot: input.returnSnapshot ? snapshot : undefined,
     observe: {
       fieldSummary,
       branchSummary: updatedBranch.summary,
@@ -588,6 +627,7 @@ export async function runSignalModeRuntime(
       brainLikeGrowth,
       activeLearning,
       actionOutcomeLearning,
+      evaluation,
     },
   }
 }
