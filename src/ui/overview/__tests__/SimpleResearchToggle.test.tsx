@@ -6,8 +6,8 @@ describe('SimpleResearchToggle', () => {
   it('renders the selected detail mode', () => {
     const html = renderToString(<SimpleResearchToggle detailMode="research" onChange={() => undefined} />)
 
-    expect(html).toContain('Simple View')
-    expect(html).toContain('Research View')
+    expect(html).toContain('Simple')
+    expect(html).toContain('Research')
     expect(html).toContain('aria-pressed="true"')
   })
 })
