@@ -605,7 +605,8 @@ export async function runSignalModeRuntime(
     await saveSignalModeState(snapshot)
   }
 
-  const persistenceSummary = buildPersistenceSummary(input.returnSnapshot ?? input.autosave ? snapshot : null)
+  const shouldIncludeSnapshot = (input.returnSnapshot ?? false) || (input.autosave ?? false)
+  const persistenceSummary = buildPersistenceSummary(shouldIncludeSnapshot ? snapshot : null)
 
   const evaluation = buildSignalEvaluationObserveSummary({
     persistence: persistenceSummary,

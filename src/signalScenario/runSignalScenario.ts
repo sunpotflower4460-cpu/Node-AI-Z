@@ -50,6 +50,9 @@ export async function runSignalScenario(
       bridgeGrowth,
       teacherDependencyDelta,
       recallSuccessDelta,
+      // overbindingRiskDelta and promotionReadinessDelta require per-step risk
+      // computation (buildSignalRiskSummary / promotionReadiness). Callers that
+      // need these can compute them from the final state after running the scenario.
       overbindingRiskDelta: 0,
       promotionReadinessDelta: 0,
     },

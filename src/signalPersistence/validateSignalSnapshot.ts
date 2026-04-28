@@ -7,6 +7,8 @@ export type SnapshotValidationResult = {
   errors: string[]
 }
 
+const MAX_SNAPSHOT_SIZE_BYTES = 5_000_000
+
 export function validateSignalSnapshot(snapshot: unknown): SnapshotValidationResult {
   const warnings: string[] = []
   const errors: string[] = []
@@ -44,7 +46,7 @@ export function validateSignalSnapshot(snapshot: unknown): SnapshotValidationRes
 
   try {
     const jsonLen = JSON.stringify(snapshot).length
-    if (jsonLen > 5_000_000) {
+    if (jsonLen > MAX_SNAPSHOT_SIZE_BYTES) {
       warnings.push(`snapshot JSON is very large (${jsonLen} bytes). Consider pruning.`)
     }
   } catch {

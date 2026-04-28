@@ -2,6 +2,8 @@ import type { SignalPersonalBranch } from '../signalBranch/signalBranchTypes'
 import type { SignalDevelopmentStage } from '../signalDevelopment/signalDevelopmentTypes'
 import type { DevelopmentRequirement } from './developmentDashboardTypes'
 
+const MIN_RECALL_SUCCESS_FOR_STAGE_8 = 0.45
+
 export function computeNextStageRequirements(
   branch: SignalPersonalBranch,
   currentStage: SignalDevelopmentStage,
@@ -88,10 +90,10 @@ export function computeNextStageRequirements(
     })
     requirements.push({
       id: 'recall_success_rate',
-      label: 'Average recall success >= 0.45',
+      label: `Average recall success >= ${MIN_RECALL_SUCCESS_FOR_STAGE_8}`,
       currentValue: branch.summary.averageRecallSuccess,
-      requiredValue: 0.45,
-      satisfied: branch.summary.averageRecallSuccess >= 0.45,
+      requiredValue: MIN_RECALL_SUCCESS_FOR_STAGE_8,
+      satisfied: branch.summary.averageRecallSuccess >= MIN_RECALL_SUCCESS_FOR_STAGE_8,
       notes: [],
     })
   }
