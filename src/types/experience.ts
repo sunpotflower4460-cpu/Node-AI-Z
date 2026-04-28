@@ -16,6 +16,7 @@ import type { ReplaySummary } from '../replay/runIdleReplay'
 import type { FacadeView, FacadeViewTranslation } from '../core/facadeRuntime'
 import type { PresentationBiasProfile } from '../core/facadePresentation'
 import type { LayeredThinkingTrace } from '../runtime/layeredThinkingTypes'
+import type { SignalOverviewSource } from '../observe/signalOverviewSource'
 
 /**
  * UI mode: observe (research) vs experience (conversation)
@@ -81,6 +82,7 @@ export type ObservationRecord = {
   facadeViewTranslation?: FacadeViewTranslation
   presentationBiasProfile?: PresentationBiasProfile
   layeredThinkingTrace?: LayeredThinkingTrace
+  signalOverviewSource?: SignalOverviewSource
 }
 
 export type ExperienceMessage = {
@@ -125,4 +127,5 @@ export type ExperienceMessage = {
   facadeViewTranslation?: FacadeViewTranslation
   presentationBiasProfile?: PresentationBiasProfile
   layeredThinkingTrace?: LayeredThinkingTrace
+  signalOverviewSource?: SignalOverviewSource
 }

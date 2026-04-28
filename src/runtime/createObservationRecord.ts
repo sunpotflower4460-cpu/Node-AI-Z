@@ -7,6 +7,9 @@ import type { LayeredBrainState } from './layeredThinkingTypes'
 import { runMainRuntime } from './runMainRuntime'
 import { runLegacyNodePipeline } from './runLegacyNodePipeline'
 import { buildRevisionEntry } from '../revision/buildRevisionEntry'
+import { runSignalModeRuntime } from './runSignalModeRuntime'
+import { createTextParticleStimulus } from './createTextParticleStimulus'
+import { buildSignalOverviewSource } from '../observe/signalOverviewSource'
 
 /**
  * Observation builder for UI flows.
@@ -98,8 +101,15 @@ export const createObservationRecord = async ({
 
   // Crystallized thinking mode
   // Need to provide backward-compatible fields for UI
+  const signalOverviewRuntime = await runSignalModeRuntime({
+    stimulus: createTextParticleStimulus(text, Date.parse(timestamp)),
+    enableBindingTeacher: true,
+    returnSnapshot: true,
+    textSummary: text,
+  })
   const legacySnapshot = runLegacyNodePipeline(text, plasticity)
   const revisionEntry = buildRevisionEntry(legacySnapshot.pipelineResult, legacySnapshot.studioView)
+  const signalOverviewSource = buildSignalOverviewSource(signalOverviewRuntime)
 
   return {
     id: createObservationId(type),
@@ -145,6 +155,7 @@ export const createObservationRecord = async ({
     rawFacadeView: runtimeResult.rawFacadeView,
     facadeViewTranslation: runtimeResult.facadeViewTranslation,
     presentationBiasProfile: runtimeResult.presentationBiasProfile,
+    signalOverviewSource,
   }
 }
 
@@ -193,6 +204,7 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       facadeViewTranslation: record.facadeViewTranslation,
       presentationBiasProfile: record.presentationBiasProfile,
       layeredThinkingTrace: record.layeredThinkingTrace,
+      signalOverviewSource: record.signalOverviewSource,
     },
     {
       id: createObservationId('exp_assistant'),
@@ -235,6 +247,7 @@ export const createExperienceTurnMessages = (record: ObservationRecord): Experie
       facadeViewTranslation: record.facadeViewTranslation,
       presentationBiasProfile: record.presentationBiasProfile,
       layeredThinkingTrace: record.layeredThinkingTrace,
+      signalOverviewSource: record.signalOverviewSource,
     },
   ]
 }

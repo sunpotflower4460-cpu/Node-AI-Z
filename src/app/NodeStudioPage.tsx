@@ -478,6 +478,7 @@ export default function NodeStudioPage() {
         {mode === 'observe' ? (
           <ObserveMode
             currentObservation={currentObservation}
+            implementationMode={implementationMode}
             history={history}
             revisionState={revisionState}
             surfaceProviderLabel={currentProviderConfig.label}
