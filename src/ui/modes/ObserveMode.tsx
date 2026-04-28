@@ -19,6 +19,9 @@ import { getDefaultOverviewMode, type OverviewMode, type UiDetailMode } from '..
 import { HumanReviewPanel } from '../review/HumanReviewPanel'
 import { TrunkUndoPanel } from '../review/TrunkUndoPanel'
 import { LayeredObservePanel } from '../LayeredObservePanel'
+import { SignalFieldView } from '../signalField/SignalFieldView'
+import { GrowthView } from '../growth/GrowthView'
+import { TeacherDependencyView } from '../teacher/TeacherDependencyView'
 import type { LayeredThinkingResult } from '../../runtime/runtimeTypes'
 import {
   createEmptySharedTrunk,
@@ -37,7 +40,7 @@ const SAMPLE_INPUTS = [
   '少しだけ希望はある気がする',
 ]
 
-type ActiveTab = 'Overview' | 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision' | 'SessionBrain'
+type ActiveTab = 'Overview' | 'Field' | 'Growth' | 'Teacher' | 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision' | 'SessionBrain'
 type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal' | 'dual' | 'facade_raw' | 'facade_translated' | 'facade_notes' | 'layered'
 const MIN_PLASTICITY_DISPLAY_VALUE = 0.009
 
@@ -1324,7 +1327,7 @@ export const ObserveMode = ({
               </section>
             ) : null}
             <div className="scrollbar-hide sticky top-2 z-10 -mx-1 flex gap-1 overflow-x-auto bg-[#F8FAFC] px-1 pb-2 pt-1 md:top-[84px]" role="tablist" aria-label="観察ビュー">
-              {(['Overview', 'Reply', 'SessionBrain', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
+              {(['Overview', 'Field', 'Growth', 'Teacher', 'Reply', 'SessionBrain', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
                 <button
                   key={tab}
                   type="button"
@@ -1338,6 +1341,9 @@ export const ObserveMode = ({
                   }`}
                 >
                   {tab === 'Overview' ? <Compass className="h-4 w-4" /> : null}
+                  {tab === 'Field' ? <Zap className="h-4 w-4" /> : null}
+                  {tab === 'Growth' ? <TrendingUp className="h-4 w-4" /> : null}
+                  {tab === 'Teacher' ? <Brain className="h-4 w-4" /> : null}
                   {tab === 'Reply' ? <MessageSquareText className="h-4 w-4" /> : null}
                   {tab === 'SessionBrain' ? <Brain className="h-4 w-4" /> : null}
                   {tab === 'Home' ? <Home className="h-4 w-4" /> : null}
@@ -1351,6 +1357,9 @@ export const ObserveMode = ({
 
             <div className="flex flex-col">
               {activeTab === 'Overview' ? <SignalOverviewPage observation={currentObservation} selectedMode={selectedOverviewMode} detailMode={detailMode} implementationMode={implementationMode} onModeChange={setSelectedOverviewMode} onDetailModeChange={setDetailMode} /> : null}
+              {activeTab === 'Field' ? <SignalFieldView source={currentObservation.signalOverviewSource ?? null} detailMode={detailMode} /> : null}
+              {activeTab === 'Growth' ? <GrowthView source={currentObservation.signalOverviewSource ?? null} detailMode={detailMode} /> : null}
+              {activeTab === 'Teacher' ? <TeacherDependencyView source={currentObservation.signalOverviewSource ?? null} detailMode={detailMode} /> : null}
               {activeTab === 'Reply' ? <ReplyTab studioView={studioView} surfaceReply={currentObservation.assistantReply} surfaceProviderLabel={surfaceProviderLabel} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} tuning={revisionState.tuning} onTuningAction={onTuningAction} /> : null}
               {activeTab === 'SessionBrain' ? <SessionBrainTab observation={currentObservation} /> : null}
               {activeTab === 'Home' ? <HomeTab studioView={studioView} /> : null}
