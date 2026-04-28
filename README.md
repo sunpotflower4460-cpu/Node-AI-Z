@@ -1039,3 +1039,14 @@ UI は New Signal Mode の内部をさらに詳しく観察するための 3 つ
 - **Teacher Dependency View** (`Teacher` タブ): Binding Teacher の補助輪がどれくらい外れてきたかを観察します。TeacherDependencyMeter で依存度をメーター表示し、bridge stage 分布チャートで tentative → reinforced → teacher_light → teacher_free → promoted の移行状況を確認できます。
 
 Simple View では分かりやすい要約表示を、Research View では particle ID / assembly ID / bridge ID などの生データを見ることができます。
+
+## UI Phase 3: Evaluation / Risk / History
+
+UI は New Signal Mode の「育ちが本当に良いものか」「どの機能が効いているか」「どんな履歴でここまで来たか」を観察するための画面を追加しました。
+
+- **Evaluate View** (`Evaluate` タブ): Signal Mode の育ち方を検証するシナリオを実行します。Same Object Learning / Similar But Different / Teacher to Teacher-Free / Overbinding Stress Test / Rest Consolidation などのシナリオを選んで実行し、各ステップごとの metrics とサマリーを確認できます。
+- **Ablation View**: 機能 ON/OFF（teacher / inhibition / dream / reward / modulator / sequenceMemory / contrastLearning / consolidation）による挙動差を比較します。baseline との diff をカードで表示し、どの機能がどの指標に影響しているかを検証できます。
+- **Risk View** (`Risk` タブ): 危険な育ち方をしていないか確認します。overbinding / false binding / teacher overtrust / dream noise の 4 指標を low / medium / high の 3 段階で表示し、warnings と recommended actions を提示します。
+- **History Timeline View** (`History` タブ): Signal Mode がどう育ってきたかを時系列で見ます。snapshot 保存・stage 変化・bridge 成熟・consolidation 実行・risk 検出・scenario 実行などのイベントをフィルター付きで確認できます。snapshot の metadata（particle / assembly / bridge / stage）も一覧で参照できます。
+
+Simple View ではサマリーと highlights を、Research View では raw step metrics / disabled feature list / raw risk scores / timeline raw IDs / snapshot metadata を見ることができます。
