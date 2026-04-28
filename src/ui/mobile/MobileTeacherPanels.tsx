@@ -9,7 +9,7 @@ type MobileTeacherPanelsProps = {
   detailMode: UiDetailMode
 }
 
-export const MobileTeacherPanels = ({ source, detailMode: _detailMode }: MobileTeacherPanelsProps) => {
+export const MobileTeacherPanels = ({ source }: MobileTeacherPanelsProps) => {
   if (!source) {
     return (
       <div className="px-3 py-4">

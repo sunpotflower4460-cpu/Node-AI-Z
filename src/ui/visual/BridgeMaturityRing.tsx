@@ -12,7 +12,6 @@ export const BridgeMaturityRing = ({
   const r = (size - 8) / 2
   const circumference = 2 * Math.PI * r
   const teacherOffset = circumference * (1 - teacherDependency)
-  const recallOffset = circumference * (1 - recallSuccess)
   const cx = size / 2
   const cy = size / 2
 

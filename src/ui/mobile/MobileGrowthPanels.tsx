@@ -10,7 +10,7 @@ type MobileGrowthPanelsProps = {
   detailMode: UiDetailMode
 }
 
-export const MobileGrowthPanels = ({ source, detailMode: _detailMode }: MobileGrowthPanelsProps) => {
+export const MobileGrowthPanels = ({ source }: MobileGrowthPanelsProps) => {
   if (!source) {
     return (
       <div className="px-3 py-4">

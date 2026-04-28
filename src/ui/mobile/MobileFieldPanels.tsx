@@ -11,7 +11,7 @@ type MobileFieldPanelsProps = {
   detailMode: UiDetailMode
 }
 
-export const MobileFieldPanels = ({ source, detailMode: _detailMode }: MobileFieldPanelsProps) => {
+export const MobileFieldPanels = ({ source }: MobileFieldPanelsProps) => {
   if (!source) {
     return (
       <div className="px-3 py-4">
