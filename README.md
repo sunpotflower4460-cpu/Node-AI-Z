@@ -1029,3 +1029,13 @@ src/signalDevelopmentDashboard/
 
 - export package / promotion readiness / overbinding risk / development stage を観察することで、接続前の安全性を確認できます。
 - 次の自然なステップは **Signal Mode ↔ Node Mother Bridge v0** です。
+
+## UI Phase 2: Signal Field / Growth / Teacher Views
+
+UI は New Signal Mode の内部をさらに詳しく観察するための 3 つのビューを追加しました。
+
+- **Signal Field View** (`Field` タブ): 点群・発火・assembly・bridge のリアルタイム状態を観察します。particle の発火源（外部入力 / 内部 replay / teacher）の色分け、assembly の安定度、bridge の stage、legend を表示します。
+- **Growth View** (`Growth` タブ): Personal Branch が「自分の経験」として育てている assembly record・bridge record・proto seed・recall event を見ます。BranchSummaryCards でサマリーを確認し、フィルター付きリストで詳細を追えます。
+- **Teacher Dependency View** (`Teacher` タブ): Binding Teacher の補助輪がどれくらい外れてきたかを観察します。TeacherDependencyMeter で依存度をメーター表示し、bridge stage 分布チャートで tentative → reinforced → teacher_light → teacher_free → promoted の移行状況を確認できます。
+
+Simple View では分かりやすい要約表示を、Research View では particle ID / assembly ID / bridge ID などの生データを見ることができます。
