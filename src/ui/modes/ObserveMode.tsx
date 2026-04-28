@@ -1345,7 +1345,7 @@ export const ObserveMode = ({
                   {tab === 'Growth' ? <TrendingUp className="h-4 w-4" /> : null}
                   {tab === 'Teacher' ? <Brain className="h-4 w-4" /> : null}
                   {tab === 'Reply' ? <MessageSquareText className="h-4 w-4" /> : null}
-                  {tab === 'SessionBrain' ? <Brain className="h-4 w-4" /> : null}
+                  {tab === 'SessionBrain' ? <BrainCircuit className="h-4 w-4" /> : null}
                   {tab === 'Home' ? <Home className="h-4 w-4" /> : null}
                   {tab === 'Relations' ? <GitPullRequest className="h-4 w-4" /> : null}
                   {tab === 'Revision' ? <RefreshCw className="h-4 w-4" /> : null}
