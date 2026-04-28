@@ -1368,7 +1368,17 @@ export const ObserveMode = ({
               {activeTab === 'Teacher' ? <TeacherDependencyView source={currentObservation.signalOverviewSource ?? null} detailMode={detailMode} /> : null}
               {activeTab === 'Evaluate' ? <ScenarioView detailMode={detailMode} /> : null}
               {activeTab === 'Risk' ? <RiskView source={currentObservation.signalOverviewSource ?? null} detailMode={detailMode} /> : null}
-              {activeTab === 'History' ? <HistoryTimelineView input={{ snapshots: currentObservation.signalOverviewSource?.snapshot ? [currentObservation.signalOverviewSource.snapshot] : [] }} detailMode={detailMode} /> : null}
+              {activeTab === 'History' ? (
+                <div className="flex flex-col gap-6">
+                  <HistoryTimelineView input={{ snapshots: currentObservation.signalOverviewSource?.snapshot ? [currentObservation.signalOverviewSource.snapshot] : [] }} detailMode={detailMode} />
+                  {history.length > 0 ? (
+                    <div>
+                      <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Observation History</p>
+                      <HistoryTab history={history} restoreHistory={handleRestore} />
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
               {activeTab === 'Reply' ? <ReplyTab studioView={studioView} surfaceReply={currentObservation.assistantReply} surfaceProviderLabel={surfaceProviderLabel} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} tuning={revisionState.tuning} onTuningAction={onTuningAction} /> : null}
               {activeTab === 'SessionBrain' ? <SessionBrainTab observation={currentObservation} /> : null}
               {activeTab === 'Home' ? <HomeTab studioView={studioView} /> : null}
