@@ -35,7 +35,8 @@ export function buildDevelopmentDashboard(
 
   const unsatisfied = requirements.filter(r => !r.satisfied)
   for (const req of unsatisfied) {
-    bottlenecks.push(`${req.label} (${req.currentValue.toFixed(2)}/${req.requiredValue})`)
+    const formattedValue = Number.isInteger(req.currentValue) ? req.currentValue.toString() : req.currentValue.toFixed(2)
+    bottlenecks.push(`${req.label} (${formattedValue}/${req.requiredValue})`)
     recommendedNextActions.push(`Improve: ${req.label}`)
   }
 

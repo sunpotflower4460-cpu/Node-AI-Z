@@ -37,7 +37,7 @@ export async function runScenarioStep(
         teacherDependencyAverage: branch?.summary.averageTeacherDependency ?? 0,
         notes,
       },
-      nextState: { ...state, consolidationState: state.consolidationState },
+      nextState: state,
     }
   }
 
