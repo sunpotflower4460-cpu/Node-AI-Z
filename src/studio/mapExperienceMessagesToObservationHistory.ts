@@ -43,6 +43,7 @@ export const mapExperienceMessagesToObservationHistory = (
       facadeViewTranslation: message.facadeViewTranslation,
       presentationBiasProfile: message.presentationBiasProfile,
       layeredThinkingTrace: message.layeredThinkingTrace,
+      signalOverviewSource: message.signalOverviewSource,
     }))
 }
 

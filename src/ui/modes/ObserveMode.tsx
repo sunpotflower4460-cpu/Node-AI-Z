@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Sparkles, Terminal, TrendingUp, Zap, Brain } from 'lucide-react'
-import type { ObservationRecord } from '../../types/experience'
+import type { ObservationRecord, ImplementationMode } from '../../types/experience'
 import type { AppliedBoostEntry, RevisionState, UserTuningAction } from '../../types/nodeStudio'
 import type { HumanReviewDecisionInput } from '../../core'
 import { describeProposedChange, formatRevisionDelta, getRevisionStatusMeta } from '../../revision/statusMeta'
@@ -14,6 +14,8 @@ import { StatesTab } from '../tabs/StatesTab'
 import { RevisionTab } from '../tabs/RevisionTab'
 import { SessionBrainTab } from '../tabs/SessionBrainTab'
 import { Badge, HelpIcon } from '../components/CommonUI'
+import { SignalOverviewPage } from '../overview/SignalOverviewPage'
+import { getDefaultOverviewMode, type OverviewMode, type UiDetailMode } from '../mode/modeUiTypes'
 import { HumanReviewPanel } from '../review/HumanReviewPanel'
 import { TrunkUndoPanel } from '../review/TrunkUndoPanel'
 import { LayeredObservePanel } from '../LayeredObservePanel'
@@ -35,7 +37,7 @@ const SAMPLE_INPUTS = [
   '少しだけ希望はある気がする',
 ]
 
-type ActiveTab = 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision' | 'SessionBrain'
+type ActiveTab = 'Overview' | 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'History' | 'Revision' | 'SessionBrain'
 type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal' | 'dual' | 'facade_raw' | 'facade_translated' | 'facade_notes' | 'layered'
 const MIN_PLASTICITY_DISPLAY_VALUE = 0.009
 
@@ -146,6 +148,7 @@ const SOURCE_LABEL: Record<AppliedBoostSource, { label: string; colorClass: stri
 
 type ObserveModeProps = {
   currentObservation: ObservationRecord | null
+  implementationMode: ImplementationMode
   history: ObservationRecord[]
   revisionState: RevisionState
   surfaceProviderLabel: string
@@ -158,6 +161,7 @@ type ObserveModeProps = {
 
 export const ObserveMode = ({
   currentObservation,
+  implementationMode,
   history,
   revisionState,
   surfaceProviderLabel,
@@ -169,7 +173,9 @@ export const ObserveMode = ({
 }: ObserveModeProps) => {
   const [inputText, setInputText] = useState(currentObservation?.text ?? '')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [activeTab, setActiveTab] = useState<ActiveTab>('Reply')
+  const [activeTab, setActiveTab] = useState<ActiveTab>('Overview')
+  const [selectedOverviewMode, setSelectedOverviewMode] = useState<OverviewMode>(() => getDefaultOverviewMode(implementationMode))
+  const [detailMode, setDetailMode] = useState<UiDetailMode>('simple')
   const [isRawOpen, setIsRawOpen] = useState(false)
   const [rawViewMode, setRawViewMode] = useState<RawViewMode>('pipeline')
   const [isProcessOpen, setIsProcessOpen] = useState(true)
@@ -204,7 +210,7 @@ export const ObserveMode = ({
 
     window.setTimeout(() => {
       void Promise.resolve(onAnalyze(trimmed)).finally(() => {
-        setActiveTab('Reply')
+        setActiveTab('Overview')
         setIsAnalyzing(false)
       })
     }, 400)
@@ -216,7 +222,7 @@ export const ObserveMode = ({
 
     window.setTimeout(() => {
       void Promise.resolve(onAnalyze(text)).finally(() => {
-        setActiveTab('Reply')
+        setActiveTab('Overview')
         setIsAnalyzing(false)
       })
     }, 400)
@@ -225,7 +231,7 @@ export const ObserveMode = ({
   const handleRestore = (item: ObservationRecord) => {
     setInputText(item.text)
     onRestore(item)
-    setActiveTab('Reply')
+    setActiveTab('Overview')
     setIsRawOpen(false)
   }
 
@@ -346,7 +352,7 @@ export const ObserveMode = ({
             </button>
           </div>
           <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-xs font-medium leading-relaxed text-slate-500 inline-flex items-center gap-1">
-            <span>1. テキストを入力 → 2. Analyze → 3. 下のタブで Reply / States / History などを確認</span>
+            <span>1. テキストを入力 → 2. Analyze → 3. まず Overview で現在地を確認 → 必要に応じて Reply / States / History を見る</span>
             <HelpIcon content="この3ステップで、AIの内部処理を観察できます。Samplesボタンで例文を試すこともできます。" />
           </div>
           <div className="scrollbar-hide -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1">
@@ -364,6 +370,17 @@ export const ObserveMode = ({
           </div>
         </div>
       </div>
+
+      {!currentObservation ? (
+        <SignalOverviewPage
+          observation={null}
+          selectedMode={selectedOverviewMode}
+          detailMode={detailMode}
+          implementationMode={implementationMode}
+          onModeChange={setSelectedOverviewMode}
+          onDetailModeChange={setDetailMode}
+        />
+      ) : null}
 
       {currentObservation && pipelineResult && studioView ? (
         <>
@@ -1307,7 +1324,7 @@ export const ObserveMode = ({
               </section>
             ) : null}
             <div className="scrollbar-hide sticky top-2 z-10 -mx-1 flex gap-1 overflow-x-auto bg-[#F8FAFC] px-1 pb-2 pt-1 md:top-[84px]" role="tablist" aria-label="観察ビュー">
-              {(['Reply', 'SessionBrain', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
+              {(['Overview', 'Reply', 'SessionBrain', 'States', 'Relations', 'Patterns', 'Home', 'History', 'Revision'] as ActiveTab[]).map((tab) => (
                 <button
                   key={tab}
                   type="button"
@@ -1320,6 +1337,7 @@ export const ObserveMode = ({
                       : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'
                   }`}
                 >
+                  {tab === 'Overview' ? <Compass className="h-4 w-4" /> : null}
                   {tab === 'Reply' ? <MessageSquareText className="h-4 w-4" /> : null}
                   {tab === 'SessionBrain' ? <Brain className="h-4 w-4" /> : null}
                   {tab === 'Home' ? <Home className="h-4 w-4" /> : null}
@@ -1332,6 +1350,7 @@ export const ObserveMode = ({
             </div>
 
             <div className="flex flex-col">
+              {activeTab === 'Overview' ? <SignalOverviewPage observation={currentObservation} selectedMode={selectedOverviewMode} detailMode={detailMode} implementationMode={implementationMode} onModeChange={setSelectedOverviewMode} onDetailModeChange={setDetailMode} /> : null}
               {activeTab === 'Reply' ? <ReplyTab studioView={studioView} surfaceReply={currentObservation.assistantReply} surfaceProviderLabel={surfaceProviderLabel} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} tuning={revisionState.tuning} onTuningAction={onTuningAction} /> : null}
               {activeTab === 'SessionBrain' ? <SessionBrainTab observation={currentObservation} /> : null}
               {activeTab === 'Home' ? <HomeTab studioView={studioView} /> : null}

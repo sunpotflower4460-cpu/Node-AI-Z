@@ -2,6 +2,17 @@
 
 Node-AI-Z は、Observe / Experience / Revision / Memory を往復しながら、CPU ベースで育つ知性の背骨と脳寄り拡張を同じ runtime で観察する実験アプリです。
 
+## UI / UX Overview
+
+Node-AI-Z の UI は、次の 3 つの runtime mode を明確に分けて表示するようになりました。
+- New Signal Mode
+- Crystallized Legacy
+- LLM Mode
+
+Overview 画面では、現在の mode、development stage、growth metrics、risk summary、recommended next actions を最初に確認できます。
+
+New Signal Mode は現在の主開発ルートです。意味未満の signal particles から始まり、assemblies、bridges、proto-seeds、recall、teacher dependency の低下、developmental stages を経て成長します。
+
 ## リポジトリの責務境界
 
 **Node-AI-Z は結晶思考 (crystallized thinking) / growing-intelligence 系のリポジトリです。**
