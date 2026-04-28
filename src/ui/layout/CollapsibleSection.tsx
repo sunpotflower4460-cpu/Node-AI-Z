@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState, useId, type ReactNode } from 'react'
 import { ChevronDown } from 'lucide-react'
 
 type CollapsibleSectionProps = {
@@ -15,7 +15,8 @@ export const CollapsibleSection = ({
   titleClass = 'text-[11px] font-bold uppercase tracking-widest text-slate-500',
 }: CollapsibleSectionProps) => {
   const [open, setOpen] = useState(defaultOpen)
-  const id = `collapsible-${title.replace(/\s+/g, '-').toLowerCase()}`
+  const uid = useId()
+  const id = `collapsible-${uid}`
 
   return (
     <section>

@@ -43,7 +43,7 @@ export const MobileGrowthPanels = ({ source, detailMode: _detailMode }: MobileGr
           key={bridge.id}
           className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950 px-3 py-2"
         >
-          <span className="text-xs text-slate-300 truncate max-w-[60%]">{bridge.id}</span>
+          <span className="text-xs text-slate-300 truncate max-w-[60%]" title={bridge.id}>{bridge.id}</span>
           <BridgeMaturityBadge stage={bridge.stage as BridgeStage} size="sm" />
         </div>
       ))}
