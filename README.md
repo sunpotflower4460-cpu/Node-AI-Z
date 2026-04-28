@@ -1050,3 +1050,16 @@ UI は New Signal Mode の「育ちが本当に良いものか」「どの機能
 - **History Timeline View** (`History` タブ): Signal Mode がどう育ってきたかを時系列で見ます。snapshot 保存・stage 変化・bridge 成熟・consolidation 実行・risk 検出・scenario 実行などのイベントをフィルター付きで確認できます。snapshot の metadata（particle / assembly / bridge / stage）も一覧で参照できます。
 
 Simple View ではサマリーと highlights を、Research View では raw step metrics / disabled feature list / raw risk scores / timeline raw IDs / snapshot metadata を見ることができます。
+
+## UI Phase 4: Mobile / Visual / Onboarding
+
+UI は以下の点でさらに最適化されました。
+
+- **モバイルファーストナビゲーション**: MobileShell / BottomNavBar による下部タブナビ
+- **明確なビジュアル階層**: StickySummaryBar による現在地の常時表示
+- **Signal Field の直感的な可視化**: SignalFieldVisualTheme による粒子・bridge の色分け強化
+- **Bridge Maturity の可視化**: BridgeMaturityBadge / BridgeMaturityRing による成熟度の一目表示
+- **Stage Transition フィードバック**: StageTransitionBanner によるステージ進化の通知
+- **初見ユーザー向け Onboarding**: FirstRunGuide / OnboardingFlow による導入フロー
+- **Empty / Loading / First-run 状態の整備**: EmptyGrowthIllustration / LoadingFieldSkeleton
+- **Simple / Research Toggle の改善**: 説明付きの自然な切替UI
