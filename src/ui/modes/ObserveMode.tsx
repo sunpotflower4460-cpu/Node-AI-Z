@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Activity, AlertTriangle, BrainCircuit, ChevronDown, ChevronUp, Clock, Compass, FlaskConical, GitPullRequest, Home, MessageSquareText, RefreshCw, Sparkles, Terminal, TrendingUp, Zap, Brain } from 'lucide-react'
+import { Activity, BrainCircuit, ChevronDown, ChevronUp, Compass, GitPullRequest, Home, MessageSquareText, RefreshCw, Sparkles, Terminal, TrendingUp, Zap } from 'lucide-react'
 import type { ObservationRecord, ImplementationMode } from '../../types/experience'
 import type { AppliedBoostEntry, RevisionState, UserTuningAction } from '../../types/nodeStudio'
 import type { HumanReviewDecisionInput } from '../../core'
@@ -38,10 +38,55 @@ import {
   safeUndoTrunkApply,
   submitHumanReviewDecision,
 } from '../../core'
+import { PrimaryTabNav } from '../navigation/PrimaryTabNav'
+import type { PrimaryTabId } from '../navigation/tabUiTypes'
+import { StickyTabHeader } from '../shared/StickyTabHeader'
+import { MotherTab } from '../tabs/MotherTab'
+import { getEngineLabel } from '../mode/engineLabelMap'
 
-type ActiveTab = 'Overview' | 'Field' | 'Growth' | 'Teacher' | 'Evaluate' | 'Risk' | 'History' | 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'Revision' | 'SessionBrain'
+type ActiveTab = 'Overview' | 'Field' | 'Growth' | 'Teacher' | 'Evaluate' | 'Risk' | 'History' | 'Mother' | 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'Revision' | 'SessionBrain'
 type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal' | 'dual' | 'facade_raw' | 'facade_translated' | 'facade_notes' | 'layered'
 const MIN_PLASTICITY_DISPLAY_VALUE = 0.009
+
+const PRIMARY_TAB_ID_TO_ACTIVE: Record<PrimaryTabId, ActiveTab> = {
+  overview: 'Overview',
+  field: 'Field',
+  growth: 'Growth',
+  teacher: 'Teacher',
+  evaluate: 'Evaluate',
+  risk: 'Risk',
+  history: 'History',
+  mother: 'Mother',
+}
+
+const ACTIVE_TO_PRIMARY_TAB_ID: Partial<Record<ActiveTab, PrimaryTabId>> = {
+  Overview: 'overview',
+  Field: 'field',
+  Growth: 'growth',
+  Teacher: 'teacher',
+  Evaluate: 'evaluate',
+  Risk: 'risk',
+  History: 'history',
+  Mother: 'mother',
+}
+
+const TAB_LABEL_JA: Record<ActiveTab, string> = {
+  Overview: '概要',
+  Field: '発火',
+  Growth: '成長',
+  Teacher: '先生',
+  Evaluate: '検証',
+  Risk: 'リスク',
+  History: '履歴',
+  Mother: 'Mother',
+  Reply: 'Reply',
+  SessionBrain: 'SessionBrain',
+  States: 'States',
+  Relations: 'Relations',
+  Patterns: 'Patterns',
+  Home: 'Home',
+  Revision: 'Revision',
+}
 
 const TONE_NOTES: Record<string, (value: number) => string> = {
   over_explaining: (value) => value < 0
@@ -1280,32 +1325,38 @@ export const ObserveMode = ({
                 </div>
               </section>
             ) : null}
-            <div className="scrollbar-hide sticky top-2 z-10 -mx-1 flex gap-1 overflow-x-auto bg-[#F8FAFC] px-1 pb-2 pt-1 md:top-[84px]" role="tablist" aria-label="観察ビュー">
-              {(['Overview', 'Field', 'Growth', 'Teacher', 'Evaluate', 'Risk', 'History', 'Reply', 'SessionBrain', 'States', 'Relations', 'Patterns', 'Home', 'Revision'] as ActiveTab[]).map((tab) => (
+            <PrimaryTabNav
+              activeTab={ACTIVE_TO_PRIMARY_TAB_ID[activeTab] ?? 'overview'}
+              researchMode={detailMode === 'research'}
+              onTabChange={(id) => setActiveTab(PRIMARY_TAB_ID_TO_ACTIVE[id])}
+            />
+
+            <StickyTabHeader
+              tabLabel={detailMode === 'research' ? activeTab : (TAB_LABEL_JA[activeTab] ?? activeTab)}
+              engineLabel={getEngineLabel(implementationMode === 'llm_mode' ? 'llm_mode' : selectedOverviewMode).short}
+              stageLabel={overviewViewModel.development.currentStage}
+              riskLabel={`Risk ${overviewViewModel.risk.level.charAt(0).toUpperCase() + overviewViewModel.risk.level.slice(1)}`}
+            />
+
+            <div className="scrollbar-hide -mx-1 flex gap-1 overflow-x-auto bg-[#F8FAFC] px-1 pb-2 pt-1" role="tablist" aria-label="詳細タブ">
+              {(['Reply', 'SessionBrain', 'States', 'Relations', 'Patterns', 'Home', 'Revision'] as ActiveTab[]).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   role="tab"
                   aria-selected={activeTab === tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`tap-target flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3.5 py-2.5 text-sm font-bold transition-all duration-150 ${
+                  className={`tap-target flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-2 text-xs font-bold transition-all duration-150 ${
                     activeTab === tab
                       ? 'bg-white text-indigo-700 shadow-sm ring-1 ring-black/5'
                       : 'text-slate-500 hover:bg-white/70 hover:text-slate-800'
                   }`}
                 >
-                  {tab === 'Overview' ? <Compass className="h-4 w-4" /> : null}
-                  {tab === 'Field' ? <Zap className="h-4 w-4" /> : null}
-                  {tab === 'Growth' ? <TrendingUp className="h-4 w-4" /> : null}
-                  {tab === 'Teacher' ? <Brain className="h-4 w-4" /> : null}
-                  {tab === 'Evaluate' ? <FlaskConical className="h-4 w-4" /> : null}
-                  {tab === 'Risk' ? <AlertTriangle className="h-4 w-4" /> : null}
-                  {tab === 'History' ? <Clock className="h-4 w-4" /> : null}
-                  {tab === 'Reply' ? <MessageSquareText className="h-4 w-4" /> : null}
-                  {tab === 'SessionBrain' ? <BrainCircuit className="h-4 w-4" /> : null}
-                  {tab === 'Home' ? <Home className="h-4 w-4" /> : null}
-                  {tab === 'Relations' ? <GitPullRequest className="h-4 w-4" /> : null}
-                  {tab === 'Revision' ? <RefreshCw className="h-4 w-4" /> : null}
+                  {tab === 'Reply' ? <MessageSquareText className="h-3.5 w-3.5" /> : null}
+                  {tab === 'SessionBrain' ? <BrainCircuit className="h-3.5 w-3.5" /> : null}
+                  {tab === 'Home' ? <Home className="h-3.5 w-3.5" /> : null}
+                  {tab === 'Relations' ? <GitPullRequest className="h-3.5 w-3.5" /> : null}
+                  {tab === 'Revision' ? <RefreshCw className="h-3.5 w-3.5" /> : null}
                   {tab}
                   {activeTab === tab ? <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" /> : null}
                 </button>
@@ -1324,12 +1375,13 @@ export const ObserveMode = ({
                   <HistoryTimelineView input={{ snapshots: currentObservation.signalOverviewSource?.snapshot ? [currentObservation.signalOverviewSource.snapshot] : [] }} detailMode={detailMode} />
                   {history.length > 0 ? (
                     <div>
-                      <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">Observation History</p>
+                      <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-slate-500">{detailMode === 'research' ? 'Observation History' : '観察履歴'}</p>
                       <HistoryTab history={history} restoreHistory={handleRestore} />
                     </div>
                   ) : null}
                 </div>
               ) : null}
+              {activeTab === 'Mother' ? <MotherTab detailMode={detailMode} /> : null}
               {activeTab === 'Reply' ? <ReplyTab studioView={studioView} surfaceReply={currentObservation.assistantReply} surfaceProviderLabel={surfaceProviderLabel} analyzedText={currentObservation.text} isProcessOpen={isProcessOpen} setIsProcessOpen={setIsProcessOpen} currentRevisionEntry={currentRevisionEntry} tuning={revisionState.tuning} onTuningAction={onTuningAction} /> : null}
               {activeTab === 'SessionBrain' ? <SessionBrainTab observation={currentObservation} /> : null}
               {activeTab === 'Home' ? <HomeTab studioView={studioView} /> : null}

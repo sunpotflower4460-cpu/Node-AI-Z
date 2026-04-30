@@ -2,7 +2,26 @@
 
 Node-AI-Z は、Observe / Experience / Revision / Memory を往復しながら、CPU ベースで育つ知性の背骨と脳寄り拡張を同じ runtime で観察する実験アプリです。
 
-## UI Clarity Pass v6-1
+## UI Clarity Pass v6-2
+
+情報がタブ構造に整理されました。スクロール後も「どこを見ているのか」が分かる UI になっています。
+
+画面下部は次の 8 つのタブに分かれています:
+
+- **概要 / Overview** — 現在地・発達段階・成長要約・次のおすすめ
+- **発火 / Field** — Signal Field / particles / assemblies / bridges
+- **成長 / Growth** — Personal Branch / assembly / bridge / proto seed
+- **先生 / Teacher** — Binding Teacher 依存・teacher-free 化
+- **検証 / Evaluate** — Scenario / evaluation
+- **リスク / Risk** — Overbinding / false binding / teacher overtrust / dream noise
+- **履歴 / History** — Snapshot / stage change / scenario history
+- **Mother** — Export candidate / guardian precheck
+
+詳細メトリクスは大きなカードではなく、CompactMetricStrip によってコンパクトに表示されます。
+
+Simple View では日本語の要約が中心になり、Research View では詳細な内部値を表示できます。
+
+
 
 最初の画面がモバイル向けに整理されました。
 
