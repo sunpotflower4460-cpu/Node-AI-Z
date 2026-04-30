@@ -53,10 +53,6 @@ const getTeacherDependency = (obs: ObservationRecord | null): number => {
   return obs?.signalOverviewSource?.observeSummary?.branch?.averageTeacherDependency ?? 0
 }
 
-const getActiveParticleCount = (obs: ObservationRecord | null): number => {
-  return obs?.signalOverviewSource?.observeSummary?.branch?.assemblyCount ?? 0
-}
-
 const formatDelta = (delta: number, unit = ''): string => {
   if (delta === 0) return `変化なし`
   const sign = delta > 0 ? '+' : ''
@@ -89,7 +85,7 @@ export const buildAnalyzeResultSummaryViewModel = ({
   const previousStage = getStage(previousObservation)
   const stageChanged = currentStage !== previousStage
   const riskChanged = currentRisk !== previousRisk
-  const activeParticleCount = getActiveParticleCount(currentObservation)
+  const activeParticleCount = getAssemblyCount(currentObservation)
   const hasScenarioResult = Boolean(currentObservation?.signalOverviewSource)
 
   const deltas: ResultDelta[] = [
