@@ -122,10 +122,11 @@ export const buildAnalyzeResultSummaryViewModel = ({
   ]
 
   if (Math.abs(teacherDependencyDelta) > 0.01) {
+    const teacherDeltaFormatted = `${teacherDependencyDelta > 0 ? '+' : ''}${(teacherDependencyDelta * 100).toFixed(0)}%`
     deltas.push({
       id: 'teacher',
-      label: `先生依存 ${teacherDependencyDelta > 0 ? '+' : ''}${(teacherDependencyDelta * 100).toFixed(0)}%`,
-      value: `${teacherDependencyDelta > 0 ? '+' : ''}${(teacherDependencyDelta * 100).toFixed(0)}%`,
+      label: `先生依存 ${teacherDeltaFormatted}`,
+      value: teacherDeltaFormatted,
       tone: teacherDependencyDelta < 0 ? 'good' : 'warning',
     })
   }

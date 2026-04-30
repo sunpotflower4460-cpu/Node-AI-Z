@@ -65,18 +65,10 @@ export const AnalyzeFlowCard = ({
     onAnalyze()
   }
 
-  const stateLabel: Record<typeof flowViewModel.state, string> = {
-    idle: 'まず観察したいテキストを入力してください。',
-    ready: 'Analyze すると、内部の発火・成長・リスクが更新されます。',
-    analyzing: '内部パイプラインを観察中...',
-    completed: '今回の観察結果',
-    error: 'Analyze に失敗しました。',
-  }
-
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
       <p className="mb-3 text-sm font-bold text-slate-700">観察する</p>
-      <p className="mb-4 text-xs leading-relaxed text-slate-500">{stateLabel[flowViewModel.state]}</p>
+      <p className="mb-4 text-xs leading-relaxed text-slate-500">{flowViewModel.helperText}</p>
 
       <AnalyzeInputArea
         inputText={inputText}
