@@ -43,6 +43,7 @@ import type { PrimaryTabId } from '../navigation/tabUiTypes'
 import { StickyTabHeader } from '../shared/StickyTabHeader'
 import { MotherTab } from '../tabs/MotherTab'
 import { getEngineLabel } from '../mode/engineLabelMap'
+import { ObserveExperienceSwitchHint } from '../shared/ObserveExperienceSwitchHint'
 
 type ActiveTab = 'Overview' | 'Field' | 'Growth' | 'Teacher' | 'Evaluate' | 'Risk' | 'History' | 'Mother' | 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'Revision' | 'SessionBrain'
 type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal' | 'dual' | 'facade_raw' | 'facade_translated' | 'facade_notes' | 'layered'
@@ -204,6 +205,7 @@ type ObserveModeProps = {
   onResetCurrent: () => void
   onTuningAction: (entryId: string, changeId: string, action: UserTuningAction) => void
   onClearRevision: () => void
+  onSwitchToExperience?: () => void
 }
 
 export const ObserveMode = ({
@@ -217,6 +219,7 @@ export const ObserveMode = ({
   onResetCurrent,
   onTuningAction,
   onClearRevision,
+  onSwitchToExperience,
 }: ObserveModeProps) => {
   const [inputText, setInputText] = useState(currentObservation?.text ?? '')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -400,14 +403,21 @@ export const ObserveMode = ({
         />
 
       {!currentObservation ? (
-        <SignalOverviewPage
-          observation={null}
-          selectedMode={selectedOverviewMode}
-          detailMode={detailMode}
-          implementationMode={implementationMode}
-          onModeChange={setSelectedOverviewMode}
-          onDetailModeChange={setDetailMode}
-        />
+        <>
+          <ObserveExperienceSwitchHint
+            currentMode="observe"
+            onSwitchClick={onSwitchToExperience}
+            collapsible
+          />
+          <SignalOverviewPage
+            observation={null}
+            selectedMode={selectedOverviewMode}
+            detailMode={detailMode}
+            implementationMode={implementationMode}
+            onModeChange={setSelectedOverviewMode}
+            onDetailModeChange={setDetailMode}
+          />
+        </>
       ) : null}
 
       {currentObservation && pipelineResult && studioView ? (
