@@ -2,6 +2,22 @@
 
 Node-AI-Z は、Observe / Experience / Revision / Memory を往復しながら、CPU ベースで育つ知性の背骨と脳寄り拡張を同じ runtime で観察する実験アプリです。
 
+## UI Clarity Pass v6-1
+
+最初の画面がモバイル向けに整理されました。
+
+UI は以下の情報を最初に示すようになっています:
+
+- 現在の画面モード（観察 / 体験）
+- 現在の脳エンジン（New Signal / Legacy / LLM）
+- 発達段階
+- リスクレベル
+- スナップショット状態
+- 最初の入力アクション（FirstActionCard）
+- Analyze 前の空状態案内（EmptyObservationState）
+
+Analyze 前に 0 の大型カードを大量表示するのをやめ、最初の観察後から個別メトリクスを表示します。
+
 ## UI / UX Overview
 
 Node-AI-Z の UI は、次の 3 つの runtime mode を明確に分けて表示するようになりました。

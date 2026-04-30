@@ -2,12 +2,13 @@ import type { ObservationRecord, ImplementationMode } from '../../types/experien
 import type { OverviewMode, UiDetailMode } from '../mode/modeUiTypes'
 import { buildSignalOverviewViewModel } from './buildSignalOverviewViewModel'
 import { OverviewHeader } from './OverviewHeader'
-import { ModeSelector } from '../mode/ModeSelector'
+import { EngineSelectorCompact } from '../mode/EngineSelectorCompact'
 import { CurrentModeCard } from './CurrentModeCard'
 import { DevelopmentStageCard } from '../development/DevelopmentStageCard'
 import { GrowthMetricCards } from './GrowthMetricCards'
 import { RiskSummaryCard } from './RiskSummaryCard'
 import { NextActionCard } from './NextActionCard'
+import { EmptyObservationState } from './EmptyObservationState'
 
 type SignalOverviewPageProps = {
   observation: ObservationRecord | null
@@ -32,16 +33,29 @@ export const SignalOverviewPage = ({
     observation,
   })
 
+  const hasObservation = observation !== null
+  const shouldShowEmptyState =
+    !hasObservation ||
+    (viewModel.growth.assemblyCount === 0 &&
+      viewModel.growth.bridgeCount === 0 &&
+      viewModel.growth.protoSeedCount === 0)
+
   return (
     <div className="flex flex-col gap-4">
       <OverviewHeader viewModel={viewModel} detailMode={detailMode} onDetailModeChange={onDetailModeChange} />
-      <ModeSelector selectedMode={activeMode} onChange={onModeChange} />
+      <EngineSelectorCompact selectedEngine={activeMode} onChange={onModeChange} />
       <div className="grid gap-4 xl:grid-cols-[1.1fr_1fr]">
         <CurrentModeCard viewModel={viewModel} />
         <DevelopmentStageCard development={viewModel.development} researchMode={detailMode === 'research'} />
       </div>
-      <GrowthMetricCards growth={viewModel.growth} detailMode={detailMode} />
-      <RiskSummaryCard risk={viewModel.risk} detailMode={detailMode} />
+      {shouldShowEmptyState ? (
+        <EmptyObservationState />
+      ) : (
+        <>
+          <GrowthMetricCards growth={viewModel.growth} detailMode={detailMode} hasObservation={hasObservation} />
+          <RiskSummaryCard risk={viewModel.risk} detailMode={detailMode} />
+        </>
+      )}
       <NextActionCard nextActions={viewModel.nextActions} />
     </div>
   )

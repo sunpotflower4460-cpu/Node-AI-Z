@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Activity, AlertTriangle, BrainCircuit, ChevronDown, ChevronUp, Clock, Compass, FlaskConical, GitPullRequest, Home, MessageSquareText, RefreshCw, Search, Sparkles, Terminal, TrendingUp, Zap, Brain } from 'lucide-react'
+import { Activity, AlertTriangle, BrainCircuit, ChevronDown, ChevronUp, Clock, Compass, FlaskConical, GitPullRequest, Home, MessageSquareText, RefreshCw, Sparkles, Terminal, TrendingUp, Zap, Brain } from 'lucide-react'
 import type { ObservationRecord, ImplementationMode } from '../../types/experience'
 import type { AppliedBoostEntry, RevisionState, UserTuningAction } from '../../types/nodeStudio'
 import type { HumanReviewDecisionInput } from '../../core'
@@ -15,6 +15,10 @@ import { RevisionTab } from '../tabs/RevisionTab'
 import { SessionBrainTab } from '../tabs/SessionBrainTab'
 import { Badge, HelpIcon } from '../components/CommonUI'
 import { SignalOverviewPage } from '../overview/SignalOverviewPage'
+import { FirstActionCard } from '../overview/FirstActionCard'
+import { CurrentStatusBar } from '../layout/CurrentStatusBar'
+import { buildCurrentStatusViewModel } from '../viewModels/buildCurrentStatusViewModel'
+import { buildSignalOverviewViewModel } from '../overview/buildSignalOverviewViewModel'
 import { getDefaultOverviewMode, type OverviewMode, type UiDetailMode } from '../mode/modeUiTypes'
 import { HumanReviewPanel } from '../review/HumanReviewPanel'
 import { TrunkUndoPanel } from '../review/TrunkUndoPanel'
@@ -34,14 +38,6 @@ import {
   safeUndoTrunkApply,
   submitHumanReviewDecision,
 } from '../../core'
-
-const SAMPLE_INPUTS = [
-  '仕事に対する意欲が湧かなくて、転職すべきか悩んでいる',
-  '最近ずっと、自分のことを信じきれない',
-  'なんとなく引っかかるけど、まだ言葉にできない',
-  'ただ分かってほしいだけなのかもしれない',
-  '少しだけ希望はある気がする',
-]
 
 type ActiveTab = 'Overview' | 'Field' | 'Growth' | 'Teacher' | 'Evaluate' | 'Risk' | 'History' | 'Reply' | 'States' | 'Relations' | 'Patterns' | 'Home' | 'Revision' | 'SessionBrain'
 type RawViewMode = 'pipeline' | 'view' | 'home' | 'revision' | 'signal' | 'dual' | 'facade_raw' | 'facade_translated' | 'facade_notes' | 'layered'
@@ -282,8 +278,24 @@ export const ObserveMode = ({
     && item.id !== currentObservation?.id
   )
 
+  const overviewViewModel = buildSignalOverviewViewModel({
+    mode: implementationMode === 'llm_mode' ? 'llm_mode' : selectedOverviewMode,
+    observation: currentObservation,
+  })
+
+  const statusViewModel = buildCurrentStatusViewModel({
+    engine: implementationMode === 'llm_mode' ? 'llm_mode' : selectedOverviewMode,
+    stage: overviewViewModel.development.currentStage,
+    riskLevel: overviewViewModel.risk.level,
+    hasSnapshot: currentObservation?.signalOverviewSource?.snapshot != null,
+  })
+
   return (
     <div className="flex flex-1 flex-col gap-6">
+      <CurrentStatusBar
+        viewModel={statusViewModel}
+        onNavigateToDetails={() => setActiveTab('Overview')}
+      />
       <section className="rounded-3xl border border-indigo-100 bg-white px-5 py-6 shadow-sm md:px-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="max-w-3xl">
@@ -296,23 +308,6 @@ export const ObserveMode = ({
               <BrainCircuit className="h-6 w-6 text-indigo-600" />
               Node Studio
             </h2>
-            <p className="mt-3 text-sm font-medium leading-relaxed text-slate-500 md:text-[15px]">
-              内部プロセスを観察し、反応・構造・修正・帰還を研究するモードです。結晶思考モデルの挙動を見ながら、Node / Relation / Pattern / Home / Revision を比較・検証できます。
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 inline-flex items-center gap-1">
-                入力して分析
-                <HelpIcon content="テキストを入力してAnalyzeボタンを押すと、AIがどのように処理するかを詳しく見ることができます。" />
-              </span>
-              <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-600 inline-flex items-center gap-1">
-                タブで内部を見る
-                <HelpIcon content="Reply、States、Relations等のタブで、AIの内部状態や処理の詳細を確認できます。" />
-              </span>
-              <span className="rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 inline-flex items-center gap-1">
-                履歴から見返せる
-                <HelpIcon content="Historyタブで過去の分析結果を振り返ることができます。" />
-              </span>
-            </div>
           </div>
           <button
             type="button"
@@ -325,57 +320,13 @@ export const ObserveMode = ({
         </div>
       </section>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
-        <div className="flex flex-col gap-3.5">
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={inputText}
-                onChange={(event) => setInputText(event.target.value)}
-                placeholder="テキストを入力して内部パイプラインを観察する..."
-                aria-label="観察対象のテキスト"
-                inputMode="text"
-                enterKeyHint="search"
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-4 pl-12 pr-4 text-base font-medium text-slate-800 transition-all focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 md:py-3.5 md:text-[15px]"
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    handleAnalyze()
-                  }
-                }}
-              />
-            </div>
-            <button
-              type="button"
-              onClick={handleAnalyze}
-              disabled={isAnalyzing || !inputText.trim()}
-              aria-label={isAnalyzing ? '分析中' : '分析する'}
-              className="tap-target flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-[15px] font-bold text-white shadow-sm transition-all hover:bg-indigo-700 hover:shadow-md active:scale-[0.98] disabled:opacity-50 sm:w-auto"
-            >
-              {isAnalyzing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
-              Analyze
-            </button>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-4 py-2.5 text-xs font-medium leading-relaxed text-slate-500 inline-flex items-center gap-1">
-            <span>1. テキストを入力 → 2. Analyze → 3. まず Overview で現在地を確認 → 必要に応じて Reply / States / History を見る</span>
-            <HelpIcon content="この3ステップで、AIの内部処理を観察できます。Samplesボタンで例文を試すこともできます。" />
-          </div>
-          <div className="scrollbar-hide -mx-1 flex items-center gap-2 overflow-x-auto px-1 pb-1">
-            <span className="mr-0.5 flex shrink-0 items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400"><Terminal className="h-3.5 w-3.5" /> Samples</span>
-            {SAMPLE_INPUTS.map((sample) => (
-              <button
-                key={sample}
-                type="button"
-                onClick={() => handleSampleClick(sample)}
-                className="shrink-0 rounded-lg border border-slate-200/60 bg-slate-100 px-3.5 py-2.5 text-left text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-200 active:scale-[0.98]"
-              >
-                {sample.length > 20 ? `${sample.substring(0, 20)}...` : sample}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <FirstActionCard
+        inputText={inputText}
+        isAnalyzing={isAnalyzing}
+        onInputChange={setInputText}
+        onAnalyze={handleAnalyze}
+        onSampleClick={handleSampleClick}
+      />
 
       {!currentObservation ? (
         <SignalOverviewPage
