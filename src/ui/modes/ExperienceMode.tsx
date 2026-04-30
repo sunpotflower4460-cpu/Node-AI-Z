@@ -4,7 +4,6 @@ import type { UserTuningAction, UserTuningState } from '../../types/nodeStudio'
 import type { UiDetailMode } from '../mode/modeUiTypes'
 import { getDefaultOverviewMode } from '../mode/modeUiTypes'
 import { ExperienceModePage } from '../experience/ExperienceModePage'
-import type { ObserveTab } from '../experience/buildExperienceResultViewModel'
 
 type ExperienceModeProps = {
   messages: ExperienceMessage[]
@@ -43,7 +42,7 @@ export const ExperienceMode = ({
     })
   }
 
-  const handleNavigateToObserve = (tab?: ObserveTab) => {
+  const handleNavigateToObserve = () => {
     if (onSwitchToObserve) {
       onSwitchToObserve()
       return
@@ -52,7 +51,6 @@ export const ExperienceMode = ({
     if (lastAssistant?.observationId) {
       onOpenObservation(lastAssistant.observationId)
     }
-    void tab
   }
 
   return (
