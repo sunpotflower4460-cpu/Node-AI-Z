@@ -15,7 +15,7 @@ import { RevisionTab } from '../tabs/RevisionTab'
 import { SessionBrainTab } from '../tabs/SessionBrainTab'
 import { Badge, HelpIcon } from '../components/CommonUI'
 import { SignalOverviewPage } from '../overview/SignalOverviewPage'
-import { FirstActionCard } from '../overview/FirstActionCard'
+import { AnalyzeFlowCard } from '../analyze/AnalyzeFlowCard'
 import { CurrentStatusBar } from '../layout/CurrentStatusBar'
 import { buildCurrentStatusViewModel } from '../viewModels/buildCurrentStatusViewModel'
 import { buildSignalOverviewViewModel } from '../overview/buildSignalOverviewViewModel'
@@ -221,6 +221,8 @@ export const ObserveMode = ({
   const [inputText, setInputText] = useState(currentObservation?.text ?? '')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [activeTab, setActiveTab] = useState<ActiveTab>('Overview')
+  const [prevObservation, setPrevObservation] = useState<ObservationRecord | null>(null)
+  const [analyzeError, setAnalyzeError] = useState<string | undefined>(undefined)
   const [selectedOverviewMode, setSelectedOverviewMode] = useState<OverviewMode>(() => getDefaultOverviewMode(implementationMode))
   const [detailMode, setDetailMode] = useState<UiDetailMode>('simple')
   const [isRawOpen, setIsRawOpen] = useState(false)
@@ -252,26 +254,41 @@ export const ObserveMode = ({
     if (!trimmed || isAnalyzing) {
       return
     }
-
+    setPrevObservation(currentObservation)
+    setAnalyzeError(undefined)
     setIsAnalyzing(true)
 
     window.setTimeout(() => {
-      void Promise.resolve(onAnalyze(trimmed)).finally(() => {
-        setActiveTab('Overview')
-        setIsAnalyzing(false)
-      })
+      void Promise.resolve(onAnalyze(trimmed))
+        .then(() => {
+          setActiveTab('Overview')
+        })
+        .catch((err: unknown) => {
+          setAnalyzeError(err instanceof Error ? err.message : 'Unknown error')
+        })
+        .finally(() => {
+          setIsAnalyzing(false)
+        })
     }, 400)
   }
 
   const handleSampleClick = (text: string) => {
     setInputText(text)
+    setPrevObservation(currentObservation)
+    setAnalyzeError(undefined)
     setIsAnalyzing(true)
 
     window.setTimeout(() => {
-      void Promise.resolve(onAnalyze(text)).finally(() => {
-        setActiveTab('Overview')
-        setIsAnalyzing(false)
-      })
+      void Promise.resolve(onAnalyze(text))
+        .then(() => {
+          setActiveTab('Overview')
+        })
+        .catch((err: unknown) => {
+          setAnalyzeError(err instanceof Error ? err.message : 'Unknown error')
+        })
+        .finally(() => {
+          setIsAnalyzing(false)
+        })
     }, 400)
   }
 
@@ -365,13 +382,22 @@ export const ObserveMode = ({
         </div>
       </section>
 
-      <FirstActionCard
-        inputText={inputText}
-        isAnalyzing={isAnalyzing}
-        onInputChange={setInputText}
-        onAnalyze={handleAnalyze}
-        onSampleClick={handleSampleClick}
-      />
+      <AnalyzeFlowCard
+          inputText={inputText}
+          isAnalyzing={isAnalyzing}
+          currentObservation={currentObservation}
+          previousObservation={prevObservation}
+          errorMessage={analyzeError}
+          researchMode={detailMode === 'research'}
+          onInputChange={setInputText}
+          onAnalyze={handleAnalyze}
+          onSampleClick={handleSampleClick}
+          onTabChange={(tabId) => {
+            const mapped = PRIMARY_TAB_ID_TO_ACTIVE[tabId]
+            if (mapped) setActiveTab(mapped)
+          }}
+          onRetry={handleAnalyze}
+        />
 
       {!currentObservation ? (
         <SignalOverviewPage
