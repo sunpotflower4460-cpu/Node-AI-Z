@@ -16,36 +16,36 @@ export const buildOnboardingViewModel = (): OnboardingViewModel => {
       id: 'what',
       title: 'Node-AI-Z とは',
       description:
-        'Node-AI-Z は、CPU だけで育つ知性の実験アプリです。外部 LLM に頼らず、点群の発火・結合・想起から学習します。',
+        'Node-AI-Z は、入力に対して内部でどんな発火や結びつきが起きるかを観察する実験アプリです。',
       highlight: 'overview',
     },
     {
       id: 'modes',
-      title: '3 つのモード',
+      title: '2 つの使い方',
       description:
-        'New Signal Mode（主役）、Crystallized Legacy（旧系統比較）、LLM Mode（外部API比較）の 3 つがあります。まずは New Signal Mode を使いましょう。',
+        '観察モードでは内部を見ます。体験モードでは自然に話します。まずは観察モードから始めましょう。',
       highlight: 'mode-selector',
     },
     {
       id: 'signal',
-      title: 'New Signal Mode の見方',
+      title: '新しい信号モード',
       description:
-        '最初から意味ノードを持ちません。点群（particles）が発火し、繰り返すうちに assembly（発火群）と bridge（結合）が育ちます。',
+        '新しい信号モードは、最初から意味を入れず、点群の発火と結びつきから育つモードです。',
       highlight: 'field',
     },
     {
-      id: 'stage',
-      title: 'Stage と Teacher Dependency',
+      id: 'start',
+      title: 'まずやること',
       description:
-        'Stage は発達段階（1〜8）です。最初は Teacher に補助されますが、成長とともに teacher dependency が下がり、自律した想起ができるようになります。',
-      highlight: 'growth',
+        'まず短い文章を入力して Analyze してください。発火・成長・リスクが表示されます。',
+      highlight: 'overview',
     },
     {
-      id: 'start',
-      title: 'まず見るおすすめ画面',
+      id: 'inspect',
+      title: '結果を見る',
       description:
-        'Overview で現在地を確認 → Field で発火を観察 → Growth で assembly/bridge の成長 → Teacher で依存度の変化、を順に見ると分かりやすいです。',
-      highlight: 'overview',
+        '結果が出たら、「発火」「成長」「リスク」タブを見ると、裏側で何が起きたか分かります。',
+      highlight: 'growth',
     },
   ]
 

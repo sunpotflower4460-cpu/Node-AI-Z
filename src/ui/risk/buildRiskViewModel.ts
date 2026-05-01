@@ -53,12 +53,12 @@ const buildExplanation = (label: string, score: number): string => {
 
 const buildSummaryText = (report: SignalRiskReport): string => {
   if (report.riskLevel === 'low') {
-    return '現在のリスクレベルは低く、育ち方は安定しています。'
+    return '落ち着いています。現在、結びつきの増え方は安定しています。'
   }
   if (report.riskLevel === 'high') {
-    return `Risk Level: High — ${report.warnings[0] ?? '重大なリスクが検出されています。'}`
+    return `確認が必要です。未成熟な結びつきが強くなりすぎている可能性があります。昇格や保存の前に、検証してください。`
   }
-  return `Risk Level: Medium — ${report.warnings[0] ?? '一部のリスク指標に注意が必要です。'}`
+  return `少し注意が必要です。結びつきや先生依存に偏りが出始めています。追加の検証をおすすめします。`
 }
 
 export const buildRiskViewModel = (report: SignalRiskReport): RiskViewModel => ({
