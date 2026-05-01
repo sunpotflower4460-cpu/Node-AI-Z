@@ -13,22 +13,22 @@ export const MotherTab = ({ detailMode }: MotherTabProps) => {
   return (
     <div className="flex flex-col gap-4">
       <SectionSummaryCard
-        title="Mother"
+        title={isResearch ? 'Mother Export Candidates' : 'Mother'}
         description={
           isResearch
-            ? 'Export candidates for Node Mother, guardian precheck, and cross-app memory preview.'
-            : 'Node Mother に渡す前の候補と guardian チェックを確認します。'
+            ? 'Signal Mode で育った結びつきや意味の種を Node Mother に渡す前に確認します。Export candidates and Guardian precheck.'
+            : 'Signal Mode で育った結びつきや意味の種を、Node Mother に渡す前に確認します。ここではまだ自動保存は行いません。'
         }
       />
 
       <TabEmptyState
-        title={isResearch ? 'Mother connection coming soon' : 'Mother 接続は準備中です'}
+        title={isResearch ? 'No export candidates yet' : 'まだ保存候補はありません'}
         description={
           isResearch
-            ? 'Export candidates and Guardian precheck will be available when the Mother bridge is ready.'
-            : 'Mother Bridge が準備できると、エクスポート候補と guardian チェックがここに表示されます。'
+            ? 'Matured bridges and Proto Seeds will appear here as export candidates before being sent to Node Mother.'
+            : '安定した結びつきや意味の種が育つと、Node Mother に渡す前の候補として表示されます。保存候補の確認・保留・除外を行います。'
         }
-        nextAction={isResearch ? 'Coming soon' : '準備中 — もうすぐ利用可能になります'}
+        nextAction={isResearch ? 'Keep observing to grow candidates' : '観察を続けると候補が育ちます'}
       />
 
       {isResearch ? (

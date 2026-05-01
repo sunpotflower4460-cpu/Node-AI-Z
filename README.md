@@ -2,6 +2,29 @@
 
 Node-AI-Z は、Observe / Experience / Revision / Memory を往復しながら、CPU ベースで育つ知性の背骨と脳寄り拡張を同じ runtime で観察する実験アプリです。
 
+## UI Clarity Pass v6-6
+
+UI のコピーを初見ユーザー向けに整理しました。
+
+Simple View では日本語ラベルと短い説明を優先し、Research View では英語・内部名を併記できるようになりました。
+
+オンボーディングでは以下を説明します:
+
+- Node-AI-Z とは何か
+- 観察モード vs 体験モードの違い
+- 新しい信号モードとは何か
+- Analyze でまず始めること
+- 結果をどのタブで確認するか
+
+リスクと Mother Export の表現は断定を避け、観察結果・候補・準備状態として誠実に表現するようにしました。
+
+### 追加ファイル
+
+- `src/ui/copy/` — UI用語辞書（uiLabelMap, engineCopy, tabCopy, metricCopy, emptyStateCopy, riskCopy, onboardingCopy, researchCopy）
+- `src/ui/help/` — 用語ヘルプ（HelpPopover, TermHelpText, GlossaryPanel, buildGlossaryViewModel）
+- `src/ui/shared/LearnMoreDisclosure.tsx` — 折りたたみ詳細表示
+- `src/ui/shared/FriendlyEmptyState.tsx` — 育つ前の状態として見せる Empty State
+
 ## UI Clarity Pass v6-4
 
 観察モードと体験モードの役割が明確に分離されました。

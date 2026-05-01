@@ -1,4 +1,5 @@
 import type { SignalRiskReport } from '../../signalRisk/signalRiskTypes'
+import { RISK_OVERALL_COPY } from '../copy/riskCopy'
 
 export type RiskCardViewModel = {
   label: string
@@ -52,13 +53,7 @@ const buildExplanation = (label: string, score: number): string => {
 }
 
 const buildSummaryText = (report: SignalRiskReport): string => {
-  if (report.riskLevel === 'low') {
-    return '現在のリスクレベルは低く、育ち方は安定しています。'
-  }
-  if (report.riskLevel === 'high') {
-    return `Risk Level: High — ${report.warnings[0] ?? '重大なリスクが検出されています。'}`
-  }
-  return `Risk Level: Medium — ${report.warnings[0] ?? '一部のリスク指標に注意が必要です。'}`
+  return RISK_OVERALL_COPY[report.riskLevel].body
 }
 
 export const buildRiskViewModel = (report: SignalRiskReport): RiskViewModel => ({
