@@ -1,0 +1,40 @@
+import type { EngineCardConfig } from '../types/engineSettingsTypes'
+
+export const ENGINE_CARD_CONFIGS: EngineCardConfig[] = [
+  {
+    id: 'signal_mode',
+    label: 'New Signal',
+    shortLabel: 'New',
+    shortDescription: '意味未満の点群から育つ新しい結晶思考。',
+    description: '意味未満の点群から育つ新しい結晶思考。現在の主な開発対象です。',
+    accentClass: 'text-cyan-200',
+    borderClass: 'border-cyan-400/30 bg-slate-950/90',
+    badgeText: '現在の主開発対象',
+    badgeClass: 'border-cyan-400/40 bg-cyan-500/15 text-cyan-100',
+    internalId: 'signal_mode',
+  },
+  {
+    id: 'crystallized_legacy',
+    label: 'Legacy',
+    shortLabel: 'Legacy',
+    shortDescription: 'これまでの結晶思考モード。',
+    description: 'これまでの結晶思考モード。既存のノード・記憶・構造を使います。',
+    accentClass: 'text-violet-200',
+    borderClass: 'border-violet-400/30 bg-slate-950/90',
+    badgeText: '旧系統',
+    badgeClass: 'border-violet-400/40 bg-violet-500/15 text-violet-100',
+    internalId: 'crystallized_legacy',
+  },
+  {
+    id: 'llm_mode',
+    label: 'LLM',
+    shortLabel: 'LLM',
+    shortDescription: '外部LLMを使う比較・補助モード。',
+    description: '外部LLMを使う比較・補助モード。',
+    accentClass: 'text-emerald-200',
+    borderClass: 'border-emerald-400/30 bg-slate-950/90',
+    badgeText: '比較用',
+    badgeClass: 'border-emerald-400/40 bg-emerald-500/15 text-emerald-100',
+    internalId: 'llm_mode',
+  },
+]

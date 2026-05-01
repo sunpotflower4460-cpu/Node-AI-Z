@@ -1125,3 +1125,36 @@ UI は以下の点でさらに最適化されました。
 - **初見ユーザー向け Onboarding**: FirstRunGuide / OnboardingFlow による導入フロー
 - **Empty / Loading / First-run 状態の整備**: EmptyGrowthIllustration / LoadingFieldSkeleton
 - **Simple / Research Toggle の改善**: 説明付きの自然な切替UI
+
+## UI Clarity Pass v6-5: 設定パネルの整理
+
+設定UI を一新し、用途ごとに整理された `SettingsPanel` を実装しました。
+
+### 新規コンポーネント
+
+- **`SettingsPanel`**: すべての設定セクションをまとめるメインパネル。Simple / Research モードで表示項目が変わります。
+- **`SettingsDrawer`**: `SettingsPanel` をサイドドロワーとして表示するラッパーコンポーネント。
+- **`BasicSettingsSection`**: スクリーンモード（観察/体験）・エンジン選択・表示詳細度（Simple/Research）の基本設定。
+- **`EngineSettingsSection`**: New Signal / Legacy / LLM の各エンジンをカード形式で選択するセクション。
+- **`EngineChoiceCard`**: エンジン1つ分の選択カード。Research モードでは内部IDと詳細説明を表示。
+- **`DisplaySettingsSection`**: 日本語ラベル優先・Compact Cards などの表示設定。Research モードでは raw IDs / debug badges のトグルも表示。
+- **`ResearchSettingsSection`**: 詳細ログ・生データ表示・機能ON/OFF比較（ablation）のトグル。Simple モードでは折りたたみ表示。
+- **`StorageSettingsSection`**: 最終保存日時・Autosave トグル・今すぐ保存・復元ボタン。
+- **`DangerZone`**: Signal Mode リセット・スナップショット削除などの危険操作（デフォルト折りたたみ）。
+- **`SimpleResearchSettingsToggle`**: 設定コンテキスト用の Simple/Research 切替トグル。
+- **`SettingRow`**: ラベル・説明・値・バッジ・内部名を持つ汎用設定行コンポーネント。
+- **`SettingSectionHeader`**: 設定セクションのヘッダー（タイトル・説明・バッジ）。
+
+### 型定義
+
+- **`settingsUiTypes.ts`**: `ScreenMode` / `EngineMode` / `DetailMode` / `SettingsViewModel` 型。
+- **`engineSettingsTypes.ts`**: `EngineCardConfig` 型。
+
+### ユーティリティ
+
+- **`buildSettingsViewModel`**: アプリ状態を `SettingsViewModel` にマッピングする関数。画面モード・エンジン・詳細度のラベルを日本語で生成し、最終保存日時を日本語ロケールでフォーマット。
+
+### 共有コンポーネント
+
+- **`HelpText`**: クリックで展開するインフォメーション表示コンポーネント。
+- **`SmallInfoBadge`**: cyan / violet / emerald / amber バリアント対応の小型バッジ。
