@@ -1206,3 +1206,38 @@ UI は以下の点でさらに最適化されました。
 
 - **`HelpText`**: クリックで展開するインフォメーション表示コンポーネント。
 - **`SmallInfoBadge`**: cyan / violet / emerald / amber バリアント対応の小型バッジ。
+
+## UI Clarity Pass v6-8
+
+このパスでは、UIの見やすさを継続的に検証するための監査システムを追加しました。
+
+各画面が初見ユーザーにとって分かりやすいかを以下の観点でチェックします:
+
+- 最初の1画面の明確さ（画面の目的・主ボタン・上部情報）
+- Analyze Flow の状態遷移の分かりやすさ
+- 観察モード / 体験モードの役割分離
+- タブごとの空状態・Simple / Research Viewの切り替え
+- 空状態（データなし）の表示
+- スマホでの読みやすさ
+- コピーの分かりやすさ（日本語優先・過剰表現なし）
+- 設定の整理状態
+- Mother Export の表現の誠実さ
+
+監査パネル（`UiAuditPanel`）は Research View / 開発用途で利用します。Simple View では表示しません。
+
+### 追加ファイル
+
+- `src/ui/audit/uiAuditTypes.ts` — 監査型定義
+- `src/ui/audit/uiAuditChecklist.ts` — 共通チェックリスト
+- `src/ui/audit/runUiAudit.ts` — 全画面監査の実行
+- `src/ui/audit/buildUiAuditReport.ts` — 監査レポート生成
+- `src/ui/audit/buildScreenAuditResult.ts` — 画面別結果生成
+- `src/ui/audit/checks/` — 画面別チェック（home / analyze / observe / experience / tabs / settings / onboarding）
+- `src/ui/audit/UiAuditPanel.tsx` — 監査パネルコンポーネント
+- `src/ui/audit/UiAuditSummaryCard.tsx` — サマリーカード
+- `src/ui/audit/ScreenAuditCard.tsx` — 画面別カード
+- `src/ui/audit/AuditCheckItem.tsx` — チェック項目コンポーネント
+- `src/ui/audit/MobileReadabilityAudit.tsx` — モバイル表示チェック
+- `src/ui/audit/EmptyStateAudit.tsx` — 空状態チェック
+- `src/ui/audit/CopyClarityAudit.tsx` — コピー分かりやすさチェック
+- `src/ui/viewModels/buildUiAuditViewModel.ts` — 監査ViewModelビルダー
