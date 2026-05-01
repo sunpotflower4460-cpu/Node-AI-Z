@@ -2,6 +2,31 @@
 
 Node-AI-Z は、Observe / Experience / Revision / Memory を往復しながら、CPU ベースで育つ知性の背骨と脳寄り拡張を同じ runtime で観察する実験アプリです。
 
+## UI Clarity Pass v6-7
+
+モバイル向けの最終ポリッシュとして、画面全体の密度・カードの優先順位・スマホでの見やすさを整えました。
+
+情報は多いままでも、最初に見るべきもの・あとで開くもの・研究用に見るものが分かれるUIになっています。
+
+このパスで追加・変更されたもの:
+
+- **CurrentSummaryCard** — 現在の状態を1枚で把握できるカード。スマホで1枚に収まり、詳細は折りたたみで確認できます。
+- **PriorityCardLayout** — カードの優先順位を制御するレイアウト。Priority 1 は常に上部、Priority 4 は Research View のみ。
+- **MetricDensityController** — 状態に応じてメトリクス表示の密度を変えます。Analyze 前は EmptyState のみ、成長データありで CompactMetricStrip を表示。
+- **MobileCardStack** — スマホでカードが縦に詰まりすぎないよう、余白とセマンティクスを統一します。
+- **CompactActionBar** — 主要アクションを最大3つに絞って横並びで表示します。
+- **SectionPriorityHeader** — 各タブ冒頭に短いタイトルと1行説明を表示します。長文説明を排除。
+- **CollapsedDetailGroup** (`src/ui/shared/`) — 詳細情報をデフォルト折りたたみで提供します。
+- **CompactInfoRow** (`src/ui/shared/`) — 小さな情報をカードではなく行表示にします。
+- **MiniMetricBadge** (`src/ui/shared/`) — 小さい数値を軽く見せるバッジ。0値は薄めに表示。
+- **TouchTargetButton** (`src/ui/shared/`) — 主要ボタン 44px / 小ボタン 36px のタップ領域を保証するボタン。
+- **SoftDivider** (`src/ui/shared/`) — セクション間の区切り線。
+- **visualPriority.ts** (`src/ui/styles/`) — 視覚優先度トークン (primary / secondary / tertiary / warning)。
+- **cardDensity.ts** (`src/ui/styles/`) — カード密度トークン (hero / compact / row)。
+- **mobileSpacing.ts** (`src/ui/styles/`) — モバイル余白・文字サイズのトークン。
+
+各タブ冒頭は最重要情報を1枚に絞り、詳細は CollapsedDetailGroup / Research View に移しています。
+
 ## UI Clarity Pass v6-6
 
 UI のコピーを初見ユーザー向けに整理しました。
