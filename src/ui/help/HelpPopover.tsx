@@ -9,12 +9,14 @@ type HelpPopoverProps = {
 
 export const HelpPopover = ({ term, definition, researchNote }: HelpPopoverProps) => {
   const [open, setOpen] = useState(false)
+  const tooltipId = `help-tooltip-${term.replace(/\s+/g, '-')}`
 
   return (
     <span className="relative inline-flex items-center gap-0.5">
       <button
         type="button"
         aria-label={`${term} の説明`}
+        aria-describedby={open ? tooltipId : undefined}
         onClick={() => setOpen((prev) => !prev)}
         className="inline-flex items-center text-slate-400 hover:text-cyan-400 focus:outline-none"
       >
@@ -22,6 +24,7 @@ export const HelpPopover = ({ term, definition, researchNote }: HelpPopoverProps
       </button>
       {open ? (
         <span
+          id={tooltipId}
           role="tooltip"
           className="absolute bottom-full left-1/2 z-50 mb-1.5 w-56 -translate-x-1/2 rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 shadow-lg"
         >

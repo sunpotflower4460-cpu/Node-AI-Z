@@ -16,6 +16,7 @@ export const LearnMoreDisclosure = ({ summary, children }: LearnMoreDisclosurePr
         onClick={() => setOpen((prev) => !prev)}
         className="flex items-center gap-1 text-xs font-semibold text-cyan-500 hover:text-cyan-400"
         aria-expanded={open}
+        aria-label={open ? '詳細を閉じる' : '詳細を開く'}
       >
         <span>{open ? '閉じる' : summary}</span>
         <ChevronDown

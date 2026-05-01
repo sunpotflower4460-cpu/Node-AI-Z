@@ -25,7 +25,7 @@ export const MotherTab = ({ detailMode }: MotherTabProps) => {
         title={isResearch ? 'No export candidates yet' : 'まだ保存候補はありません'}
         description={
           isResearch
-            ? 'Matured bridges and proto seeds will appear here as export candidates before being sent to Node Mother.'
+            ? 'Matured bridges and Proto Seeds will appear here as export candidates before being sent to Node Mother.'
             : '安定した結びつきや意味の種が育つと、Node Mother に渡す前の候補として表示されます。保存候補の確認・保留・除外を行います。'
         }
         nextAction={isResearch ? 'Keep observing to grow candidates' : '観察を続けると候補が育ちます'}
