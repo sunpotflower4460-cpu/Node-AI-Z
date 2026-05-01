@@ -2,6 +2,29 @@
 
 Node-AI-Z は、Observe / Experience / Revision / Memory を往復しながら、CPU ベースで育つ知性の背骨と脳寄り拡張を同じ runtime で観察する実験アプリです。
 
+## UI Clarity Pass v6-9
+
+このパスでは UI Audit Fix Planner を追加しました。
+
+UI監査の警告・失敗結果をもとに、優先度付きの修正候補を自動で整理し、小さなPR単位に分割して、GitHub Copilot / Cloud Agent にそのまま渡せる指示書を生成します。
+
+このシステムは自動でコードを変更したりPRをマージしたりしません。開発者が明確で範囲を絞った改善指示を作成するための補助ツールです。
+
+### 追加ファイル
+
+- `src/ui/auditFix/uiAuditFixTypes.ts` — UiFixCandidate / UiFixPrPlan / UiFixPlan の型定義
+- `src/ui/auditFix/extractUiFixCandidates.ts` — UI監査結果から修正候補を抽出
+- `src/ui/auditFix/prioritizeUiFixCandidates.ts` — p0 / p1 / p2 の優先度付け
+- `src/ui/auditFix/groupFixesIntoPrPlans.ts` — 修正候補を小さなPR案に分割
+- `src/ui/auditFix/generateCopilotUiFixPrompt.ts` — Copilot / Cloud Agent 用指示書を生成
+- `src/ui/auditFix/buildUiFixPlan.ts` — 監査結果から UiFixPlan を構築
+- `src/ui/auditFix/buildUiFixPlanViewModel.ts` — UI表示用 ViewModel
+- `src/ui/auditFix/UiFixPlanPanel.tsx` — 修正計画パネル（Research View 配置推奨）
+- `src/ui/auditFix/UiFixCandidateCard.tsx` — 修正候補カード
+- `src/ui/auditFix/UiFixPrPlanCard.tsx` — PR計画カード
+- `src/ui/auditFix/CopyFixPromptButton.tsx` — 指示書コピーボタン
+- `src/ui/auditFix/templates/` — 画面ごとのプロンプトテンプレート
+
 ## UI Clarity Pass v6-7
 
 モバイル向けの最終ポリッシュとして、画面全体の密度・カードの優先順位・スマホでの見やすさを整えました。
