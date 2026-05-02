@@ -34,7 +34,11 @@ export const BindingQueueList = ({ queue }: Props) => {
       {queue.items.map(item => (
         <div key={item.id} className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs">
           <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${PRIORITY_COLORS[item.priority]}`}>{item.priority}</span>
-          <span className="font-mono text-slate-400 text-[10px]">{item.candidateId.slice(0, 16)}…</span>
+          <span
+            className="font-mono text-slate-400 text-[10px]"
+            title={item.candidateId}
+            aria-label={`candidate ${item.candidateId}`}
+          >{item.candidateId.slice(0, 16)}…</span>
           <span className={`ml-auto font-medium ${STATUS_COLORS[item.status]}`}>{item.status}</span>
         </div>
       ))}
