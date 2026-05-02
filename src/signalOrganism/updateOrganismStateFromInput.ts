@@ -27,6 +27,7 @@ export function updateOrganismStateFromInput(
     teacherInvolved,
     recallSuccess,
     timestamp,
+    inputModality,
   } = signal
 
   const inputStrength = clamp(activeParticleCount / Math.max(assemblyCount * 5, 10))
@@ -99,6 +100,23 @@ export function updateOrganismStateFromInput(
     totalInputCount: state.lifecycle.totalInputCount + 1,
   }
 
+  // --- modalityBalance ---
+  // Running average: prev_ratio * (n-1)/n + new_increment * 1/n
+  const prevModal = state.modalityBalance
+  const modalTotal = state.lifecycle.totalInputCount + 1
+  const scaleForNewInput = (r: number) => r * (modalTotal - 1) / modalTotal
+  const modalityBalance = {
+    textRatio: inputModality === 'text'
+      ? clamp(scaleForNewInput(prevModal.textRatio) + 1 / modalTotal)
+      : clamp(scaleForNewInput(prevModal.textRatio)),
+    imageRatio: inputModality === 'image'
+      ? clamp(scaleForNewInput(prevModal.imageRatio) + 1 / modalTotal)
+      : clamp(scaleForNewInput(prevModal.imageRatio)),
+    audioRatio: inputModality === 'audio'
+      ? clamp(scaleForNewInput(prevModal.audioRatio) + 1 / modalTotal)
+      : clamp(scaleForNewInput(prevModal.audioRatio)),
+  }
+
   return {
     ...state,
     lastActiveAt: timestamp,
@@ -106,6 +124,7 @@ export function updateOrganismStateFromInput(
     regulation,
     continuity,
     sourceBalance,
+    modalityBalance,
     learning,
   }
 }

@@ -46,6 +46,12 @@ export function createInitialOrganismState(): PersistentOrganismState {
       selfGeneratedRatio: 0.0,
     },
 
+    modalityBalance: {
+      textRatio: 0.0,
+      imageRatio: 0.0,
+      audioRatio: 0.0,
+    },
+
     learning: {
       teacherDependency: 0.5,
       learningStage: 0,

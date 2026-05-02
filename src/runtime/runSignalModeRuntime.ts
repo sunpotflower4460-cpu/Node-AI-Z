@@ -3,6 +3,8 @@ import type { SignalPersonalBranch } from '../signalBranch/signalBranchTypes'
 import type { SignalLoopState } from '../signalLoop/signalLoopTypes'
 import type { SignalConsolidationState } from '../signalConsolidation/signalConsolidationTypes'
 import type { SignalAttentionBudget } from '../signalAttention/signalAttentionTypes'
+import type { SensoryPacket } from '../signalSensory/sensoryPacketTypes'
+import { sensoryPacketToInjectionVector } from '../signalSensory/sensoryPacketToInjectionVector'
 import { runSignalFieldRuntime } from './runSignalFieldRuntime'
 import { createInitialSignalPersonalBranch } from '../signalBranch/createInitialSignalPersonalBranch'
 import { recordAssemblyExperience } from '../signalBranch/recordAssemblyExperience'
@@ -108,7 +110,16 @@ export type SignalModeRuntimeOptions = {
 }
 
 export type SignalModeRuntimeInput = {
+  /**
+   * Raw particle stimulus. If `sensoryPacket` is also provided,
+   * the packet takes precedence and `stimulus` is used as a fallback.
+   */
   stimulus: ParticleStimulus
+  /**
+   * Optional SensoryPacket from the multimodal input layer.
+   * When provided, its converted injection vector overrides `stimulus`.
+   */
+  sensoryPacket?: SensoryPacket
   existingBranch?: SignalPersonalBranch
   existingLoopState?: SignalLoopState
   existingFieldState?: SignalFieldState
@@ -180,7 +191,12 @@ function createEmptyDreamSummary() {
 export async function runSignalModeRuntime(
   input: SignalModeRuntimeInput,
 ): Promise<SignalModeRuntimeResult> {
-  const timestamp = input.stimulus.timestamp
+  // Resolve the active stimulus: SensoryPacket takes precedence when provided
+  const activeStimulus: ParticleStimulus = input.sensoryPacket
+    ? sensoryPacketToInjectionVector(input.sensoryPacket)
+    : input.stimulus
+
+  const timestamp = activeStimulus.timestamp
   const branch = input.existingBranch ?? createInitialSignalPersonalBranch()
   const loopState = input.existingLoopState ?? createInitialSignalLoopState()
   const previousFieldState = input.existingFieldState
@@ -212,7 +228,7 @@ export async function runSignalModeRuntime(
   const recentActivityLevel = input.recentActivityLevel ?? 0.5
 
   const fieldResult = await runSignalFieldRuntime({
-    stimulus: input.stimulus,
+    stimulus: activeStimulus,
     existingState: previousFieldState,
     enableBindingTeacher: input.enableBindingTeacher,
     textSummary: input.textSummary,
@@ -671,6 +687,9 @@ export async function runSignalModeRuntime(
     teacherInvolved: input.enableBindingTeacher ?? false,
     recallSuccess: fieldResult.observe.recallEvents.length > 0,
     timestamp,
+    inputModality: input.sensoryPacket
+      ? (activeStimulus.modality as 'text' | 'image' | 'audio')
+      : (input.stimulus.modality as 'text' | 'image' | 'audio'),
   })
 
   // Update recent assembly ids for replay
