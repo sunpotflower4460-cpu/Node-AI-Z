@@ -26,7 +26,7 @@ export const TeacherJudgmentCard = ({ judgment }: Props) => {
       <div className="flex items-center gap-2">
         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${judgmentCls}`}>{judgment.judgment}</span>
         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500">{TEACHER_TYPE_LABELS[judgment.teacherType] ?? judgment.teacherType}</span>
-        <span className="ml-auto text-xs text-slate-400">確信度: {judgment.confidence.toFixed(2)}</span>
+        <span className="ml-auto text-xs text-slate-400">確信度: {(Math.round(judgment.confidence * 100) / 100).toFixed(judgment.confidence === 1 || judgment.confidence === 0 ? 0 : 2)}</span>
       </div>
       <p className="text-xs text-slate-600">{judgment.explanation}</p>
     </div>

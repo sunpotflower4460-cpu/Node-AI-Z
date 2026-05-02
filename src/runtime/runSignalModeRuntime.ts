@@ -97,7 +97,7 @@ import { buildOrganismSummary } from '../signalOrganism/buildOrganismSummary'
 import { runBackgroundTick } from '../signalBackground/runBackgroundTick'
 import { buildBackgroundLoopSummary } from '../signalBackground/buildBackgroundLoopSummary'
 import { extendSignalSnapshotWithOrganism } from '../signalPersistence/extendSignalSnapshotWithOrganism'
-import type { SameObjectBindingCandidate } from '../signalTeacher/signalTeacherTypes'
+import type { SameObjectBindingCandidate, TeacherJudgment } from '../signalTeacher/signalTeacherTypes'
 import type { BindingQueueState } from '../signalTeacher/queue/bindingQueueTypes'
 import type { CrossModalRecallResult } from '../signalRecall/crossModalRecallTypes'
 import { detectCrossModalCandidates } from '../signalTeacher/detectCrossModalCandidates'
@@ -772,7 +772,7 @@ export async function runSignalModeRuntime(
   const teacherMode = bgOptions.teacherMode ?? 'off'
   const autoCheckHigh = bgOptions.autoCheckHighPriorityCandidates ?? false
 
-  const appliedJudgments: import('../signalTeacher/signalTeacherTypes').TeacherJudgment[] = []
+  const appliedJudgments: TeacherJudgment[] = []
   if (teacherMode === 'mock' && autoCheckHigh) {
     const highPriorityItems = bindingQueue.items.filter(
       item => item.priority === 'high' && item.status === 'pending',

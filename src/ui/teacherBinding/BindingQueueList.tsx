@@ -37,7 +37,6 @@ export const BindingQueueList = ({ queue }: Props) => {
           <span
             className="font-mono text-slate-400 text-[10px]"
             title={item.candidateId}
-            aria-label={`candidate ${item.candidateId}`}
           >{item.candidateId.slice(0, 16)}…</span>
           <span className={`ml-auto font-medium ${STATUS_COLORS[item.status]}`}>{item.status}</span>
         </div>

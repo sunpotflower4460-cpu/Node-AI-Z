@@ -24,8 +24,6 @@ function decideMockJudgment(input: TeacherAdapterInput): { judgment: TeacherJudg
   if (
     candidate.source === 'temporal_cooccurrence' &&
     candidate.modalities.length >= 2 &&
-    candidate.modalities[0] != null &&
-    candidate.modalities[1] != null &&
     candidate.modalities[0] !== candidate.modalities[1]
   ) {
     return { judgment: 'uncertain', confidence: TEMPORAL_COOCCURRENCE_UNCERTAIN_CONFIDENCE }
