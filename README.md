@@ -2,7 +2,31 @@
 
 Node-AI-Z は、Observe / Experience / Revision / Memory を往復しながら、CPU ベースで育つ知性の背骨と脳寄り拡張を同じ runtime で観察する実験アプリです。
 
+## New Signal Mode Phase 1: Persistent Organism State + Background Loop
+
+New Signal Mode に、持続的な個体状態と軽量バックグラウンドループを追加しました。
+
+含まれる機能:
+- persistent organism state（消えない個体状態）
+  - energy / curiosity / uncertainty / safety
+  - self echo / internal rhythm / baseline activation
+  - source-aware signal flow（外界・内部再生・teacher・自己生成の区別）
+- background micro pulse（弱いベースライン更新）
+- weak replay tick（弱い再活性）
+- maintenance tick（軽量メンテナンス）
+- save / restore サポート（スナップショットに individual state を含める）
+- UI: OrganismStateCard / BackgroundLoopPanel / BackgroundActivityTimeline
+
+これは意識の証明ではありません。  
+pre-semantic signal learning のための連続状態メカニズムです。
+
+```
+These are continuity mechanisms for pre-semantic signal learning,
+not claims of consciousness or self-awareness.
+```
+
 ## UI Clarity Pass v6-9
+
 
 このパスでは UI Audit Fix Planner を追加しました。
 
