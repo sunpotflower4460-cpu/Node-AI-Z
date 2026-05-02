@@ -10,7 +10,7 @@ describe('buildBackgroundLoopSummary', () => {
     expect(summary.isRunning).toBe(false)
     expect(summary.tickCount).toBe(0)
     expect(summary.pendingReplayCount).toBe(0)
-    expect(summary.hasError).toBeUndefined()
+    expect(summary.lastError).toBeUndefined()
   })
 
   it('reflects pending replay count', () => {
@@ -29,5 +29,4 @@ describe('buildBackgroundLoopSummary', () => {
     }
     const summary = buildBackgroundLoopSummary(state)
     expect(summary.lastError).toBe('test error')
-  })
-})
+  })})
