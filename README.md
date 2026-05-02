@@ -1264,3 +1264,38 @@ UI は以下の点でさらに最適化されました。
 - `src/ui/audit/EmptyStateAudit.tsx` — 空状態チェック
 - `src/ui/audit/CopyClarityAudit.tsx` — コピー分かりやすさチェック
 - `src/ui/viewModels/buildUiAuditViewModel.ts` — 監査ViewModelビルダー
+
+## UI Clarity Pass v6-10
+
+このパスでは、UI改善サイクルを継続的に記録・比較・可視化するための UI Review Loop を追加しました。
+
+ループの流れ:
+
+- UI Audit 実行
+- 問題点の検出
+- Fix Plan の作成
+- Copilot / Cloud Agent への指示
+- 修正後に再 Audit
+- 改善結果の比較
+- 履歴への保存
+- 次の改善候補の提案
+
+このパスはコードの自動修正や自動PR作成は行いません。  
+開発者がUI改善を測定可能・繰り返し可能な形で続けられるようにすることが目的です。
+
+### 追加ファイル
+
+- `src/ui/reviewLoop/uiReviewLoopTypes.ts` — UiReviewSession / UiAuditComparison / UiReviewDelta / NextUiReviewSuggestion / UiReviewLoopViewModel 型定義
+- `src/ui/reviewLoop/createUiReviewSession.ts` — Audit Report から ReviewSession を作成
+- `src/ui/reviewLoop/compareUiAuditReports.ts` — 2つの監査結果を比較
+- `src/ui/reviewLoop/buildUiReviewDelta.ts` — 比較結果をUI表示用に整形
+- `src/ui/reviewLoop/buildNextUiReviewSuggestion.ts` — 次の改善候補を提案
+- `src/ui/reviewLoop/saveUiReviewHistory.ts` — レビュー履歴を保存
+- `src/ui/reviewLoop/loadUiReviewHistory.ts` — レビュー履歴を読み込み
+- `src/ui/reviewLoop/buildUiReviewLoopViewModel.ts` — Review Loop の ViewModel を構築
+- `src/ui/reviewLoop/storage/uiReviewStorageAdapter.ts` — ストレージアダプター（localStorage 実装 / 将来的に交換可能）
+- `src/ui/reviewLoop/UiReviewLoopPanel.tsx` — UI Review Loop 全体パネル
+- `src/ui/reviewLoop/UiReviewSessionCard.tsx` — セッションカード
+- `src/ui/reviewLoop/UiReviewDeltaPanel.tsx` — スコア差分・警告差分パネル
+- `src/ui/reviewLoop/UiReviewHistoryList.tsx` — 改善履歴一覧
+- `src/ui/reviewLoop/NextReviewSuggestionCard.tsx` — 次の改善提案カード
