@@ -97,6 +97,20 @@ import { buildOrganismSummary } from '../signalOrganism/buildOrganismSummary'
 import { runBackgroundTick } from '../signalBackground/runBackgroundTick'
 import { buildBackgroundLoopSummary } from '../signalBackground/buildBackgroundLoopSummary'
 import { extendSignalSnapshotWithOrganism } from '../signalPersistence/extendSignalSnapshotWithOrganism'
+import type { SameObjectBindingCandidate } from '../signalTeacher/signalTeacherTypes'
+import type { BindingQueueState } from '../signalTeacher/queue/bindingQueueTypes'
+import type { CrossModalRecallResult } from '../signalRecall/crossModalRecallTypes'
+import { detectCrossModalCandidates } from '../signalTeacher/detectCrossModalCandidates'
+import { enqueueBindingCandidate } from '../signalTeacher/queue/enqueueBindingCandidate'
+import { createInitialBindingQueue } from '../signalTeacher/queue/createInitialBindingQueue'
+import { buildBindingQueueSummary } from '../signalTeacher/queue/buildBindingQueueSummary'
+import { buildTeacherSummary } from '../signalTeacher/buildTeacherSummary'
+import { applyTeacherJudgmentToBinding } from '../signalTeacher/applyTeacherJudgmentToBinding'
+import { mockSameObjectTeacher } from '../signalTeacher/adapters/mockSameObjectTeacher'
+import { createCrossModalRecallCue } from '../signalRecall/createCrossModalRecallCue'
+import { runCrossModalRecall } from '../signalRecall/runCrossModalRecall'
+import { evaluateCrossModalRecall } from '../signalRecall/evaluateCrossModalRecall'
+import { buildCrossModalRecallSummary } from '../signalRecall/buildCrossModalRecallSummary'
 
 export type SignalModeRuntimeOptions = {
   /** Enable background loop ticks */
@@ -107,6 +121,9 @@ export type SignalModeRuntimeOptions = {
   runBackgroundAfterInput?: boolean
   /** Automatically save organism state with the snapshot */
   autosaveOrganismState?: boolean
+  teacherMode?: 'off' | 'mock' | 'human' | 'llm_stub'
+  autoCheckHighPriorityCandidates?: boolean
+  enableCrossModalRecall?: boolean
 }
 
 export type SignalModeRuntimeInput = {
@@ -130,6 +147,10 @@ export type SignalModeRuntimeInput = {
   /** Background loop state from a previous run or restored snapshot */
   existingBackgroundLoopState?: BackgroundLoopState
   enableBindingTeacher?: boolean
+  existingBindingCandidates?: SameObjectBindingCandidate[]
+  existingBindingQueue?: BindingQueueState
+  existingRecallResults?: CrossModalRecallResult[]
+  recentPackets?: SensoryPacket[]
   textSummary?: string
   imageSummary?: string
   audioSummary?: string
@@ -155,6 +176,12 @@ export type SignalModeRuntimeResult = {
   organismState: PersistentOrganismState
   /** Current background loop state */
   backgroundLoopState: BackgroundLoopState
+  bindingCandidates: SameObjectBindingCandidate[]
+  bindingQueue: BindingQueueState
+  recallResults: CrossModalRecallResult[]
+  teacherSummary: ReturnType<typeof buildTeacherSummary>
+  bindingQueueSummary: ReturnType<typeof buildBindingQueueSummary>
+  recallSummary: ReturnType<typeof buildCrossModalRecallSummary>
   snapshot?: SignalModeSnapshot
   observe: {
     fieldSummary: ReturnType<typeof buildSignalFieldSummary>
@@ -173,6 +200,9 @@ export type SignalModeRuntimeResult = {
     organismSummary: ReturnType<typeof buildOrganismSummary>
     /** Background loop summary for UI display */
     backgroundLoopSummary: ReturnType<typeof buildBackgroundLoopSummary>
+    teacherSummary: ReturnType<typeof buildTeacherSummary>
+    bindingQueueSummary: ReturnType<typeof buildBindingQueueSummary>
+    recallSummary: ReturnType<typeof buildCrossModalRecallSummary>
   }
 }
 
@@ -725,6 +755,56 @@ export async function runSignalModeRuntime(
     }
   }
 
+  // --- Phase 3: Binding Teacher / Queue / Cross-modal Recall ---
+  let bindingCandidates: SameObjectBindingCandidate[] = input.existingBindingCandidates ?? []
+  let bindingQueue: BindingQueueState = input.existingBindingQueue ?? createInitialBindingQueue()
+  let recallResults: CrossModalRecallResult[] = input.existingRecallResults ?? []
+
+  const recentPackets = input.recentPackets ?? (input.sensoryPacket ? [input.sensoryPacket] : [])
+  if (recentPackets.length >= 2) {
+    const newCandidates = detectCrossModalCandidates(recentPackets, currentAssemblyIds)
+    for (const candidate of newCandidates) {
+      bindingCandidates = [...bindingCandidates, candidate]
+      bindingQueue = enqueueBindingCandidate(bindingQueue, candidate)
+    }
+  }
+
+  const teacherMode = bgOptions.teacherMode ?? 'off'
+  const autoCheckHigh = bgOptions.autoCheckHighPriorityCandidates ?? false
+
+  const appliedJudgments: import('../signalTeacher/signalTeacherTypes').TeacherJudgment[] = []
+  if (teacherMode === 'mock' && autoCheckHigh) {
+    const highPriorityItems = bindingQueue.items.filter(
+      item => item.priority === 'high' && item.status === 'pending',
+    )
+    for (const item of highPriorityItems) {
+      const candidate = bindingCandidates.find(c => c.id === item.candidateId)
+      if (!candidate) continue
+      const judgment = await mockSameObjectTeacher.judge({
+        candidate,
+        packetSummaries: [],
+      })
+      appliedJudgments.push(judgment)
+      const updated = applyTeacherJudgmentToBinding(candidate, judgment)
+      bindingCandidates = bindingCandidates.map(c => (c.id === updated.id ? updated : c))
+    }
+  }
+
+  if (bgOptions.enableCrossModalRecall && recentPackets.length > 0 && bindingCandidates.length > 0) {
+    const sourcePacket = recentPackets[recentPackets.length - 1]!
+    const cue = createCrossModalRecallCue(sourcePacket.id, sourcePacket.modality, bindingCandidates)
+    if (cue.candidateIds.length > 0) {
+      const recallResult = runCrossModalRecall(cue, recentPackets, bindingCandidates)
+      recallResults = [...recallResults, recallResult]
+      const evalResult = evaluateCrossModalRecall(recallResult, bindingCandidates)
+      bindingCandidates = evalResult.updated
+    }
+  }
+
+  const teacherSummaryResult = buildTeacherSummary(bindingCandidates, appliedJudgments)
+  const bindingQueueSummaryResult = buildBindingQueueSummary(bindingQueue)
+  const recallSummaryResult = buildCrossModalRecallSummary(recallResults)
+
   const snapshot = extendSignalSnapshotWithOrganism(baseSnapshot, organismState, backgroundLoopState)
 
   if (input.autosave) {
@@ -748,6 +828,12 @@ export async function runSignalModeRuntime(
     attentionBudget,
     organismState,
     backgroundLoopState,
+    bindingCandidates,
+    bindingQueue,
+    recallResults,
+    teacherSummary: teacherSummaryResult,
+    bindingQueueSummary: bindingQueueSummaryResult,
+    recallSummary: recallSummaryResult,
     snapshot: input.returnSnapshot ? snapshot : undefined,
     observe: {
       fieldSummary,
@@ -759,6 +845,9 @@ export async function runSignalModeRuntime(
       evaluation,
       organismSummary: buildOrganismSummary(organismState),
       backgroundLoopSummary: buildBackgroundLoopSummary(backgroundLoopState),
+      teacherSummary: teacherSummaryResult,
+      bindingQueueSummary: bindingQueueSummaryResult,
+      recallSummary: recallSummaryResult,
     },
   }
 }
