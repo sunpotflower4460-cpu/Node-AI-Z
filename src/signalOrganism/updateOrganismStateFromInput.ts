@@ -101,19 +101,20 @@ export function updateOrganismStateFromInput(
   }
 
   // --- modalityBalance ---
+  // Running average: prev_ratio * (n-1)/n + new_increment * 1/n
   const prevModal = state.modalityBalance
   const modalTotal = state.lifecycle.totalInputCount + 1
-  const modalPrevRatio = (r: number) => r * (modalTotal - 1) / modalTotal
+  const scaleForNewInput = (r: number) => r * (modalTotal - 1) / modalTotal
   const modalityBalance = {
     textRatio: inputModality === 'text'
-      ? clamp(modalPrevRatio(prevModal.textRatio) + 1 / modalTotal)
-      : clamp(modalPrevRatio(prevModal.textRatio)),
+      ? clamp(scaleForNewInput(prevModal.textRatio) + 1 / modalTotal)
+      : clamp(scaleForNewInput(prevModal.textRatio)),
     imageRatio: inputModality === 'image'
-      ? clamp(modalPrevRatio(prevModal.imageRatio) + 1 / modalTotal)
-      : clamp(modalPrevRatio(prevModal.imageRatio)),
+      ? clamp(scaleForNewInput(prevModal.imageRatio) + 1 / modalTotal)
+      : clamp(scaleForNewInput(prevModal.imageRatio)),
     audioRatio: inputModality === 'audio'
-      ? clamp(modalPrevRatio(prevModal.audioRatio) + 1 / modalTotal)
-      : clamp(modalPrevRatio(prevModal.audioRatio)),
+      ? clamp(scaleForNewInput(prevModal.audioRatio) + 1 / modalTotal)
+      : clamp(scaleForNewInput(prevModal.audioRatio)),
   }
 
   return {

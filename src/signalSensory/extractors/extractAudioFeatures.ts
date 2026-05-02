@@ -71,8 +71,10 @@ export function extractAudioFeatures(
   energyMid = Math.min(1, (energyMid / totalEnergy) * 3)
   energyHigh = Math.min(1, (energyHigh / totalEnergy) * 3)
 
-  // --- rhythm score: autocorrelation at small lag ---
-  const LAG = Math.max(1, Math.floor(sampleCount / 20))
+  // --- rhythm score: autocorrelation at a fixed temporal lag ---
+  // LAG_DIVISOR = 20: at 44.1 kHz this captures ~50ms patterns (typical beat resolution)
+  const LAG_DIVISOR = 20
+  const LAG = Math.max(1, Math.floor(sampleCount / LAG_DIVISOR))
   let autoCorr = 0
   for (let i = 0; i + LAG < sampleCount; i++) {
     autoCorr += channelData[i]! * channelData[i + LAG]!

@@ -55,7 +55,10 @@ export function extractTextFeatures(text: string): SensoryFeatureVector {
   const repeatedWords = [...wordFreq.values()].filter(count => count > 1).length
   const repetitionScore = wordCount > 1 ? Math.min(1, repeatedWords / wordCount) : 0
 
-  // [6] average char code normalized (cap to ASCII range for universality)
+  // [6] average char code normalized
+  // Capped at ASCII 127 for a modality-neutral baseline across scripts.
+  // Japanese/CJK characters would dominate if uncapped, so we treat only
+  // the ASCII range as a structural feature (rhythm of the character stream).
   let charCodeSum = 0
   for (let i = 0; i < Math.min(len, 64); i++) {
     charCodeSum += Math.min(127, text.charCodeAt(i))

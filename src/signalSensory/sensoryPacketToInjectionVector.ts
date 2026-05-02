@@ -39,7 +39,9 @@ export function sensoryPacketToInjectionVector(packet: SensoryPacket): ParticleS
   const x = Math.min(1, Math.max(0, baseX + (v[0]! - 0.5) * 0.15))
   // y: use features[1] scaled to cover the [0.2, 0.8] range to stay in the active region
   const y = Math.max(0, Math.min(1, (v[1] ?? 0.5) * 0.6 + 0.2))
-  // z: always 0 (all particles in the stable field have z=0; non-zero z reduces similarity)
+  // z: always 0 — all stable-field particles have z=0 (see createStableParticleField).
+  // Non-zero z increases the 3D distance to every particle, reducing ignition probability.
+  // features[2] is preserved in the vector array (index 5+) for downstream consumers.
   const z = 0
 
   // Strength: scale feature mean, ensuring it exceeds particle activation threshold (0.3)
