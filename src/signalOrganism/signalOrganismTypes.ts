@@ -45,6 +45,12 @@ export type PersistentOrganismState = {
     selfGeneratedRatio: number
   }
 
+  modalityBalance: {
+    textRatio: number
+    imageRatio: number
+    audioRatio: number
+  }
+
   learning: {
     teacherDependency: number
     learningStage: number
@@ -71,6 +77,8 @@ export type OrganismInputSignal = {
   teacherInvolved: boolean
   recallSuccess: boolean
   timestamp: number
+  /** Modality of the current input, used to update modalityBalance */
+  inputModality?: 'text' | 'image' | 'audio'
 }
 
 /** Input to updateOrganismStateFromBackground */

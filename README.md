@@ -2,6 +2,70 @@
 
 Node-AI-Z は、Observe / Experience / Revision / Memory を往復しながら、CPU ベースで育つ知性の背骨と脳寄り拡張を同じ runtime で観察する実験アプリです。
 
+## New Signal Mode Phase 2: Multimodal Sensory Packet — Text / Image / Audio Input Foundation
+
+New Signal Mode にマルチモーダル入力基盤を追加しました。
+
+テキスト・画像・音を同じ `SensoryPacket` 形式で受け取り、Signal Field に注入できる共通入口を構築しました。
+
+含まれる機能:
+- **SensoryPacket 共通型** — `text / image / audio / event / synthetic_*` を同一形式で扱う
+- **Modality Tagging** — `text / image / audio` どれ由来かを保持
+- **低次元特徴抽出**（意味ラベルなし）
+  - テキスト: 文字数・単語数・疑問符・反復・平均文字コード・スペース比率（8次元）
+  - 画像: アスペクト比・明度・分散・RGB平均・エッジ密度・空間活性（8次元、Canvas API）
+  - 音声: 振幅平均・最大・分散・ゼロ交差率・帯域エネルギー・リズム（8次元、AudioBuffer / mock）
+- **Audio Mock** — AudioBuffer が取れない場合は説明文から弱い特徴ベクトルを生成
+- **Common Injection Interface** — `injectSensoryPacketIntoField` でどのモダリティでも Signal Field に注入
+- **Modality-aware spatial mapping** — テキストは左領域(x≈0.25)、画像は中央(x≈0.5)、音声は右領域(x≈0.75) に発火
+- **Source-aware Signal Flow** — `external / internal_replay / teacher / self_generated` を区別する土台
+- **Organism Modality Balance** — `PersistentOrganismState` にモダリティ比率を追加（textRatio / imageRatio / audioRatio）
+- **UI: MultimodalInputPanel** — テキスト・画像・音声を切り替えられる入力パネル
+  - `TextInputStimulusCard / ImageInputStimulusCard / AudioInputStimulusCard`
+  - `SensoryPacketPreview` — 最後のパケットの特徴を視覚化
+  - `ModalityRatioCard` — モダリティ比率バー
+
+これは意味づけを行いません。  
+意味づけは Phase 3 以降の teacher / bridge / recall に任せます。
+
+```
+Phase 2 assigns NO semantic labels ("cat", "sad", etc.).
+Only low-dimensional structural/statistical features are extracted.
+Meaning emerges later from Signal Field assemblies.
+```
+
+### 追加ファイル
+
+- `src/signalSensory/sensoryPacketTypes.ts` — SensoryPacket / SensoryModality / SensoryFeatureVector 型
+- `src/signalSensory/createTextSensoryPacket.ts` — テキストからパケット生成
+- `src/signalSensory/createImageSensoryPacket.ts` — 画像からパケット生成（Canvas API）
+- `src/signalSensory/createAudioSensoryPacket.ts` — AudioBuffer / mock からパケット生成
+- `src/signalSensory/normalizeSensoryPacket.ts` — 特徴ベクトルを [0,1] に正規化
+- `src/signalSensory/sensoryPacketToInjectionVector.ts` — パケット → ParticleStimulus 変換
+- `src/signalSensory/buildSensoryPacketSummary.ts` — UI/デバッグ用サマリー生成
+- `src/signalSensory/extractors/extractTextFeatures.ts` — テキスト低次元特徴抽出
+- `src/signalSensory/extractors/extractImageFeatures.ts` — 画像低次元特徴抽出
+- `src/signalSensory/extractors/extractAudioFeatures.ts` — 音声低次元特徴抽出
+- `src/signalSensory/extractors/createAudioMockFeatures.ts` — モック音声特徴生成
+- `src/signalInjection/signalInjectionTypes.ts` — InjectionVector / InjectionEvent / InjectionSummary 型
+- `src/signalInjection/injectSensoryPacketIntoField.ts` — 共通 Signal Field 注入入口
+- `src/signalInjection/buildInjectionSummary.ts` — 注入サマリー生成
+- `src/ui/multimodal/MultimodalInputPanel.tsx` — マルチモーダル入力パネル
+- `src/ui/multimodal/TextInputStimulusCard.tsx` — テキスト入力カード
+- `src/ui/multimodal/ImageInputStimulusCard.tsx` — 画像入力カード
+- `src/ui/multimodal/AudioInputStimulusCard.tsx` — 音声入力カード
+- `src/ui/multimodal/SensoryPacketPreview.tsx` — パケットプレビュー
+- `src/ui/multimodal/ModalityRatioCard.tsx` — モダリティ比率カード
+- `src/ui/multimodal/buildMultimodalInputViewModel.ts` — ViewModel 構築
+
+### 変更ファイル
+
+- `src/signalOrganism/signalOrganismTypes.ts` — `modalityBalance` フィールド追加
+- `src/signalOrganism/createInitialOrganismState.ts` — `modalityBalance` 初期化
+- `src/signalOrganism/updateOrganismStateFromInput.ts` — モダリティ比率更新ロジック追加
+- `src/signalOrganism/buildOrganismSummary.ts` — `modalityBalance` を OrganismSummary に含める
+- `src/runtime/runSignalModeRuntime.ts` — `sensoryPacket?: SensoryPacket` オプション入力追加
+
 ## New Signal Mode Phase 1: Persistent Organism State + Background Loop
 
 New Signal Mode に、持続的な個体状態と軽量バックグラウンドループを追加しました。

@@ -15,6 +15,12 @@ export type OrganismSummary = {
   totalReplayCount: number
   replayQueueLength: number
   openQuestionCount: number
+  /** Proportion of inputs by modality */
+  modalityBalance: {
+    textRatio: number
+    imageRatio: number
+    audioRatio: number
+  }
   /** Short human-readable label for current regulation level */
   regulationLabel: string
 }
@@ -49,6 +55,7 @@ export function buildOrganismSummary(state: PersistentOrganismState): OrganismSu
     totalReplayCount: lifecycle.totalReplayCount,
     replayQueueLength: recent.replayQueueIds.length,
     openQuestionCount: recent.openQuestionIds.length,
+    modalityBalance: state.modalityBalance,
     regulationLabel,
   }
 }
