@@ -86,6 +86,26 @@ import { buildDevelopmentDashboard } from '../signalDevelopmentDashboard/buildDe
 import { buildDevelopmentDashboardSummary } from '../signalDevelopmentDashboard/buildDevelopmentDashboardSummary'
 import { buildSignalEvaluationObserveSummary } from '../observe/buildSignalEvaluationObserveSummary'
 import type { SignalModeSnapshot } from '../signalPersistence/signalPersistenceTypes'
+import type { PersistentOrganismState } from '../signalOrganism/signalOrganismTypes'
+import type { BackgroundLoopState } from '../signalBackground/signalBackgroundTypes'
+import { createInitialOrganismState } from '../signalOrganism/createInitialOrganismState'
+import { createInitialBackgroundLoopState } from '../signalBackground/createInitialBackgroundLoopState'
+import { updateOrganismStateFromInput } from '../signalOrganism/updateOrganismStateFromInput'
+import { buildOrganismSummary } from '../signalOrganism/buildOrganismSummary'
+import { runBackgroundTick } from '../signalBackground/runBackgroundTick'
+import { buildBackgroundLoopSummary } from '../signalBackground/buildBackgroundLoopSummary'
+import { extendSignalSnapshotWithOrganism } from '../signalPersistence/extendSignalSnapshotWithOrganism'
+
+export type SignalModeRuntimeOptions = {
+  /** Enable background loop ticks */
+  enableBackgroundLoop?: boolean
+  /** Run a background tick before processing the input */
+  runBackgroundBeforeInput?: boolean
+  /** Run a background tick after processing the input */
+  runBackgroundAfterInput?: boolean
+  /** Automatically save organism state with the snapshot */
+  autosaveOrganismState?: boolean
+}
 
 export type SignalModeRuntimeInput = {
   stimulus: ParticleStimulus
@@ -94,16 +114,24 @@ export type SignalModeRuntimeInput = {
   existingFieldState?: SignalFieldState
   existingConsolidationState?: SignalConsolidationState
   existingAttentionBudget?: SignalAttentionBudget
+  /** Persistent organism state from a previous run or restored snapshot */
+  existingOrganismState?: PersistentOrganismState
+  /** Background loop state from a previous run or restored snapshot */
+  existingBackgroundLoopState?: BackgroundLoopState
   enableBindingTeacher?: boolean
   textSummary?: string
   imageSummary?: string
   audioSummary?: string
   isUserActive?: boolean
   recentActivityLevel?: number
+  /** Timestamp of the last external input (used by background loop) */
+  lastInputAt?: number
   /** When true, autosave Signal Mode state after each run */
   autosave?: boolean
   /** When provided, the result will include the snapshot for external use */
   returnSnapshot?: boolean
+  /** Background loop options */
+  backgroundOptions?: SignalModeRuntimeOptions
 }
 
 export type SignalModeRuntimeResult = {
@@ -112,6 +140,10 @@ export type SignalModeRuntimeResult = {
   loopState: SignalLoopState
   consolidationState: SignalConsolidationState
   attentionBudget: SignalAttentionBudget
+  /** Current persistent organism state */
+  organismState: PersistentOrganismState
+  /** Current background loop state */
+  backgroundLoopState: BackgroundLoopState
   snapshot?: SignalModeSnapshot
   observe: {
     fieldSummary: ReturnType<typeof buildSignalFieldSummary>
@@ -126,6 +158,10 @@ export type SignalModeRuntimeResult = {
     activeLearning: ReturnType<typeof buildSignalActiveLearningSummary>
     actionOutcomeLearning: ReturnType<typeof buildSignalActionOutcomeObserveSummary>
     evaluation: ReturnType<typeof buildSignalEvaluationObserveSummary>
+    /** Organism state summary for UI display */
+    organismSummary: ReturnType<typeof buildOrganismSummary>
+    /** Background loop summary for UI display */
+    backgroundLoopSummary: ReturnType<typeof buildBackgroundLoopSummary>
   }
 }
 
@@ -150,6 +186,27 @@ export async function runSignalModeRuntime(
   const previousFieldState = input.existingFieldState
   let consolidationState = input.existingConsolidationState ?? createConsolidationState()
   let attentionBudget = input.existingAttentionBudget ?? createInitialAttentionBudget()
+
+  // --- Organism / Background state ---
+  let organismState = input.existingOrganismState ?? createInitialOrganismState()
+  let backgroundLoopState = input.existingBackgroundLoopState ?? createInitialBackgroundLoopState()
+
+  const bgOptions = input.backgroundOptions ?? {}
+  const enableBackgroundLoop = bgOptions.enableBackgroundLoop ?? false
+
+  // Optional: run background tick before processing input
+  if (enableBackgroundLoop && bgOptions.runBackgroundBeforeInput) {
+    const bgResult = runBackgroundTick({
+      organism: organismState,
+      background: backgroundLoopState,
+      now: timestamp,
+      lastInputAt: input.lastInputAt,
+    })
+    if (bgResult.ran) {
+      organismState = bgResult.updatedOrganismState
+      backgroundLoopState = bgResult.updatedBackgroundState
+    }
+  }
 
   const isUserActive = input.isUserActive ?? true
   const recentActivityLevel = input.recentActivityLevel ?? 0.5
@@ -593,13 +650,63 @@ export async function runSignalModeRuntime(
   const developmentDashboardSummary = buildDevelopmentDashboardSummary(developmentDashboard)
 
   // Build snapshot (always create, optionally save)
-  const snapshot = createSignalSnapshot({
+  const baseSnapshot = createSignalSnapshot({
     fieldState,
     personalBranch: updatedBranch,
     loopState: finalLoopState,
     consolidationState,
     attentionBudget,
   })
+
+  // Update organism state from this input run
+  const riskLevelNum =
+    riskReport.riskLevel === 'high' ? 0.8 : riskReport.riskLevel === 'medium' ? 0.5 : 0.2
+  organismState = updateOrganismStateFromInput(organismState, {
+    activeParticleCount: fieldState.particles.filter(p => p.activation > 0.1).length,
+    assemblyCount: fieldState.assemblies.length,
+    newAssemblyCount: fieldResult.observe.newlyDetectedAssemblies.length,
+    bridgeChangeCount: fieldState.crossModalBridges.length,
+    predictionError: updatedBoundaryLoop.predictionResidue,
+    riskLevel: riskLevelNum,
+    teacherInvolved: input.enableBindingTeacher ?? false,
+    recallSuccess: fieldResult.observe.recallEvents.length > 0,
+    timestamp,
+  })
+
+  // Update recent assembly ids for replay
+  const newAssemblyIds = fieldResult.observe.newlyDetectedAssemblies.slice(0, 5)
+  if (newAssemblyIds.length > 0) {
+    organismState = {
+      ...organismState,
+      recent: {
+        ...organismState.recent,
+        recentAssemblyIds: [
+          ...organismState.recent.recentAssemblyIds,
+          ...newAssemblyIds,
+        ].slice(-20),
+        replayQueueIds: [
+          ...organismState.recent.replayQueueIds,
+          ...newAssemblyIds,
+        ].slice(-30),
+      },
+    }
+  }
+
+  // Optional: run background tick after processing input
+  if (enableBackgroundLoop && bgOptions.runBackgroundAfterInput) {
+    const bgResult = runBackgroundTick({
+      organism: organismState,
+      background: backgroundLoopState,
+      now: timestamp,
+      lastInputAt: timestamp,
+    })
+    if (bgResult.ran) {
+      organismState = bgResult.updatedOrganismState
+      backgroundLoopState = bgResult.updatedBackgroundState
+    }
+  }
+
+  const snapshot = extendSignalSnapshotWithOrganism(baseSnapshot, organismState, backgroundLoopState)
 
   if (input.autosave) {
     await saveSignalModeState(snapshot)
@@ -620,6 +727,8 @@ export async function runSignalModeRuntime(
     loopState: finalLoopState,
     consolidationState,
     attentionBudget,
+    organismState,
+    backgroundLoopState,
     snapshot: input.returnSnapshot ? snapshot : undefined,
     observe: {
       fieldSummary,
@@ -629,6 +738,8 @@ export async function runSignalModeRuntime(
       activeLearning,
       actionOutcomeLearning,
       evaluation,
+      organismSummary: buildOrganismSummary(organismState),
+      backgroundLoopSummary: buildBackgroundLoopSummary(backgroundLoopState),
     },
   }
 }

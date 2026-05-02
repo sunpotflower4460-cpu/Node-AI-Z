@@ -3,6 +3,8 @@ import type { SignalPersonalBranch } from '../signalBranch/signalBranchTypes'
 import type { SignalLoopState } from '../signalLoop/signalLoopTypes'
 import type { SignalConsolidationState } from '../signalConsolidation/signalConsolidationTypes'
 import type { SignalAttentionBudget } from '../signalAttention/signalAttentionTypes'
+import type { PersistentOrganismState } from '../signalOrganism/signalOrganismTypes'
+import type { BackgroundLoopState } from '../signalBackground/signalBackgroundTypes'
 import type { SignalModeSnapshot } from './signalPersistenceTypes'
 import { SIGNAL_SNAPSHOT_VERSION } from './signalPersistenceTypes'
 
@@ -12,11 +14,23 @@ export type CreateSnapshotInput = {
   loopState: SignalLoopState
   consolidationState?: SignalConsolidationState
   attentionBudget?: SignalAttentionBudget
+  /** Persistent organism state (Phase 1) */
+  organismState?: PersistentOrganismState
+  /** Background loop state (Phase 1) */
+  backgroundLoopState?: BackgroundLoopState
 }
 
 export function createSignalSnapshot(input: CreateSnapshotInput): SignalModeSnapshot {
   const now = Date.now()
-  const { fieldState, personalBranch, loopState, consolidationState, attentionBudget } = input
+  const {
+    fieldState,
+    personalBranch,
+    loopState,
+    consolidationState,
+    attentionBudget,
+    organismState,
+    backgroundLoopState,
+  } = input
 
   return {
     id: `snap_${now}_${Math.random().toString(36).slice(2, 8)}`,
@@ -37,6 +51,9 @@ export function createSignalSnapshot(input: CreateSnapshotInput): SignalModeSnap
 
     contrastState: personalBranch.contrastRecords,
     sequenceState: personalBranch.sequenceRecords,
+
+    organismState,
+    backgroundLoopState,
 
     metadata: {
       mode: 'signal_mode',

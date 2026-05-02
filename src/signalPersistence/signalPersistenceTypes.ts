@@ -20,6 +20,11 @@ export type SignalModeSnapshot = {
   dreamState?: unknown
   inquiryState?: unknown
 
+  /** Persistent organism state (added in Phase 1) */
+  organismState?: unknown
+  /** Background loop state (added in Phase 1) */
+  backgroundLoopState?: unknown
+
   metadata: {
     mode: 'signal_mode'
     particleCount?: number
@@ -43,7 +48,7 @@ export type SignalPersistenceSummary = {
   warnings: string[]
 }
 
-export const SIGNAL_SNAPSHOT_VERSION = 1
+export const SIGNAL_SNAPSHOT_VERSION = 2
 
 export type SignalStorageAdapter = {
   save: (key: string, value: unknown) => Promise<void>
