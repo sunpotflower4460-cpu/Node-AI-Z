@@ -1,5 +1,7 @@
 import type { SameObjectBindingCandidate, TeacherJudgment } from './signalTeacherTypes'
 
+const HIGH_DEPENDENCY_THRESHOLD = 0.7
+
 export function buildTeacherSummary(
   candidates: SameObjectBindingCandidate[],
   judgments: TeacherJudgment[],
@@ -26,7 +28,7 @@ export function buildTeacherSummary(
 
   const notes: string[] = []
   if (judgments.length > 0) notes.push(`judgments:${judgments.length}`)
-  if (avgTeacherDependency > 0.7) notes.push('high_teacher_dependency')
+  if (avgTeacherDependency > HIGH_DEPENDENCY_THRESHOLD) notes.push('high_teacher_dependency')
 
   return {
     totalCandidates: candidates.length,

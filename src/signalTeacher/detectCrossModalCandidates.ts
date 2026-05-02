@@ -2,12 +2,14 @@ import type { SensoryPacket } from '../signalSensory/sensoryPacketTypes'
 import type { SameObjectBindingCandidate } from './signalTeacherTypes'
 import { createBindingCandidate } from './createBindingCandidate'
 
+const DEFAULT_MAX_TEMPORAL_GAP_MS = 10000
+
 export function detectCrossModalCandidates(
   packets: SensoryPacket[],
   assemblyIds: string[],
   options?: { maxAgeMs?: number },
 ): SameObjectBindingCandidate[] {
-  const maxAgeMs = options?.maxAgeMs ?? 10000
+  const maxAgeMs = options?.maxAgeMs ?? DEFAULT_MAX_TEMPORAL_GAP_MS
   const candidates: SameObjectBindingCandidate[] = []
 
   for (let i = 0; i < packets.length; i++) {

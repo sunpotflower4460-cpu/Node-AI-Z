@@ -1,5 +1,7 @@
 import type { TeacherJudgment, TeacherJudgmentType } from './signalTeacherTypes'
 
+const SAME_OBJECT_CONFIDENCE_THRESHOLD = 0.7
+
 export function createTeacherJudgment(params: {
   candidateId: string
   teacherType: TeacherJudgment['teacherType']
@@ -15,8 +17,8 @@ export function createTeacherJudgment(params: {
     switch (params.judgment) {
       case 'same_object':
         return {
-          shouldStrengthen: params.confidence > 0.7,
-          shouldHold: params.confidence <= 0.7,
+          shouldStrengthen: params.confidence > SAME_OBJECT_CONFIDENCE_THRESHOLD,
+          shouldHold: params.confidence <= SAME_OBJECT_CONFIDENCE_THRESHOLD,
           shouldReject: false,
           needsMoreEvidence: false,
         }

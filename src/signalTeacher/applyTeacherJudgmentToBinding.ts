@@ -1,5 +1,8 @@
 import type { SameObjectBindingCandidate, TeacherJudgment } from './signalTeacherTypes'
 
+const TEACHER_CONFIRMATION_SCORE_BOOST = 0.1
+const SIMILAR_BUT_DIFFERENT_RISK_INCREASE = 0.15
+
 export function applyTeacherJudgmentToBinding(
   candidate: SameObjectBindingCandidate,
   judgment: TeacherJudgment,
@@ -27,7 +30,7 @@ export function applyTeacherJudgmentToBinding(
         score: {
           ...base.score,
           teacherConfidence: judgment.confidence,
-          overallBindingScore: Math.min(1, base.score.overallBindingScore + 0.1),
+          overallBindingScore: Math.min(1, base.score.overallBindingScore + TEACHER_CONFIRMATION_SCORE_BOOST),
         },
       }
     case 'same_category':
@@ -45,7 +48,7 @@ export function applyTeacherJudgmentToBinding(
         status: 'uncertain',
         risk: {
           ...base.risk,
-          falseBindingRisk: Math.min(1, base.risk.falseBindingRisk + 0.15),
+          falseBindingRisk: Math.min(1, base.risk.falseBindingRisk + SIMILAR_BUT_DIFFERENT_RISK_INCREASE),
         },
       }
     case 'different':

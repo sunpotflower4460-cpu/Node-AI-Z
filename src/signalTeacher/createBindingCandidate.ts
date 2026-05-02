@@ -1,6 +1,13 @@
 import type { SensoryPacket } from '../signalSensory/sensoryPacketTypes'
 import type { SameObjectBindingCandidate, BindingCandidateSource } from './signalTeacherTypes'
 
+const TEMPORAL_PROXIMITY_WINDOW_MS = 5000
+const MAX_ASSEMBLY_COUNT_FOR_SCORE = 5
+const INITIAL_TEACHER_DEPENDENCY = 0.8
+const INITIAL_FALSE_BINDING_RISK = 0.3
+const INITIAL_OVERBINDING_RISK = 0.2
+const INITIAL_UNCERTAINTY = 0.6
+
 function cosineSimilarity(a: number[], b: number[]): number {
   if (a.length === 0 || b.length === 0) return 0
   const len = Math.min(a.length, b.length)
@@ -38,10 +45,10 @@ export function createBindingCandidate(
   if (packets.length >= 2) {
     const timestamps = packets.map(p => p.createdAt)
     const maxGap = Math.max(...timestamps) - Math.min(...timestamps)
-    temporalProximityScore = maxGap <= 5000 ? 1 - maxGap / 5000 : 0
+    temporalProximityScore = maxGap <= TEMPORAL_PROXIMITY_WINDOW_MS ? 1 - maxGap / TEMPORAL_PROXIMITY_WINDOW_MS : 0
   }
 
-  const coActivationScore = assemblyIds.length > 0 ? Math.min(1, assemblyIds.length / 5) : 0
+  const coActivationScore = assemblyIds.length > 0 ? Math.min(1, assemblyIds.length / MAX_ASSEMBLY_COUNT_FOR_SCORE) : 0
   const overallBindingScore = (featureSimilarityScore + temporalProximityScore + coActivationScore) / 3
 
   return {
@@ -64,7 +71,7 @@ export function createBindingCandidate(
     },
     teacher: {
       teacherChecked: false,
-      teacherDependencyScore: 0.8,
+      teacherDependencyScore: INITIAL_TEACHER_DEPENDENCY,
       teacherConfirmCount: 0,
       teacherRejectCount: 0,
     },
@@ -74,9 +81,9 @@ export function createBindingCandidate(
       recallFailureCount: 0,
     },
     risk: {
-      falseBindingRisk: 0.3,
-      overbindingRisk: 0.2,
-      uncertainty: 0.6,
+      falseBindingRisk: INITIAL_FALSE_BINDING_RISK,
+      overbindingRisk: INITIAL_OVERBINDING_RISK,
+      uncertainty: INITIAL_UNCERTAINTY,
     },
     notes: [],
   }

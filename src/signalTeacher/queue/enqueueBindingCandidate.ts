@@ -1,6 +1,8 @@
 import type { BindingQueueState, BindingQueueItem } from './bindingQueueTypes'
 import type { SameObjectBindingCandidate } from '../signalTeacherTypes'
 
+const MEDIUM_PRIORITY_SIMILARITY_THRESHOLD = 0.6
+
 export function enqueueBindingCandidate(
   queue: BindingQueueState,
   candidate: SameObjectBindingCandidate,
@@ -9,7 +11,7 @@ export function enqueueBindingCandidate(
   const priority: BindingQueueItem['priority'] =
     candidate.source === 'user_pairing'
       ? 'high'
-      : candidate.score.featureSimilarityScore > 0.6
+      : candidate.score.featureSimilarityScore > MEDIUM_PRIORITY_SIMILARITY_THRESHOLD
         ? 'medium'
         : 'low'
 
