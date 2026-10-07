@@ -2,6 +2,19 @@
 
 Node-AI-Z は、Observe / Experience / Revision / Memory を往復しながら、CPU ベースで育つ知性の背骨と脳寄り拡張を同じ runtime で観察する実験アプリです。
 
+## Developmental Node v2 — 設計段階
+
+Node-AI-Z の独立した次世代研究系統として、**Developmental Node v2** の設計を追加しました。
+
+この系統では、最初から fear / vision / curiosity などの意味付き Node を与えるのではなく、匿名 Node・局所予測・予測誤差・局所可塑性・構造可塑性から始め、**人生によって Edge Topology や将来的には Node 構造そのものが変化するか**を検証します。
+
+最初の実験は **Twin Life 0** です。同一の出生状態から異なる時間関係を経験した脳が、意味のある構造差と予測差を獲得するかを、same-life control と causal lesion を含めて検証します。
+
+この設計はまだ既存の会話 runtime / UI には接続しません。既存モードを壊さず、まず独立した research runtime として検証する方針です。
+
+詳細: [`docs/developmental-node-v2-design.md`](./docs/developmental-node-v2-design.md)
+
+
 ## New Signal Mode Phase 2: Multimodal Sensory Packet — Text / Image / Audio Input Foundation
 
 New Signal Mode にマルチモーダル入力基盤を追加しました。
