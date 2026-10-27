@@ -12,7 +12,15 @@ Node-AI-Z の独立した次世代研究系統として、**Developmental Node v
 
 この設計はまだ既存の会話 runtime / UI には接続しません。既存モードを壊さず、まず独立した research runtime として検証する方針です。
 
-詳細: [`docs/developmental-node-v2-design.md`](./docs/developmental-node-v2-design.md)
+**2026-10-28更新 — 第1〜25巡の現行設計（こちらを優先）**
+
+- [現行研究設計・全体像](./docs/developmental-node-v2-current-spec.md)
+- [時間順序・局所因果・Kernel Contract](./docs/developmental-node-v2-kernel-contract.md)
+- [Twin Life / Pilot / Confirmatory 実験計画](./docs/developmental-node-v2-experiment-protocol.md)
+- [25巡の決定台帳と旧設計との差分](./docs/developmental-node-v2-decision-ledger.md)
+- [2026-10-07版の旧設計（設計履歴）](./docs/developmental-node-v2-design.md)
+
+**重要**: 現行設計は未実装・未実証。旧設計にある predictedActivation中心の自己予測、Utility-based Edge Search、必須Nursery、旧Edge型などを現在のPhase 1仕様として実装しない。
 
 
 ## New Signal Mode Phase 2: Multimodal Sensory Packet — Text / Image / Audio Input Foundation

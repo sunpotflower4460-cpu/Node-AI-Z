@@ -1,3 +1,9 @@
+> **⚠ Historical specification — updated 2026-10-28**
+>
+> この文書は2026-10-07の設計履歴です。第1〜25巡を統合した**現行参照仕様**は [developmental-node-v2-current-spec.md](./developmental-node-v2-current-spec.md) を参照してください。
+> 技術仕様: [Kernel Contract](./developmental-node-v2-kernel-contract.md) / [Experiment Protocol](./developmental-node-v2-experiment-protocol.md) / [Decision Ledger](./developmental-node-v2-decision-ledger.md)。
+> 特に旧5〜21節の自己activation予測、utilityEma、candidate search、必須Nursery、Edge aging/固定in-out capacityは**現在の第一候補ではありません**。古い仮説も検証履歴として残しています。
+
 # Node-AI-Z v2 — Developmental Node Design
 
 Status: **Design / research hypothesis**
